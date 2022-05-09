@@ -4,7 +4,13 @@ use serde::{Deserialize, Serialize};
 
 pub mod blob;
 pub mod core;
+pub mod email;
+pub mod email_submission;
+pub mod identity;
+pub mod mailbox;
 pub mod push_subscription;
+pub mod thread;
+pub mod vacation_response;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub enum URI {
@@ -94,6 +100,7 @@ pub enum Object {
     Mailbox,
     Thread,
     Email,
+    EmailDelivery,
     SearchSnippet,
     Identity,
     EmailSubmission,
@@ -112,3 +119,8 @@ pub struct StateChange {
     pub type_: StateChangeType,
     pub changed: HashMap<String, HashMap<Object, String>>,
 }
+
+#[derive(Debug, Clone)]
+pub struct Get;
+#[derive(Debug, Clone)]
+pub struct Set;

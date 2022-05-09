@@ -1,13 +1,17 @@
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-
-use crate::Object;
-
 pub mod get;
 pub mod set;
 
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+
+use crate::core::set::list_not_set;
+use crate::{Get, Object};
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PushSubscription {
+pub struct PushSubscription<State = Get> {
+    #[serde(skip)]
+    _state: std::marker::PhantomData<State>,
+
     #[serde(rename = "id")]
     #[serde(skip_serializing_if = "Option::is_none")]
     id: Option<String>,
@@ -33,7 +37,7 @@ pub struct PushSubscription {
     expires: Option<DateTime<Utc>>,
 
     #[serde(rename = "types")]
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "list_not_set")]
     types: Option<Vec<Object>>,
 }
 
