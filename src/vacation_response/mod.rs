@@ -40,3 +40,21 @@ pub struct VacationResponse<State = Get> {
     #[serde(skip_serializing_if = "string_not_set")]
     html_body: Option<String>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Property {
+    #[serde(rename = "id")]
+    Id,
+    #[serde(rename = "isEnabled")]
+    IsEnabled,
+    #[serde(rename = "fromDate")]
+    FromDate,
+    #[serde(rename = "toDate")]
+    ToDate,
+    #[serde(rename = "subject")]
+    Subject,
+    #[serde(rename = "textBody")]
+    TextBody,
+    #[serde(rename = "htmlBody")]
+    HtmlBody,
+}

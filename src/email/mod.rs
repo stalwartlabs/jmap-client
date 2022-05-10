@@ -1,4 +1,8 @@
 pub mod get;
+pub mod import;
+pub mod parse;
+pub mod query;
+pub mod search_snippet;
 pub mod set;
 
 use chrono::{DateTime, Utc};
@@ -225,7 +229,7 @@ pub struct EmailHeader<State = Get> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum EmailProperty {
+pub enum Property {
     #[serde(rename = "id")]
     Id,
     #[serde(rename = "blobId")]
@@ -279,7 +283,7 @@ pub enum EmailProperty {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum EmailBodyProperty {
+pub enum BodyProperty {
     #[serde(rename = "partId")]
     PartId,
     #[serde(rename = "blobId")]
@@ -304,4 +308,127 @@ pub enum EmailBodyProperty {
     Location,
     #[serde(rename = "subParts")]
     SubParts,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct MailCapabilities {
+    #[serde(rename = "maxMailboxesPerEmail")]
+    max_mailboxes_per_email: Option<usize>,
+
+    #[serde(rename = "maxMailboxDepth")]
+    max_mailbox_depth: usize,
+
+    #[serde(rename = "maxSizeMailboxName")]
+    max_size_mailbox_name: usize,
+
+    #[serde(rename = "maxSizeAttachmentsPerEmail")]
+    max_size_attachments_per_email: usize,
+
+    #[serde(rename = "emailQuerySortOptions")]
+    email_query_sort_options: Vec<String>,
+
+    #[serde(rename = "mayCreateTopLevelMailbox")]
+    may_create_top_level_mailbox: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SubmissionCapabilities {
+    #[serde(rename = "maxDelayedSend")]
+    max_delayed_send: usize,
+
+    #[serde(rename = "submissionExtensions")]
+    submission_extensions: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct QueryArguments {
+    #[serde(rename = "collapseThreads")]
+    collapse_threads: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct GetArguments {
+    #[serde(rename = "bodyProperties")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    body_properties: Option<Vec<BodyProperty>>,
+    #[serde(rename = "fetchTextBodyValues")]
+    fetch_text_body_values: bool,
+    #[serde(rename = "fetchHTMLBodyValues")]
+    fetch_html_body_values: bool,
+    #[serde(rename = "fetchAllBodyValues")]
+    fetch_all_body_values: bool,
+    #[serde(rename = "maxBodyValueBytes")]
+    max_body_value_bytes: usize,
+}
+
+impl QueryArguments {
+    pub fn collapse_threads(&mut self, collapse_threads: bool) {
+        self.collapse_threads = collapse_threads;
+    }
+}
+
+impl GetArguments {
+    pub fn body_properties(
+        &mut self,
+        body_properties: impl IntoIterator<Item = BodyProperty>,
+    ) -> &mut Self {
+        self.body_properties = Some(body_properties.into_iter().collect());
+        self
+    }
+
+    pub fn fetch_text_body_values(&mut self, fetch_text_body_values: bool) -> &mut Self {
+        self.fetch_text_body_values = fetch_text_body_values;
+        self
+    }
+
+    pub fn fetch_html_body_values(&mut self, fetch_html_body_values: bool) -> &mut Self {
+        self.fetch_html_body_values = fetch_html_body_values;
+        self
+    }
+
+    pub fn fetch_all_body_values(&mut self, fetch_all_body_values: bool) -> &mut Self {
+        self.fetch_all_body_values = fetch_all_body_values;
+        self
+    }
+
+    pub fn max_body_value_bytes(&mut self, max_body_value_bytes: usize) -> &mut Self {
+        self.max_body_value_bytes = max_body_value_bytes;
+        self
+    }
+}
+
+impl MailCapabilities {
+    pub fn max_mailboxes_per_email(&self) -> Option<usize> {
+        self.max_mailboxes_per_email
+    }
+
+    pub fn max_mailbox_depth(&self) -> usize {
+        self.max_mailbox_depth
+    }
+
+    pub fn max_size_mailbox_name(&self) -> usize {
+        self.max_size_mailbox_name
+    }
+
+    pub fn max_size_attachments_per_email(&self) -> usize {
+        self.max_size_attachments_per_email
+    }
+
+    pub fn email_query_sort_options(&self) -> &[String] {
+        &self.email_query_sort_options
+    }
+
+    pub fn may_create_top_level_mailbox(&self) -> bool {
+        self.may_create_top_level_mailbox
+    }
+}
+
+impl SubmissionCapabilities {
+    pub fn max_delayed_send(&self) -> usize {
+        self.max_delayed_send
+    }
+
+    pub fn submission_extensions(&self) -> &[String] {
+        &self.submission_extensions
+    }
 }

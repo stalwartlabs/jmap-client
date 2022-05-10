@@ -7,8 +7,12 @@ use super::{
 };
 
 impl Email<Set> {
-    pub fn mailbox_ids(mut self, mailbox_ids: impl Iterator<Item = String>) -> Self {
-        self.mailbox_ids = Some(mailbox_ids.into_iter().map(|s| (s, true)).collect());
+    pub fn mailbox_ids<T, U>(mut self, mailbox_ids: T) -> Self
+    where
+        T: IntoIterator<Item = U>,
+        U: Into<String>,
+    {
+        self.mailbox_ids = Some(mailbox_ids.into_iter().map(|s| (s.into(), true)).collect());
         self
     }
 
@@ -21,8 +25,12 @@ impl Email<Set> {
         self
     }
 
-    pub fn keywords(mut self, keywords: impl Iterator<Item = String>) -> Self {
-        self.keywords = Some(keywords.into_iter().map(|s| (s, true)).collect());
+    pub fn keywords<T, U>(mut self, keywords: T) -> Self
+    where
+        T: IntoIterator<Item = U>,
+        U: Into<String>,
+    {
+        self.keywords = Some(keywords.into_iter().map(|s| (s.into(), true)).collect());
         self
     }
 
@@ -33,77 +41,89 @@ impl Email<Set> {
         self
     }
 
-    pub fn message_id(mut self, message_id: impl Iterator<Item = String>) -> Self {
-        self.message_id = Some(message_id.into_iter().collect());
+    pub fn message_id<T, U>(mut self, message_id: T) -> Self
+    where
+        T: IntoIterator<Item = U>,
+        U: Into<String>,
+    {
+        self.message_id = Some(message_id.into_iter().map(|v| v.into()).collect());
         self
     }
 
-    pub fn in_reply_to(mut self, in_reply_to: impl Iterator<Item = String>) -> Self {
-        self.in_reply_to = Some(in_reply_to.into_iter().collect());
+    pub fn in_reply_to<T, U>(mut self, in_reply_to: T) -> Self
+    where
+        T: IntoIterator<Item = U>,
+        U: Into<String>,
+    {
+        self.in_reply_to = Some(in_reply_to.into_iter().map(|v| v.into()).collect());
         self
     }
 
-    pub fn references(mut self, references: impl Iterator<Item = String>) -> Self {
-        self.references = Some(references.into_iter().collect());
+    pub fn references<T, U>(mut self, references: T) -> Self
+    where
+        T: IntoIterator<Item = U>,
+        U: Into<String>,
+    {
+        self.references = Some(references.into_iter().map(|v| v.into()).collect());
         self
     }
 
     pub fn sender<T, U>(mut self, sender: T) -> Self
     where
-        T: Iterator<Item = U>,
+        T: IntoIterator<Item = U>,
         U: Into<EmailAddress>,
     {
-        self.sender = Some(sender.map(|s| s.into()).collect());
+        self.sender = Some(sender.into_iter().map(|s| s.into()).collect());
         self
     }
 
     pub fn from<T, U>(mut self, from: T) -> Self
     where
-        T: Iterator<Item = U>,
+        T: IntoIterator<Item = U>,
         U: Into<EmailAddress>,
     {
-        self.from = Some(from.map(|s| s.into()).collect());
+        self.from = Some(from.into_iter().map(|s| s.into()).collect());
         self
     }
 
     pub fn to<T, U>(mut self, to: T) -> Self
     where
-        T: Iterator<Item = U>,
+        T: IntoIterator<Item = U>,
         U: Into<EmailAddress>,
     {
-        self.to = Some(to.map(|s| s.into()).collect());
+        self.to = Some(to.into_iter().map(|s| s.into()).collect());
         self
     }
 
     pub fn cc<T, U>(mut self, cc: T) -> Self
     where
-        T: Iterator<Item = U>,
+        T: IntoIterator<Item = U>,
         U: Into<EmailAddress>,
     {
-        self.cc = Some(cc.map(|s| s.into()).collect());
+        self.cc = Some(cc.into_iter().map(|s| s.into()).collect());
         self
     }
 
     pub fn bcc<T, U>(mut self, bcc: T) -> Self
     where
-        T: Iterator<Item = U>,
+        T: IntoIterator<Item = U>,
         U: Into<EmailAddress>,
     {
-        self.bcc = Some(bcc.map(|s| s.into()).collect());
+        self.bcc = Some(bcc.into_iter().map(|s| s.into()).collect());
         self
     }
 
     pub fn reply_to<T, U>(mut self, reply_to: T) -> Self
     where
-        T: Iterator<Item = U>,
+        T: IntoIterator<Item = U>,
         U: Into<EmailAddress>,
     {
-        self.reply_to = Some(reply_to.map(|s| s.into()).collect());
+        self.reply_to = Some(reply_to.into_iter().map(|s| s.into()).collect());
         self
     }
 
-    pub fn subject(mut self, subject: String) -> Self {
-        self.subject = Some(subject);
+    pub fn subject(mut self, subject: impl Into<String>) -> Self {
+        self.subject = Some(subject.into());
         self
     }
 
@@ -202,38 +222,42 @@ impl EmailBodyPart {
 }
 
 impl EmailBodyPart<Set> {
-    pub fn part_id(mut self, part_id: String) -> Self {
-        self.part_id = Some(part_id);
+    pub fn part_id(mut self, part_id: impl Into<String>) -> Self {
+        self.part_id = Some(part_id.into());
         self
     }
 
-    pub fn blob_id(mut self, blob_id: String) -> Self {
-        self.blob_id = Some(blob_id);
+    pub fn blob_id(mut self, blob_id: impl Into<String>) -> Self {
+        self.blob_id = Some(blob_id.into());
         self
     }
 
-    pub fn name(mut self, name: String) -> Self {
-        self.name = Some(name);
+    pub fn name(mut self, name: impl Into<String>) -> Self {
+        self.name = Some(name.into());
         self
     }
 
-    pub fn content_type(mut self, content_type: String) -> Self {
-        self.type_ = Some(content_type);
+    pub fn content_type(mut self, content_type: impl Into<String>) -> Self {
+        self.type_ = Some(content_type.into());
         self
     }
 
-    pub fn content_id(mut self, content_id: String) -> Self {
-        self.cid = Some(content_id);
+    pub fn content_id(mut self, content_id: impl Into<String>) -> Self {
+        self.cid = Some(content_id.into());
         self
     }
 
-    pub fn content_language(mut self, content_language: impl Iterator<Item = String>) -> Self {
-        self.language = Some(content_language.into_iter().collect());
+    pub fn content_language<T, U>(mut self, content_language: T) -> Self
+    where
+        T: IntoIterator<Item = U>,
+        U: Into<String>,
+    {
+        self.language = Some(content_language.into_iter().map(|v| v.into()).collect());
         self
     }
 
-    pub fn content_location(mut self, content_location: String) -> Self {
-        self.location = Some(content_location);
+    pub fn content_location(mut self, content_location: impl Into<String>) -> Self {
+        self.location = Some(content_location.into());
         self
     }
 
@@ -333,8 +357,8 @@ impl EmailAddressGroup {
 }
 
 impl EmailAddressGroup<Set> {
-    pub fn name(mut self, name: String) -> Self {
-        self.name = Some(name);
+    pub fn name(mut self, name: impl Into<String>) -> Self {
+        self.name = Some(name.into());
         self
     }
 

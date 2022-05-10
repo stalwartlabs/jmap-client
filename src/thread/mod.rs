@@ -8,3 +8,11 @@ pub struct Thread {
     #[serde(rename = "emailIds")]
     email_ids: Vec<String>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Property {
+    #[serde(rename = "id")]
+    Id,
+    #[serde(rename = "emailIds")]
+    EmailIds,
+}

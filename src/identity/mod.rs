@@ -44,7 +44,7 @@ pub struct Identity<State = Get> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum IdentityProperty {
+pub enum Property {
     #[serde(rename = "id")]
     Id,
     #[serde(rename = "name")]

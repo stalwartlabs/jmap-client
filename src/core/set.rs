@@ -1,20 +1,19 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::hash::Hash;
 
 #[derive(Debug, Clone, Serialize)]
-pub struct SetRequest<T, U>
-where
-    U: Eq + Hash,
-{
+pub struct SetRequest<T, A: Default> {
     #[serde(rename = "accountId")]
     account_id: String,
     #[serde(rename = "ifInState")]
     if_in_state: Option<String>,
     create: Option<HashMap<String, T>>,
-    update: Option<HashMap<String, HashMap<U, serde_json::Value>>>,
+    update: Option<HashMap<String, T>>,
     destroy: Option<Vec<String>>,
+
+    #[serde(flatten)]
+    arguments: A,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -109,4 +108,122 @@ pub fn date_not_set(date: &Option<DateTime<Utc>>) -> bool {
 
 pub fn list_not_set<T>(list: &Option<Vec<T>>) -> bool {
     matches!(list, Some(list) if list.is_empty() )
+}
+
+impl<T, A: Default> SetRequest<T, A> {
+    pub fn new(account_id: String) -> Self {
+        Self {
+            account_id,
+            if_in_state: None,
+            create: None,
+            update: None,
+            destroy: None,
+            arguments: Default::default(),
+        }
+    }
+
+    pub fn account_id(&mut self, account_id: impl Into<String>) -> &mut Self {
+        self.account_id = account_id.into();
+        self
+    }
+
+    pub fn if_in_state(&mut self, if_in_state: impl Into<String>) -> &mut Self {
+        self.if_in_state = Some(if_in_state.into());
+        self
+    }
+
+    pub fn create(&mut self, id: impl Into<String>, value: T) -> &mut Self {
+        self.create
+            .get_or_insert_with(HashMap::new)
+            .insert(id.into(), value);
+        self
+    }
+
+    pub fn update(&mut self, id: impl Into<String>, value: T) -> &mut Self {
+        self.update
+            .get_or_insert_with(HashMap::new)
+            .insert(id.into(), value);
+        self
+    }
+
+    pub fn destroy(&mut self, id: impl Into<String>) -> &mut Self {
+        self.destroy.get_or_insert_with(Vec::new).push(id.into());
+        self
+    }
+
+    pub fn arguments(&mut self) -> &mut A {
+        &mut self.arguments
+    }
+}
+
+impl<T, U> SetResponse<T, U> {
+    pub fn account_id(&self) -> &str {
+        &self.account_id
+    }
+
+    pub fn old_state(&self) -> Option<&str> {
+        self.old_state.as_deref()
+    }
+
+    pub fn new_state(&self) -> &str {
+        &self.new_state
+    }
+
+    pub fn created(&self) -> Option<impl Iterator<Item = &String>> {
+        self.created.as_ref().map(|map| map.keys())
+    }
+
+    pub fn updated(&self) -> Option<impl Iterator<Item = &String>> {
+        self.updated.as_ref().map(|map| map.keys())
+    }
+
+    pub fn destroyed(&self) -> Option<&[String]> {
+        self.destroyed.as_deref()
+    }
+
+    pub fn not_created(&self) -> Option<impl Iterator<Item = &String>> {
+        self.not_created.as_ref().map(|map| map.keys())
+    }
+
+    pub fn not_updated(&self) -> Option<impl Iterator<Item = &String>> {
+        self.not_updated.as_ref().map(|map| map.keys())
+    }
+
+    pub fn not_destroyed(&self) -> Option<impl Iterator<Item = &String>> {
+        self.not_destroyed.as_ref().map(|map| map.keys())
+    }
+
+    pub fn not_created_reason(&self, id: &str) -> Option<&SetError<U>> {
+        self.not_created.as_ref().and_then(|map| map.get(id))
+    }
+
+    pub fn not_updated_reason(&self, id: &str) -> Option<&SetError<U>> {
+        self.not_updated.as_ref().and_then(|map| map.get(id))
+    }
+
+    pub fn not_destroyed_reason(&self, id: &str) -> Option<&SetError<U>> {
+        self.not_destroyed.as_ref().and_then(|map| map.get(id))
+    }
+
+    pub fn created_details(&self, id: &str) -> Option<&T> {
+        self.created.as_ref().and_then(|map| map.get(id))
+    }
+
+    pub fn updated_details(&self, id: &str) -> Option<&T> {
+        self.updated.as_ref().and_then(|map| map.get(id))?.as_ref()
+    }
+}
+
+impl<U> SetError<U> {
+    pub fn error(&self) -> &SetErrorType {
+        &self.type_
+    }
+
+    pub fn description(&self) -> Option<&str> {
+        self.description.as_deref()
+    }
+
+    pub fn properties(&self) -> Option<&[U]> {
+        self.properties.as_deref()
+    }
 }

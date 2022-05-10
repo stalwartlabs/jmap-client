@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 pub mod blob;
+pub mod client;
 pub mod core;
 pub mod email;
 pub mod email_submission;
@@ -29,7 +30,7 @@ pub enum URI {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-enum Method {
+pub enum Method {
     #[serde(rename = "Core/echo")]
     Echo,
     #[serde(rename = "Blob/copy")]

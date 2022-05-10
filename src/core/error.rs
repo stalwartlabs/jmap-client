@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct ProblemDetails {
@@ -70,4 +70,32 @@ pub enum MethodErrorType {
     UnsupportedFilter,
     #[serde(rename = "tooManyChanges")]
     TooManyChanges,
+}
+
+impl ProblemDetails {
+    pub fn error(&self) -> &ProblemType {
+        &self.p_type
+    }
+
+    pub fn status(&self) -> Option<u32> {
+        self.status
+    }
+
+    pub fn title(&self) -> Option<&str> {
+        self.title.as_deref()
+    }
+
+    pub fn detail(&self) -> Option<&str> {
+        self.detail.as_deref()
+    }
+
+    pub fn limit(&self) -> Option<usize> {
+        self.limit
+    }
+}
+
+impl MethodError {
+    pub fn error(&self) -> &MethodErrorType {
+        &self.p_type
+    }
 }

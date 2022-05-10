@@ -1,4 +1,5 @@
 pub mod get;
+pub mod query;
 pub mod set;
 
 use std::collections::HashMap;
@@ -6,7 +7,15 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::Get;
+use crate::{email::Email, Get};
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct SetArguments {
+    #[serde(rename = "onSuccessUpdateEmail")]
+    on_success_update_email: Option<HashMap<String, Email>>,
+    #[serde(rename = "onSuccessDestroyEmail")]
+    on_success_destroy_email: Option<Vec<String>>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmailSubmission<State = Get> {
@@ -115,7 +124,7 @@ pub enum Displayed {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum EmailSubmissionProperty {
+pub enum Property {
     #[serde(rename = "id")]
     Id,
     #[serde(rename = "identityId")]

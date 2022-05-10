@@ -1,10 +1,25 @@
 pub mod get;
+pub mod query;
 pub mod set;
 
 use crate::core::set::string_not_set;
 use crate::mailbox::set::role_not_set;
 use crate::Get;
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct SetArguments {
+    #[serde(rename = "onDestroyRemoveEmails")]
+    on_destroy_remove_emails: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct QueryArguments {
+    #[serde(rename = "sortAsTree")]
+    sort_as_tree: bool,
+    #[serde(rename = "filterAsTree")]
+    filter_as_tree: bool,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Mailbox<State = Get> {
@@ -100,7 +115,7 @@ pub struct MailboxRights {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum MailboxProperty {
+pub enum Property {
     #[serde(rename = "id")]
     Id,
     #[serde(rename = "name")]

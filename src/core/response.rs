@@ -5,7 +5,7 @@ use serde::Deserialize;
 use crate::Method;
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct Request {
+pub struct Response {
     #[serde(rename = "methodResponses")]
     method_calls: Vec<(Method, Result, String)>,
     #[serde(rename = "createdIds")]

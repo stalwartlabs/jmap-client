@@ -42,7 +42,7 @@ pub struct PushSubscription<State = Get> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum PushSubscriptionProperty {
+pub enum Property {
     #[serde(rename = "id")]
     Id,
     #[serde(rename = "deviceClientId")]
