@@ -8,6 +8,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Identity<State = Get> {
     #[serde(skip)]
+    _create_id: Option<usize>,
+
+    #[serde(skip)]
     _state: std::marker::PhantomData<State>,
 
     #[serde(rename = "id")]

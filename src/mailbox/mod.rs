@@ -21,8 +21,17 @@ pub struct QueryArguments {
     filter_as_tree: bool,
 }
 
+#[derive(Debug, Deserialize, Default)]
+pub struct ChangesResponse {
+    #[serde(rename = "updatedProperties")]
+    updated_properties: Option<Vec<Property>>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Mailbox<State = Get> {
+    #[serde(skip)]
+    _create_id: Option<usize>,
+
     #[serde(skip)]
     _state: std::marker::PhantomData<State>,
 
@@ -138,4 +147,10 @@ pub enum Property {
     MyRights,
     #[serde(rename = "isSubscribed")]
     IsSubscribed,
+}
+
+impl ChangesResponse {
+    pub fn updated_properties(&self) -> Option<&[Property]> {
+        self.updated_properties.as_deref()
+    }
 }

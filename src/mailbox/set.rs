@@ -1,19 +1,19 @@
-use crate::Set;
+use crate::{core::set::Create, Set};
 
-use super::{Mailbox, Role};
+use super::{Mailbox, Role, SetArguments};
 
 impl Mailbox<Set> {
-    pub fn name(mut self, name: String) -> Self {
-        self.name = Some(name);
+    pub fn name(&mut self, name: impl Into<String>) -> &mut Self {
+        self.name = Some(name.into());
         self
     }
 
-    pub fn parent_id(mut self, parent_id: Option<String>) -> Self {
-        self.parent_id = parent_id;
+    pub fn parent_id(&mut self, parent_id: Option<impl Into<String>>) -> &mut Self {
+        self.parent_id = parent_id.map(|s| s.into());
         self
     }
 
-    pub fn role(mut self, role: Role) -> Self {
+    pub fn role(&mut self, role: Role) -> &mut Self {
         if !matches!(role, Role::None) {
             self.role = Some(role);
         } else {
@@ -22,7 +22,7 @@ impl Mailbox<Set> {
         self
     }
 
-    pub fn sort_order(mut self, sort_order: u32) -> Self {
+    pub fn sort_order(&mut self, sort_order: u32) -> &mut Self {
         self.sort_order = sort_order.into();
         self
     }
@@ -32,9 +32,10 @@ pub fn role_not_set(role: &Option<Role>) -> bool {
     matches!(role, Some(Role::None))
 }
 
-impl Mailbox {
-    pub fn new() -> Mailbox<Set> {
+impl Create for Mailbox<Set> {
+    fn new(_create_id: Option<usize>) -> Self {
         Mailbox {
+            _create_id,
             _state: Default::default(),
             id: None,
             name: None,
@@ -48,5 +49,16 @@ impl Mailbox {
             my_rights: None,
             is_subscribed: None,
         }
+    }
+
+    fn create_id(&self) -> Option<String> {
+        self._create_id.map(|id| format!("c{}", id))
+    }
+}
+
+impl SetArguments {
+    pub fn on_destroy_remove_emails(&mut self, value: bool) -> &mut Self {
+        self.on_destroy_remove_emails = value;
+        self
     }
 }

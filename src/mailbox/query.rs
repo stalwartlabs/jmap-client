@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::core::query::{self};
 
-use super::Role;
+use super::{QueryArguments, Role};
 
 #[derive(Serialize, Clone, Debug)]
 #[serde(untagged)]
@@ -79,5 +79,17 @@ impl Comparator {
 
     pub fn parent_id() -> query::Comparator<Comparator> {
         query::Comparator::new(Comparator::ParentId)
+    }
+}
+
+impl QueryArguments {
+    pub fn sort_as_tree(&mut self, value: bool) -> &mut Self {
+        self.sort_as_tree = value;
+        self
+    }
+
+    pub fn filter_as_tree(&mut self, value: bool) -> &mut Self {
+        self.filter_as_tree = value;
+        self
     }
 }

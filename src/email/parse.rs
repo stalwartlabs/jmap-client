@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{BodyProperty, Email, Property};
 
@@ -31,7 +31,7 @@ pub struct EmailParseRequest {
     max_body_value_bytes: usize,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct EmailParseResponse {
     #[serde(rename = "accountId")]
     account_id: String,

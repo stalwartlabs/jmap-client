@@ -1,22 +1,35 @@
 use std::collections::HashMap;
 
-use crate::{core::set::from_timestamp, Set};
+use crate::{
+    core::{
+        request::ResultReference,
+        set::{from_timestamp, Create},
+    },
+    Set,
+};
 
 use super::{
     Email, EmailAddress, EmailAddressGroup, EmailBodyPart, EmailBodyValue, EmailHeader, Field,
 };
 
 impl Email<Set> {
-    pub fn mailbox_ids<T, U>(mut self, mailbox_ids: T) -> Self
+    pub fn mailbox_ids<T, U>(&mut self, mailbox_ids: T) -> &mut Self
     where
         T: IntoIterator<Item = U>,
         U: Into<String>,
     {
         self.mailbox_ids = Some(mailbox_ids.into_iter().map(|s| (s.into(), true)).collect());
+        self.mailbox_ids_ref = None;
         self
     }
 
-    pub fn mailbox_id(mut self, mailbox_id: &str, set: bool) -> Self {
+    pub fn mailbox_ids_ref(&mut self, reference: ResultReference) -> &mut Self {
+        self.mailbox_ids_ref = reference.into();
+        self.mailbox_ids = None;
+        self
+    }
+
+    pub fn mailbox_id(&mut self, mailbox_id: &str, set: bool) -> &mut Self {
         self.mailbox_ids = None;
         self.others.insert(
             format!("mailboxIds/{}", mailbox_id),
@@ -25,7 +38,7 @@ impl Email<Set> {
         self
     }
 
-    pub fn keywords<T, U>(mut self, keywords: T) -> Self
+    pub fn keywords<T, U>(&mut self, keywords: T) -> &mut Self
     where
         T: IntoIterator<Item = U>,
         U: Into<String>,
@@ -34,14 +47,14 @@ impl Email<Set> {
         self
     }
 
-    pub fn keyword(mut self, keyword: &str, set: bool) -> Self {
+    pub fn keyword(&mut self, keyword: &str, set: bool) -> &mut Self {
         self.keywords = None;
         self.others
             .insert(format!("keywords/{}", keyword), Field::Bool(set).into());
         self
     }
 
-    pub fn message_id<T, U>(mut self, message_id: T) -> Self
+    pub fn message_id<T, U>(&mut self, message_id: T) -> &mut Self
     where
         T: IntoIterator<Item = U>,
         U: Into<String>,
@@ -50,7 +63,7 @@ impl Email<Set> {
         self
     }
 
-    pub fn in_reply_to<T, U>(mut self, in_reply_to: T) -> Self
+    pub fn in_reply_to<T, U>(&mut self, in_reply_to: T) -> &mut Self
     where
         T: IntoIterator<Item = U>,
         U: Into<String>,
@@ -59,7 +72,7 @@ impl Email<Set> {
         self
     }
 
-    pub fn references<T, U>(mut self, references: T) -> Self
+    pub fn references<T, U>(&mut self, references: T) -> &mut Self
     where
         T: IntoIterator<Item = U>,
         U: Into<String>,
@@ -68,7 +81,7 @@ impl Email<Set> {
         self
     }
 
-    pub fn sender<T, U>(mut self, sender: T) -> Self
+    pub fn sender<T, U>(&mut self, sender: T) -> &mut Self
     where
         T: IntoIterator<Item = U>,
         U: Into<EmailAddress>,
@@ -77,7 +90,7 @@ impl Email<Set> {
         self
     }
 
-    pub fn from<T, U>(mut self, from: T) -> Self
+    pub fn from<T, U>(&mut self, from: T) -> &mut Self
     where
         T: IntoIterator<Item = U>,
         U: Into<EmailAddress>,
@@ -86,7 +99,7 @@ impl Email<Set> {
         self
     }
 
-    pub fn to<T, U>(mut self, to: T) -> Self
+    pub fn to<T, U>(&mut self, to: T) -> &mut Self
     where
         T: IntoIterator<Item = U>,
         U: Into<EmailAddress>,
@@ -95,7 +108,7 @@ impl Email<Set> {
         self
     }
 
-    pub fn cc<T, U>(mut self, cc: T) -> Self
+    pub fn cc<T, U>(&mut self, cc: T) -> &mut Self
     where
         T: IntoIterator<Item = U>,
         U: Into<EmailAddress>,
@@ -104,7 +117,7 @@ impl Email<Set> {
         self
     }
 
-    pub fn bcc<T, U>(mut self, bcc: T) -> Self
+    pub fn bcc<T, U>(&mut self, bcc: T) -> &mut Self
     where
         T: IntoIterator<Item = U>,
         U: Into<EmailAddress>,
@@ -113,7 +126,7 @@ impl Email<Set> {
         self
     }
 
-    pub fn reply_to<T, U>(mut self, reply_to: T) -> Self
+    pub fn reply_to<T, U>(&mut self, reply_to: T) -> &mut Self
     where
         T: IntoIterator<Item = U>,
         U: Into<EmailAddress>,
@@ -122,59 +135,61 @@ impl Email<Set> {
         self
     }
 
-    pub fn subject(mut self, subject: impl Into<String>) -> Self {
+    pub fn subject(&mut self, subject: impl Into<String>) -> &mut Self {
         self.subject = Some(subject.into());
         self
     }
 
-    pub fn sent_at(mut self, sent_at: i64) -> Self {
+    pub fn sent_at(&mut self, sent_at: i64) -> &mut Self {
         self.sent_at = Some(from_timestamp(sent_at));
         self
     }
 
-    pub fn body_structure(mut self, body_structure: EmailBodyPart) -> Self {
+    pub fn body_structure(&mut self, body_structure: EmailBodyPart) -> &mut Self {
         self.body_structure = Some(body_structure.into());
         self
     }
 
-    pub fn body_value(mut self, id: String, body_value: impl Into<EmailBodyValue>) -> Self {
+    pub fn body_value(&mut self, id: String, body_value: impl Into<EmailBodyValue>) -> &mut Self {
         self.body_values
             .get_or_insert_with(HashMap::new)
             .insert(id, body_value.into());
         self
     }
 
-    pub fn text_body(mut self, text_body: EmailBodyPart) -> Self {
+    pub fn text_body(&mut self, text_body: EmailBodyPart) -> &mut Self {
         self.text_body.get_or_insert_with(Vec::new).push(text_body);
         self
     }
 
-    pub fn html_body(mut self, html_body: EmailBodyPart) -> Self {
+    pub fn html_body(&mut self, html_body: EmailBodyPart) -> &mut Self {
         self.html_body.get_or_insert_with(Vec::new).push(html_body);
         self
     }
 
-    pub fn attachment(mut self, attachment: EmailBodyPart) -> Self {
+    pub fn attachment(&mut self, attachment: EmailBodyPart) -> &mut Self {
         self.attachments
             .get_or_insert_with(Vec::new)
             .push(attachment);
         self
     }
 
-    pub fn header(mut self, header: String, value: impl Into<Field>) -> Self {
+    pub fn header(&mut self, header: String, value: impl Into<Field>) -> &mut Self {
         self.others.insert(header, Some(value.into()));
         self
     }
 }
 
-impl Email {
-    pub fn new() -> Email<Set> {
+impl Create for Email<Set> {
+    fn new(_create_id: Option<usize>) -> Email<Set> {
         Email {
+            _create_id,
             _state: Default::default(),
             id: Default::default(),
             blob_id: Default::default(),
             thread_id: Default::default(),
             mailbox_ids: Default::default(),
+            mailbox_ids_ref: Default::default(),
             keywords: Default::default(),
             size: Default::default(),
             received_at: Default::default(),
@@ -198,6 +213,10 @@ impl Email {
             preview: Default::default(),
             others: Default::default(),
         }
+    }
+
+    fn create_id(&self) -> Option<String> {
+        self._create_id.map(|id| format!("c{}", id))
     }
 }
 

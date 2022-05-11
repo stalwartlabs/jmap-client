@@ -11,7 +11,9 @@ use super::{Email, Property};
 pub struct EmailImportRequest {
     #[serde(rename = "accountId")]
     account_id: String,
+
     #[serde(rename = "ifInState")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     if_in_state: Option<String>,
 
     emails: HashMap<String, EmailImport>,
@@ -19,6 +21,9 @@ pub struct EmailImportRequest {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct EmailImport {
+    #[serde(skip)]
+    create_id: usize,
+
     #[serde(rename = "blobId")]
     blob_id: String,
 
@@ -37,12 +42,16 @@ pub struct EmailImport {
 pub struct EmailImportResponse {
     #[serde(rename = "accountId")]
     account_id: String,
+
     #[serde(rename = "oldState")]
     old_state: Option<String>,
+
     #[serde(rename = "newState")]
     new_state: String,
+
     #[serde(rename = "created")]
     created: Option<HashMap<String, Email>>,
+
     #[serde(rename = "notCreated")]
     not_created: Option<HashMap<String, SetError<Property>>>,
 }
@@ -56,20 +65,26 @@ impl EmailImportRequest {
         }
     }
 
-    pub fn if_in_state(&mut self, if_in_state: String) -> &mut Self {
-        self.if_in_state = Some(if_in_state);
+    pub fn if_in_state(&mut self, if_in_state: impl Into<String>) -> &mut Self {
+        self.if_in_state = Some(if_in_state.into());
         self
     }
 
-    pub fn add_email(&mut self, id: String, email_import: EmailImport) -> &mut Self {
-        self.emails.insert(id, email_import);
-        self
+    pub fn email(&mut self, blob_id: impl Into<String>) -> &mut EmailImport {
+        let create_id = self.emails.len();
+        let create_id_str = format!("i{}", create_id);
+        self.emails.insert(
+            create_id_str.clone(),
+            EmailImport::new(blob_id.into(), create_id),
+        );
+        self.emails.get_mut(&create_id_str).unwrap()
     }
 }
 
 impl EmailImport {
-    pub fn new(blob_id: String) -> Self {
+    fn new(blob_id: String, create_id: usize) -> Self {
         EmailImport {
+            create_id,
             blob_id,
             mailbox_ids: HashMap::new(),
             keywords: HashMap::new(),
@@ -77,19 +92,23 @@ impl EmailImport {
         }
     }
 
-    pub fn mailbox_id(mut self, mailbox_id: String) -> Self {
-        self.mailbox_ids.insert(mailbox_id, true);
+    pub fn mailbox_id(&mut self, mailbox_id: impl Into<String>) -> &mut Self {
+        self.mailbox_ids.insert(mailbox_id.into(), true);
         self
     }
 
-    pub fn keyword(mut self, keyword: String) -> Self {
-        self.keywords.insert(keyword, true);
+    pub fn keyword(&mut self, keyword: impl Into<String>) -> &mut Self {
+        self.keywords.insert(keyword.into(), true);
         self
     }
 
-    pub fn received_at(mut self, received_at: i64) -> Self {
+    pub fn received_at(&mut self, received_at: i64) -> &mut Self {
         self.received_at = Some(from_timestamp(received_at));
         self
+    }
+
+    pub fn create_id(&self) -> String {
+        format!("i{}", self.create_id)
     }
 }
 

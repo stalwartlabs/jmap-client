@@ -1,10 +1,21 @@
 use serde::{Deserialize, Serialize};
 
+use super::request::ResultReference;
+
 #[derive(Debug, Clone, Serialize)]
 pub struct GetRequest<T, A: Default> {
     #[serde(rename = "accountId")]
     account_id: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     ids: Option<Vec<String>>,
+
+    #[serde(rename = "#ids")]
+    #[serde(skip_deserializing)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ids_ref: Option<ResultReference>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     properties: Option<Vec<T>>,
 
     #[serde(flatten)]
@@ -15,8 +26,11 @@ pub struct GetRequest<T, A: Default> {
 pub struct GetResponse<T> {
     #[serde(rename = "accountId")]
     account_id: String,
+
     state: String,
+
     list: Vec<T>,
+
     #[serde(rename = "notFound")]
     not_found: Vec<String>,
 }
@@ -26,6 +40,7 @@ impl<T, A: Default> GetRequest<T, A> {
         GetRequest {
             account_id,
             ids: None,
+            ids_ref: None,
             properties: None,
             arguments: A::default(),
         }
@@ -42,6 +57,13 @@ impl<T, A: Default> GetRequest<T, A> {
         V: Into<String>,
     {
         self.ids = Some(ids.into_iter().map(|v| v.into()).collect());
+        self.ids_ref = None;
+        self
+    }
+
+    pub fn ids_ref(&mut self, reference: ResultReference) -> &mut Self {
+        self.ids_ref = reference.into();
+        self.ids = None;
         self
     }
 

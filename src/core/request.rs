@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 use serde::Serialize;
 
@@ -17,17 +17,19 @@ use crate::{
 
 use super::{
     changes::ChangesRequest, copy::CopyRequest, get::GetRequest, query::QueryRequest,
-    query_changes::QueryChangesRequest, set::SetRequest,
+    query_changes::QueryChangesRequest, response::Response, set::SetRequest,
 };
 
 #[derive(Serialize)]
 pub struct Request<'x> {
     #[serde(skip)]
-    client: &'x Client,
+    client: &'x mut Client,
 
     using: Vec<URI>,
+
     #[serde(rename = "methodCalls")]
     method_calls: Vec<(Method, Arguments, String)>,
+
     #[serde(rename = "createdIds")]
     #[serde(skip_serializing_if = "Option::is_none")]
     created_ids: Option<HashMap<String, String>>,
@@ -37,7 +39,7 @@ pub struct Request<'x> {
 pub struct ResultReference {
     #[serde(rename = "resultOf")]
     result_of: String,
-    name: String,
+    name: Method,
     path: String,
 }
 
@@ -392,13 +394,33 @@ impl Arguments {
 }
 
 impl<'x> Request<'x> {
-    pub fn new(client: &'x Client) -> Self {
+    pub fn new(client: &'x mut Client) -> Self {
         Request {
             using: vec![URI::Core, URI::Mail],
             method_calls: vec![],
             created_ids: None,
             client,
         }
+    }
+
+    pub async fn send(&mut self) -> crate::Result<Response> {
+        let response: Response = serde_json::from_slice(
+            &Client::handle_error(
+                reqwest::Client::builder()
+                    .timeout(Duration::from_millis(self.client.timeout()))
+                    .default_headers(self.client.headers().clone())
+                    .build()?
+                    .post(self.client.session().api_url())
+                    .body(serde_json::to_string(&self)?)
+                    .send()
+                    .await?,
+            )
+            .await?
+            .bytes()
+            .await?,
+        )?;
+        self.client.update_session(response.session_state()).await?;
+        Ok(response)
     }
 
     fn add_method_call(&mut self, method: Method, arguments: Arguments) -> &mut Arguments {
@@ -613,6 +635,9 @@ impl<'x> Request<'x> {
     }
 
     pub fn get_email_submission(&mut self) -> &mut GetRequest<email_submission::Property, ()> {
+        if !self.using.contains(&URI::Submission) {
+            self.using.push(URI::Submission);
+        }
         self.add_method_call(
             Method::GetEmailSubmission,
             Arguments::email_submission_get(self.client.default_account_id().to_string()),
@@ -624,6 +649,9 @@ impl<'x> Request<'x> {
         &mut self,
         since_state: impl Into<String>,
     ) -> &mut ChangesRequest {
+        if !self.using.contains(&URI::Submission) {
+            self.using.push(URI::Submission);
+        }
         self.add_method_call(
             Method::ChangesEmailSubmission,
             Arguments::changes(
@@ -638,6 +666,9 @@ impl<'x> Request<'x> {
         &mut self,
     ) -> &mut QueryRequest<email_submission::query::Filter, email_submission::query::Comparator, ()>
     {
+        if !self.using.contains(&URI::Submission) {
+            self.using.push(URI::Submission);
+        }
         self.add_method_call(
             Method::QueryEmailSubmission,
             Arguments::email_submission_query(self.client.default_account_id().to_string()),
@@ -653,6 +684,9 @@ impl<'x> Request<'x> {
         email_submission::query::Comparator,
         (),
     > {
+        if !self.using.contains(&URI::Submission) {
+            self.using.push(URI::Submission);
+        }
         self.add_method_call(
             Method::QueryChangesEmailSubmission,
             Arguments::email_submission_query_changes(
@@ -666,6 +700,9 @@ impl<'x> Request<'x> {
     pub fn set_email_submission(
         &mut self,
     ) -> &mut SetRequest<EmailSubmission<Set>, email_submission::SetArguments> {
+        if !self.using.contains(&URI::Submission) {
+            self.using.push(URI::Submission);
+        }
         self.add_method_call(
             Method::SetEmailSubmission,
             Arguments::email_submission_set(self.client.default_account_id().to_string()),
@@ -674,6 +711,9 @@ impl<'x> Request<'x> {
     }
 
     pub fn get_vacation_response(&mut self) -> &mut GetRequest<vacation_response::Property, ()> {
+        if !self.using.contains(&URI::VacationResponse) {
+            self.using.push(URI::VacationResponse);
+        }
         self.add_method_call(
             Method::GetVacationResponse,
             Arguments::vacation_response_get(self.client.default_account_id().to_string()),
@@ -682,10 +722,22 @@ impl<'x> Request<'x> {
     }
 
     pub fn set_vacation_response(&mut self) -> &mut SetRequest<VacationResponse<Set>, ()> {
+        if !self.using.contains(&URI::VacationResponse) {
+            self.using.push(URI::VacationResponse);
+        }
         self.add_method_call(
             Method::SetVacationResponse,
             Arguments::vacation_response_set(self.client.default_account_id().to_string()),
         )
         .vacation_response_set_mut()
+    }
+
+    pub fn result_reference(&self, path: impl Into<String>) -> ResultReference {
+        let last_method = self.method_calls.last().unwrap();
+        ResultReference {
+            result_of: last_method.2.clone(),
+            name: last_method.0.clone(),
+            path: path.into(),
+        }
     }
 }

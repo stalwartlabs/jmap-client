@@ -106,12 +106,8 @@ impl Session {
         self.accounts.get(account)
     }
 
-    pub fn primary_accounts(&self) -> impl Iterator<Item = &String> {
-        self.primary_accounts.keys()
-    }
-
-    pub fn primary_account(&self, account: &str) -> Option<&String> {
-        self.primary_accounts.get(account)
+    pub fn primary_accounts(&self) -> impl Iterator<Item = (&String, &String)> {
+        self.primary_accounts.iter()
     }
 
     pub fn username(&self) -> &str {
@@ -192,5 +188,53 @@ impl CoreCapabilities {
 
     pub fn collation_algorithms(&self) -> &[String] {
         &self.collation_algorithms
+    }
+}
+
+pub trait URLParser: Sized {
+    fn parse(value: &str) -> Option<Self>;
+}
+
+pub enum URLPart<T: URLParser> {
+    Value(String),
+    Parameter(T),
+}
+
+impl<T: URLParser> URLPart<T> {
+    pub fn parse(url: &str) -> crate::Result<Vec<URLPart<T>>> {
+        let mut parts = Vec::new();
+        let mut buf = String::with_capacity(url.len());
+        let mut in_parameter = false;
+
+        for ch in url.chars() {
+            match ch {
+                '{' => {
+                    if !buf.is_empty() {
+                        parts.push(URLPart::Value(buf.clone()));
+                        buf.clear();
+                    }
+                    in_parameter = true;
+                }
+                '}' => {
+                    if in_parameter && !buf.is_empty() {
+                        parts.push(URLPart::Parameter(T::parse(&buf).ok_or_else(|| {
+                            crate::Error::Internal(format!(
+                                "Invalid parameter '{}' in URL: {}",
+                                buf, url
+                            ))
+                        })?));
+                        buf.clear();
+                    } else {
+                        return Err(crate::Error::Internal(format!("Invalid URL: {}", url)));
+                    }
+                    in_parameter = false;
+                }
+                _ => {
+                    buf.push(ch);
+                }
+            }
+        }
+
+        Ok(parts)
     }
 }

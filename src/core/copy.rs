@@ -2,20 +2,22 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use super::set::SetError;
+use super::set::{Create, SetError};
 
 #[derive(Debug, Clone, Serialize)]
-pub struct CopyRequest<T> {
+pub struct CopyRequest<T: Create> {
     #[serde(rename = "fromAccountId")]
     from_account_id: String,
 
     #[serde(rename = "ifFromInState")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     if_from_in_state: Option<String>,
 
     #[serde(rename = "accountId")]
     account_id: String,
 
     #[serde(rename = "ifInState")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     if_in_state: Option<String>,
 
     #[serde(rename = "create")]
@@ -25,6 +27,7 @@ pub struct CopyRequest<T> {
     on_success_destroy_original: bool,
 
     #[serde(rename = "destroyFromIfInState")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     destroy_from_if_in_state: Option<String>,
 }
 
@@ -32,19 +35,24 @@ pub struct CopyRequest<T> {
 pub struct CopyResponse<T, U> {
     #[serde(rename = "fromAccountId")]
     from_account_id: String,
+
     #[serde(rename = "accountId")]
     account_id: String,
+
     #[serde(rename = "oldState")]
     old_state: Option<String>,
+
     #[serde(rename = "newState")]
     new_state: String,
+
     #[serde(rename = "created")]
     created: Option<HashMap<String, T>>,
+
     #[serde(rename = "notCreated")]
     not_created: Option<HashMap<String, SetError<U>>>,
 }
 
-impl<T> CopyRequest<T> {
+impl<T: Create> CopyRequest<T> {
     pub fn new(from_account_id: String, account_id: String) -> Self {
         CopyRequest {
             from_account_id,
@@ -72,9 +80,12 @@ impl<T> CopyRequest<T> {
         self
     }
 
-    pub fn create(&mut self, id: impl Into<String>, value: T) -> &mut Self {
-        self.create.insert(id.into(), value);
-        self
+    pub fn create(&mut self) -> &mut T {
+        let create_id = self.create.len();
+        let create_id_str = format!("c{}", create_id);
+        self.create
+            .insert(create_id_str.clone(), T::new(create_id.into()));
+        self.create.get_mut(&create_id_str).unwrap()
     }
 
     pub fn on_success_destroy_original(&mut self, on_success_destroy_original: bool) -> &mut Self {

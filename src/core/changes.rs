@@ -4,9 +4,12 @@ use serde::{Deserialize, Serialize};
 pub struct ChangesRequest {
     #[serde(rename = "accountId")]
     account_id: String,
+
     #[serde(rename = "sinceState")]
     since_state: String,
+
     #[serde(rename = "maxChanges")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     max_changes: Option<usize>,
 }
 
@@ -14,14 +17,20 @@ pub struct ChangesRequest {
 pub struct ChangesResponse<A> {
     #[serde(rename = "accountId")]
     account_id: String,
+
     #[serde(rename = "oldState")]
     old_state: String,
+
     #[serde(rename = "newState")]
     new_state: String,
+
     #[serde(rename = "hasMoreChanges")]
     has_more_changes: bool,
+
     created: Vec<String>,
+
     updated: Vec<String>,
+
     destroyed: Vec<String>,
 
     #[serde(flatten)]

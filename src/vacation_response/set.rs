@@ -1,42 +1,46 @@
-use crate::{core::set::from_timestamp, Set};
+use crate::{
+    core::set::{from_timestamp, Create},
+    Set,
+};
 
 use super::VacationResponse;
 
 impl VacationResponse<Set> {
-    pub fn is_enabled(mut self, is_enabled: bool) -> Self {
+    pub fn is_enabled(&mut self, is_enabled: bool) -> &mut Self {
         self.is_enabled = Some(is_enabled);
         self
     }
 
-    pub fn from_date(mut self, from_date: Option<i64>) -> Self {
+    pub fn from_date(&mut self, from_date: Option<i64>) -> &mut Self {
         self.from_date = from_date.map(from_timestamp);
         self
     }
 
-    pub fn to_date(mut self, to_date: Option<i64>) -> Self {
+    pub fn to_date(&mut self, to_date: Option<i64>) -> &mut Self {
         self.to_date = to_date.map(from_timestamp);
         self
     }
 
-    pub fn subject(mut self, subject: Option<String>) -> Self {
-        self.subject = subject;
+    pub fn subject(&mut self, subject: Option<impl Into<String>>) -> &mut Self {
+        self.subject = subject.map(|s| s.into());
         self
     }
 
-    pub fn text_body(mut self, text_body: Option<String>) -> Self {
-        self.text_body = text_body;
+    pub fn text_body(&mut self, text_body: Option<impl Into<String>>) -> &mut Self {
+        self.text_body = text_body.map(|s| s.into());
         self
     }
 
-    pub fn html_body(mut self, html_body: Option<String>) -> Self {
-        self.html_body = html_body;
+    pub fn html_body(&mut self, html_body: Option<impl Into<String>>) -> &mut Self {
+        self.html_body = html_body.map(|s| s.into());
         self
     }
 }
 
-impl VacationResponse {
-    pub fn new() -> VacationResponse<Set> {
+impl Create for VacationResponse<Set> {
+    fn new(_create_id: Option<usize>) -> Self {
         VacationResponse {
+            _create_id,
             _state: Default::default(),
             id: None,
             is_enabled: None,
@@ -46,5 +50,9 @@ impl VacationResponse {
             text_body: "".to_string().into(),
             html_body: "".to_string().into(),
         }
+    }
+
+    fn create_id(&self) -> Option<String> {
+        self._create_id.map(|id| format!("c{}", id))
     }
 }

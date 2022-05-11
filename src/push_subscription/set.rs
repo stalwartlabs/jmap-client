@@ -1,42 +1,46 @@
-use crate::{core::set::from_timestamp, Object, Set};
+use crate::{
+    core::set::{from_timestamp, Create},
+    Object, Set,
+};
 
 use super::{Keys, PushSubscription};
 
 impl PushSubscription<Set> {
-    pub fn device_client_id(mut self, device_client_id: String) -> Self {
-        self.device_client_id = Some(device_client_id);
+    pub fn device_client_id(&mut self, device_client_id: impl Into<String>) -> &mut Self {
+        self.device_client_id = Some(device_client_id.into());
         self
     }
 
-    pub fn url(mut self, url: String) -> Self {
-        self.url = Some(url);
+    pub fn url(&mut self, url: impl Into<String>) -> &mut Self {
+        self.url = Some(url.into());
         self
     }
 
-    pub fn verification_code(mut self, verification_code: String) -> Self {
-        self.verification_code = Some(verification_code);
+    pub fn verification_code(&mut self, verification_code: impl Into<String>) -> &mut Self {
+        self.verification_code = Some(verification_code.into());
         self
     }
 
-    pub fn keys(mut self, keys: Keys) -> Self {
+    pub fn keys(&mut self, keys: Keys) -> &mut Self {
         self.keys = Some(keys);
         self
     }
 
-    pub fn expires(mut self, expires: i64) -> Self {
+    pub fn expires(&mut self, expires: i64) -> &mut Self {
         self.expires = Some(from_timestamp(expires));
         self
     }
 
-    pub fn types(mut self, types: Option<impl Iterator<Item = Object>>) -> Self {
+    pub fn types(&mut self, types: Option<impl Iterator<Item = Object>>) -> &mut Self {
         self.types = types.map(|s| s.collect());
         self
     }
 }
 
-impl PushSubscription {
-    pub fn new() -> PushSubscription<Set> {
+impl Create for PushSubscription<Set> {
+    fn new(_create_id: Option<usize>) -> Self {
         PushSubscription {
+            _create_id,
             _state: Default::default(),
             id: None,
             device_client_id: None,
@@ -46,6 +50,10 @@ impl PushSubscription {
             expires: None,
             types: Vec::with_capacity(0).into(),
         }
+    }
+
+    fn create_id(&self) -> Option<String> {
+        self._create_id.map(|id| format!("c{}", id))
     }
 }
 

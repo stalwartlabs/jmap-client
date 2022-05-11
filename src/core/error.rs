@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -97,5 +99,30 @@ impl ProblemDetails {
 impl MethodError {
     pub fn error(&self) -> &MethodErrorType {
         &self.p_type
+    }
+}
+
+impl Display for ProblemDetails {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.p_type {
+            ProblemType::UnknownCapability => write!(f, "Unknown capability")?,
+            ProblemType::NotJSON => write!(f, "Not JSON")?,
+            ProblemType::NotRequest => write!(f, "Not request")?,
+            ProblemType::Limit => write!(f, "Limit")?,
+        }
+
+        if let Some(status) = self.status {
+            write!(f, " (status {})", status)?
+        }
+
+        if let Some(title) = &self.title {
+            write!(f, ": {}", title)?
+        }
+
+        if let Some(detail) = &self.detail {
+            write!(f, ". Details: {}", detail)?
+        }
+
+        Ok(())
     }
 }

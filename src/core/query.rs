@@ -6,21 +6,25 @@ pub struct QueryRequest<F, S, A: Default> {
     account_id: String,
 
     #[serde(rename = "filter")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     filter: Option<Filter<F>>,
 
     #[serde(rename = "sort")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     sort: Option<Vec<Comparator<S>>>,
 
     #[serde(rename = "position")]
     position: i32,
 
     #[serde(rename = "anchor")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     anchor: Option<String>,
 
     #[serde(rename = "anchorOffset")]
     anchor_offset: i32,
 
     #[serde(rename = "limit")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     limit: Option<usize>,
 
     #[serde(rename = "calculateTotal")]

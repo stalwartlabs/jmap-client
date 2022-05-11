@@ -1,21 +1,21 @@
 use std::collections::HashMap;
 
-use crate::Set;
+use crate::{core::set::Create, Set};
 
 use super::{Address, EmailSubmission, Envelope, UndoStatus};
 
 impl EmailSubmission<Set> {
-    pub fn identity_id(mut self, identity_id: String) -> Self {
-        self.identity_id = Some(identity_id);
+    pub fn identity_id(&mut self, identity_id: impl Into<String>) -> &mut Self {
+        self.identity_id = Some(identity_id.into());
         self
     }
 
-    pub fn email_id(mut self, email_id: String) -> Self {
-        self.email_id = Some(email_id);
+    pub fn email_id(&mut self, email_id: impl Into<String>) -> &mut Self {
+        self.email_id = Some(email_id.into());
         self
     }
 
-    pub fn envelope<T, U>(mut self, mail_from: U, rcpt_to: T) -> Self
+    pub fn envelope<T, U>(&mut self, mail_from: U, rcpt_to: T) -> &mut Self
     where
         T: Iterator<Item = U>,
         U: Into<Address>,
@@ -27,15 +27,16 @@ impl EmailSubmission<Set> {
         self
     }
 
-    pub fn undo_status(mut self, undo_status: UndoStatus) -> Self {
+    pub fn undo_status(&mut self, undo_status: UndoStatus) -> &mut Self {
         self.undo_status = Some(undo_status);
         self
     }
 }
 
-impl EmailSubmission {
-    pub fn new() -> EmailSubmission<Set> {
+impl Create for EmailSubmission<Set> {
+    fn new(_create_id: Option<usize>) -> Self {
         EmailSubmission {
+            _create_id,
             _state: Default::default(),
             id: None,
             identity_id: None,
@@ -48,6 +49,10 @@ impl EmailSubmission {
             dsn_blob_ids: None,
             mdn_blob_ids: None,
         }
+    }
+
+    fn create_id(&self) -> Option<String> {
+        self._create_id.map(|id| format!("c{}", id))
     }
 }
 

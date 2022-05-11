@@ -6,16 +6,26 @@ use super::query::{Comparator, Filter};
 pub struct QueryChangesRequest<F, S, A: Default> {
     #[serde(rename = "accountId")]
     account_id: String,
+
     #[serde(rename = "filter")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     filter: Option<Filter<F>>,
+
     #[serde(rename = "sort")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     sort: Option<Vec<Comparator<S>>>,
+
     #[serde(rename = "sinceQueryState")]
     since_query_state: String,
+
     #[serde(rename = "maxChanges")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     max_changes: Option<usize>,
+
     #[serde(rename = "upToId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     up_to_id: Option<String>,
+
     #[serde(rename = "calculateTotal")]
     calculate_total: bool,
 

@@ -10,6 +10,9 @@ use crate::{Get, Object};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PushSubscription<State = Get> {
     #[serde(skip)]
+    _create_id: Option<usize>,
+
+    #[serde(skip)]
     _state: std::marker::PhantomData<State>,
 
     #[serde(rename = "id")]

@@ -9,10 +9,13 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::Get;
+use crate::{core::request::ResultReference, Get};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Email<State = Get> {
+    #[serde(skip)]
+    _create_id: Option<usize>,
+
     #[serde(skip)]
     _state: std::marker::PhantomData<State>,
 
@@ -31,6 +34,11 @@ pub struct Email<State = Get> {
     #[serde(rename = "mailboxIds")]
     #[serde(skip_serializing_if = "Option::is_none")]
     mailbox_ids: Option<HashMap<String, bool>>,
+
+    #[serde(rename = "#mailboxIds")]
+    #[serde(skip_deserializing)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    mailbox_ids_ref: Option<ResultReference>,
 
     #[serde(rename = "keywords")]
     #[serde(skip_serializing_if = "Option::is_none")]

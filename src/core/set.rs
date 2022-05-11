@@ -2,15 +2,30 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use super::request::ResultReference;
+
 #[derive(Debug, Clone, Serialize)]
-pub struct SetRequest<T, A: Default> {
+pub struct SetRequest<T: Create, A: Default> {
     #[serde(rename = "accountId")]
     account_id: String,
+
     #[serde(rename = "ifInState")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     if_in_state: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     create: Option<HashMap<String, T>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     update: Option<HashMap<String, T>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     destroy: Option<Vec<String>>,
+
+    #[serde(rename = "#destroy")]
+    #[serde(skip_deserializing)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    destroy_ref: Option<ResultReference>,
 
     #[serde(flatten)]
     arguments: A,
@@ -20,20 +35,28 @@ pub struct SetRequest<T, A: Default> {
 pub struct SetResponse<T, U> {
     #[serde(rename = "accountId")]
     account_id: String,
+
     #[serde(rename = "oldState")]
     old_state: Option<String>,
+
     #[serde(rename = "newState")]
     new_state: String,
+
     #[serde(rename = "created")]
     created: Option<HashMap<String, T>>,
+
     #[serde(rename = "updated")]
     updated: Option<HashMap<String, Option<T>>>,
+
     #[serde(rename = "destroyed")]
     destroyed: Option<Vec<String>>,
+
     #[serde(rename = "notCreated")]
     not_created: Option<HashMap<String, SetError<U>>>,
+
     #[serde(rename = "notUpdated")]
     not_updated: Option<HashMap<String, SetError<U>>>,
+
     #[serde(rename = "notDestroyed")]
     not_destroyed: Option<HashMap<String, SetError<U>>>,
 }
@@ -94,23 +117,12 @@ pub enum SetErrorType {
     CannotUnsend,
 }
 
-pub fn from_timestamp(timestamp: i64) -> DateTime<Utc> {
-    DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(timestamp, 0), Utc)
+pub trait Create: Sized {
+    fn new(create_id: Option<usize>) -> Self;
+    fn create_id(&self) -> Option<String>;
 }
 
-pub fn string_not_set(string: &Option<String>) -> bool {
-    matches!(string, Some(string) if string.is_empty())
-}
-
-pub fn date_not_set(date: &Option<DateTime<Utc>>) -> bool {
-    matches!(date, Some(date) if date.timestamp() == 0)
-}
-
-pub fn list_not_set<T>(list: &Option<Vec<T>>) -> bool {
-    matches!(list, Some(list) if list.is_empty() )
-}
-
-impl<T, A: Default> SetRequest<T, A> {
+impl<T: Create, A: Default> SetRequest<T, A> {
     pub fn new(account_id: String) -> Self {
         Self {
             account_id,
@@ -118,6 +130,7 @@ impl<T, A: Default> SetRequest<T, A> {
             create: None,
             update: None,
             destroy: None,
+            destroy_ref: None,
             arguments: Default::default(),
         }
     }
@@ -132,22 +145,42 @@ impl<T, A: Default> SetRequest<T, A> {
         self
     }
 
-    pub fn create(&mut self, id: impl Into<String>, value: T) -> &mut Self {
+    pub fn create(&mut self) -> &mut T {
+        let create_id = self.create.as_ref().map_or(0, |c| c.len());
+        let create_id_str = format!("c{}", create_id);
         self.create
             .get_or_insert_with(HashMap::new)
-            .insert(id.into(), value);
-        self
+            .insert(create_id_str.clone(), T::new(create_id.into()));
+        self.create
+            .as_mut()
+            .unwrap()
+            .get_mut(&create_id_str)
+            .unwrap()
     }
 
-    pub fn update(&mut self, id: impl Into<String>, value: T) -> &mut Self {
+    pub fn update(&mut self, id: impl Into<String>) -> &mut T {
+        let id: String = id.into();
         self.update
             .get_or_insert_with(HashMap::new)
-            .insert(id.into(), value);
+            .insert(id.clone(), T::new(None));
+        self.update.as_mut().unwrap().get_mut(&id).unwrap()
+    }
+
+    pub fn destroy<U, V>(&mut self, ids: U) -> &mut Self
+    where
+        U: IntoIterator<Item = V>,
+        V: Into<String>,
+    {
+        self.destroy
+            .get_or_insert_with(Vec::new)
+            .extend(ids.into_iter().map(|id| id.into()));
+        self.destroy_ref = None;
         self
     }
 
-    pub fn destroy(&mut self, id: impl Into<String>) -> &mut Self {
-        self.destroy.get_or_insert_with(Vec::new).push(id.into());
+    pub fn destroy_ref(&mut self, reference: ResultReference) -> &mut Self {
+        self.destroy_ref = reference.into();
+        self.destroy = None;
         self
     }
 
@@ -169,40 +202,28 @@ impl<T, U> SetResponse<T, U> {
         &self.new_state
     }
 
-    pub fn created(&self) -> Option<impl Iterator<Item = &String>> {
-        self.created.as_ref().map(|map| map.keys())
+    pub fn created(&self) -> Option<impl Iterator<Item = (&String, &T)>> {
+        self.created.as_ref().map(|map| map.iter())
     }
 
-    pub fn updated(&self) -> Option<impl Iterator<Item = &String>> {
-        self.updated.as_ref().map(|map| map.keys())
+    pub fn updated(&self) -> Option<impl Iterator<Item = (&String, &Option<T>)>> {
+        self.updated.as_ref().map(|map| map.iter())
     }
 
     pub fn destroyed(&self) -> Option<&[String]> {
         self.destroyed.as_deref()
     }
 
-    pub fn not_created(&self) -> Option<impl Iterator<Item = &String>> {
-        self.not_created.as_ref().map(|map| map.keys())
+    pub fn not_created(&self) -> Option<impl Iterator<Item = (&String, &SetError<U>)>> {
+        self.not_created.as_ref().map(|map| map.iter())
     }
 
-    pub fn not_updated(&self) -> Option<impl Iterator<Item = &String>> {
-        self.not_updated.as_ref().map(|map| map.keys())
+    pub fn not_updated(&self) -> Option<impl Iterator<Item = (&String, &SetError<U>)>> {
+        self.not_updated.as_ref().map(|map| map.iter())
     }
 
-    pub fn not_destroyed(&self) -> Option<impl Iterator<Item = &String>> {
-        self.not_destroyed.as_ref().map(|map| map.keys())
-    }
-
-    pub fn not_created_reason(&self, id: &str) -> Option<&SetError<U>> {
-        self.not_created.as_ref().and_then(|map| map.get(id))
-    }
-
-    pub fn not_updated_reason(&self, id: &str) -> Option<&SetError<U>> {
-        self.not_updated.as_ref().and_then(|map| map.get(id))
-    }
-
-    pub fn not_destroyed_reason(&self, id: &str) -> Option<&SetError<U>> {
-        self.not_destroyed.as_ref().and_then(|map| map.get(id))
+    pub fn not_destroyed(&self) -> Option<impl Iterator<Item = (&String, &SetError<U>)>> {
+        self.not_destroyed.as_ref().map(|map| map.iter())
     }
 
     pub fn created_details(&self, id: &str) -> Option<&T> {
@@ -211,6 +232,18 @@ impl<T, U> SetResponse<T, U> {
 
     pub fn updated_details(&self, id: &str) -> Option<&T> {
         self.updated.as_ref().and_then(|map| map.get(id))?.as_ref()
+    }
+
+    pub fn not_created_details(&self, id: &str) -> Option<&SetError<U>> {
+        self.not_created.as_ref().and_then(|map| map.get(id))
+    }
+
+    pub fn not_updated_details(&self, id: &str) -> Option<&SetError<U>> {
+        self.not_updated.as_ref().and_then(|map| map.get(id))
+    }
+
+    pub fn not_destroyed_details(&self, id: &str) -> Option<&SetError<U>> {
+        self.not_destroyed.as_ref().and_then(|map| map.get(id))
     }
 }
 
@@ -226,4 +259,20 @@ impl<U> SetError<U> {
     pub fn properties(&self) -> Option<&[U]> {
         self.properties.as_deref()
     }
+}
+
+pub fn from_timestamp(timestamp: i64) -> DateTime<Utc> {
+    DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(timestamp, 0), Utc)
+}
+
+pub fn string_not_set(string: &Option<String>) -> bool {
+    matches!(string, Some(string) if string.is_empty())
+}
+
+pub fn date_not_set(date: &Option<DateTime<Utc>>) -> bool {
+    matches!(date, Some(date) if date.timestamp() == 0)
+}
+
+pub fn list_not_set<T>(list: &Option<Vec<T>>) -> bool {
+    matches!(list, Some(list) if list.is_empty() )
 }

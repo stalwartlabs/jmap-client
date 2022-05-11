@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use crate::core::error::ProblemDetails;
+use std::{collections::HashMap, fmt::Display};
 
 use serde::{Deserialize, Serialize};
 
@@ -7,6 +8,7 @@ pub mod client;
 pub mod core;
 pub mod email;
 pub mod email_submission;
+pub mod event_source;
 pub mod identity;
 pub mod mailbox;
 pub mod push_subscription;
@@ -125,3 +127,37 @@ pub struct StateChange {
 pub struct Get;
 #[derive(Debug, Clone)]
 pub struct Set;
+
+pub type Result<T> = std::result::Result<T, Error>;
+
+pub enum Error {
+    Transport(reqwest::Error),
+    Parse(serde_json::Error),
+    Internal(String),
+    Problem(ProblemDetails),
+    ServerError(String),
+}
+
+impl From<reqwest::Error> for Error {
+    fn from(e: reqwest::Error) -> Self {
+        Error::Transport(e)
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(e: serde_json::Error) -> Self {
+        Error::Parse(e)
+    }
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::Transport(e) => write!(f, "Transport error: {}", e),
+            Error::Parse(e) => write!(f, "Parse error: {}", e),
+            Error::Internal(e) => write!(f, "Internal error: {}", e),
+            Error::Problem(e) => write!(f, "Problem details: {}", e),
+            Error::ServerError(e) => write!(f, "Server error: {}", e),
+        }
+    }
+}
