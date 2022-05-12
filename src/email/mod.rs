@@ -1,4 +1,5 @@
 pub mod get;
+pub mod helpers;
 pub mod import;
 pub mod parse;
 pub mod query;
@@ -7,7 +8,10 @@ pub mod set;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    fmt::{self, Display, Formatter},
+};
 
 use crate::{core::request::ResultReference, Get};
 
@@ -318,7 +322,39 @@ pub enum BodyProperty {
     SubParts,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+impl Display for Property {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Property::Id => write!(f, "id"),
+            Property::BlobId => write!(f, "blobId"),
+            Property::ThreadId => write!(f, "threadId"),
+            Property::MailboxIds => write!(f, "mailboxIds"),
+            Property::Keywords => write!(f, "keywords"),
+            Property::Size => write!(f, "size"),
+            Property::ReceivedAt => write!(f, "receivedAt"),
+            Property::MessageId => write!(f, "messageId"),
+            Property::InReplyTo => write!(f, "inReplyTo"),
+            Property::References => write!(f, "references"),
+            Property::Sender => write!(f, "sender"),
+            Property::From => write!(f, "from"),
+            Property::To => write!(f, "to"),
+            Property::Cc => write!(f, "cc"),
+            Property::Bcc => write!(f, "bcc"),
+            Property::ReplyTo => write!(f, "replyTo"),
+            Property::Subject => write!(f, "subject"),
+            Property::SentAt => write!(f, "sentAt"),
+            Property::BodyStructure => write!(f, "bodyStructure"),
+            Property::BodyValues => write!(f, "bodyValues"),
+            Property::TextBody => write!(f, "textBody"),
+            Property::HtmlBody => write!(f, "htmlBody"),
+            Property::Attachments => write!(f, "attachments"),
+            Property::HasAttachment => write!(f, "hasAttachment"),
+            Property::Preview => write!(f, "preview"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MailCapabilities {
     #[serde(rename = "maxMailboxesPerEmail")]
     max_mailboxes_per_email: Option<usize>,
@@ -339,7 +375,7 @@ pub struct MailCapabilities {
     may_create_top_level_mailbox: bool,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubmissionCapabilities {
     #[serde(rename = "maxDelayedSend")]
     max_delayed_send: usize,

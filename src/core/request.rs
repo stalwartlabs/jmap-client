@@ -1,6 +1,6 @@
-use std::{collections::HashMap, time::Duration};
+use std::collections::HashMap;
 
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{
     blob::copy::CopyBlobRequest,
@@ -12,18 +12,25 @@ use crate::{
     push_subscription::{self, PushSubscription},
     thread,
     vacation_response::{self, VacationResponse},
-    Method, Set, URI,
+    Error, Method, Set, URI,
 };
 
 use super::{
-    changes::ChangesRequest, copy::CopyRequest, get::GetRequest, query::QueryRequest,
-    query_changes::QueryChangesRequest, response::Response, set::SetRequest,
+    changes::ChangesRequest,
+    copy::CopyRequest,
+    get::GetRequest,
+    query::QueryRequest,
+    query_changes::QueryChangesRequest,
+    response::{MethodResponse, Response, SingleMethodResponse},
+    set::SetRequest,
 };
 
 #[derive(Serialize)]
 pub struct Request<'x> {
     #[serde(skip)]
-    client: &'x mut Client,
+    client: Option<&'x mut Client>,
+    #[serde(skip)]
+    default_account_id: String,
 
     using: Vec<URI>,
 
@@ -399,28 +406,29 @@ impl<'x> Request<'x> {
             using: vec![URI::Core, URI::Mail],
             method_calls: vec![],
             created_ids: None,
-            client,
+            default_account_id: client.default_account_id().to_string(),
+            client: client.into(),
         }
     }
 
-    pub async fn send(&mut self) -> crate::Result<Response> {
-        let response: Response = serde_json::from_slice(
-            &Client::handle_error(
-                reqwest::Client::builder()
-                    .timeout(Duration::from_millis(self.client.timeout()))
-                    .default_headers(self.client.headers().clone())
-                    .build()?
-                    .post(self.client.session().api_url())
-                    .body(serde_json::to_string(&self)?)
-                    .send()
-                    .await?,
-            )
-            .await?
-            .bytes()
-            .await?,
-        )?;
-        self.client.update_session(response.session_state()).await?;
-        Ok(response)
+    pub async fn send(mut self) -> crate::Result<Response<MethodResponse>> {
+        Option::take(&mut self.client).unwrap().send(&self).await
+    }
+
+    pub async fn send_single<T>(mut self) -> crate::Result<T>
+    where
+        T: DeserializeOwned,
+    {
+        let response: Response<SingleMethodResponse<T>> =
+            Option::take(&mut self.client).unwrap().send(&self).await?;
+        match response
+            .unwrap_method_responses()
+            .pop()
+            .ok_or_else(|| Error::Internal("Server returned no results".to_string()))?
+        {
+            SingleMethodResponse::Ok((_, response, _)) => Ok(response),
+            SingleMethodResponse::Error((_, err, _)) => Err(err.into()),
+        }
     }
 
     fn add_method_call(&mut self, method: Method, arguments: Arguments) -> &mut Arguments {
@@ -432,7 +440,7 @@ impl<'x> Request<'x> {
     pub fn get_push(&mut self) -> &mut GetRequest<push_subscription::Property, ()> {
         self.add_method_call(
             Method::GetPushSubscription,
-            Arguments::push_get(self.client.default_account_id().to_string()),
+            Arguments::push_get(self.default_account_id.clone()),
         )
         .push_get_mut()
     }
@@ -440,7 +448,7 @@ impl<'x> Request<'x> {
     pub fn set_push(&mut self) -> &mut SetRequest<PushSubscription<Set>, ()> {
         self.add_method_call(
             Method::SetPushSubscription,
-            Arguments::push_set(self.client.default_account_id().to_string()),
+            Arguments::push_set(self.default_account_id.clone()),
         )
         .push_set_mut()
     }
@@ -460,7 +468,7 @@ impl<'x> Request<'x> {
     pub fn get_mailbox(&mut self) -> &mut GetRequest<mailbox::Property, ()> {
         self.add_method_call(
             Method::GetMailbox,
-            Arguments::mailbox_get(self.client.default_account_id().to_string()),
+            Arguments::mailbox_get(self.default_account_id.clone()),
         )
         .mailbox_get_mut()
     }
@@ -468,10 +476,7 @@ impl<'x> Request<'x> {
     pub fn changes_mailbox(&mut self, since_state: impl Into<String>) -> &mut ChangesRequest {
         self.add_method_call(
             Method::ChangesMailbox,
-            Arguments::changes(
-                self.client.default_account_id().to_string(),
-                since_state.into(),
-            ),
+            Arguments::changes(self.default_account_id.clone(), since_state.into()),
         )
         .changes_mut()
     }
@@ -485,7 +490,7 @@ impl<'x> Request<'x> {
     > {
         self.add_method_call(
             Method::QueryMailbox,
-            Arguments::mailbox_query(self.client.default_account_id().to_string()),
+            Arguments::mailbox_query(self.default_account_id.clone()),
         )
         .mailbox_query_mut()
     }
@@ -501,7 +506,7 @@ impl<'x> Request<'x> {
         self.add_method_call(
             Method::QueryChangesMailbox,
             Arguments::mailbox_query_changes(
-                self.client.default_account_id().to_string(),
+                self.default_account_id.clone(),
                 since_query_state.into(),
             ),
         )
@@ -511,7 +516,7 @@ impl<'x> Request<'x> {
     pub fn set_mailbox(&mut self) -> &mut SetRequest<Mailbox<Set>, mailbox::SetArguments> {
         self.add_method_call(
             Method::SetMailbox,
-            Arguments::mailbox_set(self.client.default_account_id().to_string()),
+            Arguments::mailbox_set(self.default_account_id.clone()),
         )
         .mailbox_set_mut()
     }
@@ -519,7 +524,7 @@ impl<'x> Request<'x> {
     pub fn get_thread(&mut self) -> &mut GetRequest<thread::Property, ()> {
         self.add_method_call(
             Method::GetThread,
-            Arguments::thread_get(self.client.default_account_id().to_string()),
+            Arguments::thread_get(self.default_account_id.clone()),
         )
         .thread_get_mut()
     }
@@ -527,17 +532,14 @@ impl<'x> Request<'x> {
     pub fn changes_thread(&mut self, since_state: impl Into<String>) -> &mut ChangesRequest {
         self.add_method_call(
             Method::ChangesThread,
-            Arguments::changes(
-                self.client.default_account_id().to_string(),
-                since_state.into(),
-            ),
+            Arguments::changes(self.default_account_id.clone(), since_state.into()),
         )
         .changes_mut()
     }
     pub fn get_email(&mut self) -> &mut GetRequest<email::Property, email::GetArguments> {
         self.add_method_call(
             Method::GetEmail,
-            Arguments::email_get(self.client.default_account_id().to_string()),
+            Arguments::email_get(self.default_account_id.clone()),
         )
         .email_get_mut()
     }
@@ -545,10 +547,7 @@ impl<'x> Request<'x> {
     pub fn changes_email(&mut self, since_state: impl Into<String>) -> &mut ChangesRequest {
         self.add_method_call(
             Method::ChangesEmail,
-            Arguments::changes(
-                self.client.default_account_id().to_string(),
-                since_state.into(),
-            ),
+            Arguments::changes(self.default_account_id.clone(), since_state.into()),
         )
         .changes_mut()
     }
@@ -559,7 +558,7 @@ impl<'x> Request<'x> {
     {
         self.add_method_call(
             Method::QueryEmail,
-            Arguments::email_query(self.client.default_account_id().to_string()),
+            Arguments::email_query(self.default_account_id.clone()),
         )
         .email_query_mut()
     }
@@ -575,7 +574,7 @@ impl<'x> Request<'x> {
         self.add_method_call(
             Method::QueryChangesEmail,
             Arguments::email_query_changes(
-                self.client.default_account_id().to_string(),
+                self.default_account_id.clone(),
                 since_query_state.into(),
             ),
         )
@@ -585,7 +584,7 @@ impl<'x> Request<'x> {
     pub fn set_email(&mut self) -> &mut SetRequest<Email<Set>, ()> {
         self.add_method_call(
             Method::SetEmail,
-            Arguments::email_set(self.client.default_account_id().to_string()),
+            Arguments::email_set(self.default_account_id.clone()),
         )
         .email_set_mut()
     }
@@ -605,7 +604,7 @@ impl<'x> Request<'x> {
     pub fn import_email(&mut self) -> &mut EmailImportRequest {
         self.add_method_call(
             Method::ImportEmail,
-            Arguments::email_import(self.client.default_account_id().to_string()),
+            Arguments::email_import(self.default_account_id.clone()),
         )
         .email_import_mut()
     }
@@ -613,7 +612,7 @@ impl<'x> Request<'x> {
     pub fn parse_email(&mut self) -> &mut EmailParseRequest {
         self.add_method_call(
             Method::ParseEmail,
-            Arguments::email_parse(self.client.default_account_id().to_string()),
+            Arguments::email_parse(self.default_account_id.clone()),
         )
         .email_parse_mut()
     }
@@ -621,7 +620,7 @@ impl<'x> Request<'x> {
     pub fn get_identity(&mut self) -> &mut GetRequest<identity::Property, ()> {
         self.add_method_call(
             Method::GetIdentity,
-            Arguments::identity_get(self.client.default_account_id().to_string()),
+            Arguments::identity_get(self.default_account_id.clone()),
         )
         .identity_get_mut()
     }
@@ -629,7 +628,7 @@ impl<'x> Request<'x> {
     pub fn set_identity(&mut self) -> &mut SetRequest<Identity<Set>, ()> {
         self.add_method_call(
             Method::SetIdentity,
-            Arguments::identity_set(self.client.default_account_id().to_string()),
+            Arguments::identity_set(self.default_account_id.clone()),
         )
         .identity_set_mut()
     }
@@ -640,7 +639,7 @@ impl<'x> Request<'x> {
         }
         self.add_method_call(
             Method::GetEmailSubmission,
-            Arguments::email_submission_get(self.client.default_account_id().to_string()),
+            Arguments::email_submission_get(self.default_account_id.clone()),
         )
         .email_submission_get_mut()
     }
@@ -654,10 +653,7 @@ impl<'x> Request<'x> {
         }
         self.add_method_call(
             Method::ChangesEmailSubmission,
-            Arguments::changes(
-                self.client.default_account_id().to_string(),
-                since_state.into(),
-            ),
+            Arguments::changes(self.default_account_id.clone(), since_state.into()),
         )
         .changes_mut()
     }
@@ -671,7 +667,7 @@ impl<'x> Request<'x> {
         }
         self.add_method_call(
             Method::QueryEmailSubmission,
-            Arguments::email_submission_query(self.client.default_account_id().to_string()),
+            Arguments::email_submission_query(self.default_account_id.clone()),
         )
         .email_submission_query_mut()
     }
@@ -690,7 +686,7 @@ impl<'x> Request<'x> {
         self.add_method_call(
             Method::QueryChangesEmailSubmission,
             Arguments::email_submission_query_changes(
-                self.client.default_account_id().to_string(),
+                self.default_account_id.clone(),
                 since_query_state.into(),
             ),
         )
@@ -705,7 +701,7 @@ impl<'x> Request<'x> {
         }
         self.add_method_call(
             Method::SetEmailSubmission,
-            Arguments::email_submission_set(self.client.default_account_id().to_string()),
+            Arguments::email_submission_set(self.default_account_id.clone()),
         )
         .email_submission_set_mut()
     }
@@ -716,7 +712,7 @@ impl<'x> Request<'x> {
         }
         self.add_method_call(
             Method::GetVacationResponse,
-            Arguments::vacation_response_get(self.client.default_account_id().to_string()),
+            Arguments::vacation_response_get(self.default_account_id.clone()),
         )
         .vacation_response_get_mut()
     }
@@ -727,7 +723,7 @@ impl<'x> Request<'x> {
         }
         self.add_method_call(
             Method::SetVacationResponse,
-            Arguments::vacation_response_set(self.client.default_account_id().to_string()),
+            Arguments::vacation_response_set(self.default_account_id.clone()),
         )
         .vacation_response_set_mut()
     }

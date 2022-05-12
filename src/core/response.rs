@@ -20,9 +20,9 @@ use super::{
 };
 
 #[derive(Debug, Deserialize)]
-pub struct Response {
+pub struct Response<T> {
     #[serde(rename = "methodResponses")]
-    method_responses: Vec<MethodResponse>,
+    method_responses: Vec<T>,
 
     #[serde(rename = "createdIds")]
     created_ids: Option<HashMap<String, String>>,
@@ -31,15 +31,13 @@ pub struct Response {
     session_state: String,
 }
 
-impl Response {
-    pub fn method_responses(&self) -> &[MethodResponse] {
+impl<T> Response<T> {
+    pub fn method_responses(&self) -> &[T] {
         self.method_responses.as_ref()
     }
 
-    pub fn method_response(&self, id: &str) -> Option<&MethodResponse> {
+    pub fn unwrap_method_responses(self) -> Vec<T> {
         self.method_responses
-            .iter()
-            .find(|response| response.call_id() == id)
     }
 
     pub fn created_ids(&self) -> Option<impl Iterator<Item = (&String, &String)>> {
@@ -51,92 +49,82 @@ impl Response {
     }
 }
 
+impl Response<MethodResponse> {
+    pub fn method_response(&self, id: &str) -> Option<&MethodResponse> {
+        self.method_responses
+            .iter()
+            .find(|response| response.call_id() == id)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum SingleMethodResponse<T> {
+    Error((Error, MethodError, String)),
+    Ok((String, T, String)),
+}
+
+pub type PushSubscriptionSetResponse =
+    SetResponse<PushSubscription<Get>, push_subscription::Property>;
+pub type PushSubscriptionGetResponse = GetResponse<PushSubscription<Get>>;
+pub type MaiboxChangesResponse = ChangesResponse<mailbox::ChangesResponse>;
+pub type MailboxSetResponse = SetResponse<Mailbox<Get>, mailbox::Property>;
+pub type MailboxGetResponse = GetResponse<Mailbox<Get>>;
+pub type ThreadGetResponse = GetResponse<Thread>;
+pub type ThreadChangesResponse = ChangesResponse<()>;
+pub type EmailGetResponse = GetResponse<Email<Get>>;
+pub type EmailSetResponse = SetResponse<Email<Get>, email::Property>;
+pub type EmailCopyResponse = CopyResponse<Email<Get>, email::Property>;
+pub type EmailChangesResponse = ChangesResponse<()>;
+pub type SearchSnippetGetResponse = GetResponse<String>;
+pub type IdentitySetResponse = SetResponse<Identity<Get>, identity::Property>;
+pub type IdentityGetResponse = GetResponse<Identity<Get>>;
+pub type IdentityChangesResponse = ChangesResponse<()>;
+pub type EmailSubmissionSetResponse = SetResponse<EmailSubmission<Get>, email_submission::Property>;
+pub type EmailSubmissionGetResponse = GetResponse<EmailSubmission<Get>>;
+pub type EmailSubmissionChangesResponse = ChangesResponse<()>;
+pub type VacationResponseGetResponse = GetResponse<VacationResponse<Get>>;
+pub type VacationResponseSetResponse =
+    SetResponse<VacationResponse<Get>, vacation_response::Property>;
+
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum MethodResponse {
     CopyBlob((CopyBlob, CopyBlobResponse, String)),
-    GetPushSubscription(
-        (
-            GetPushSubscription,
-            GetResponse<PushSubscription<Get>>,
-            String,
-        ),
-    ),
-    SetPushSubscription(
-        (
-            SetPushSubscription,
-            SetResponse<PushSubscription<Get>, push_subscription::Property>,
-            String,
-        ),
-    ),
-    GetMailbox((GetMailbox, GetResponse<Mailbox<Get>>, String)),
-    ChangesMailbox(
-        (
-            ChangesMailbox,
-            ChangesResponse<mailbox::ChangesResponse>,
-            String,
-        ),
-    ),
+    GetPushSubscription((GetPushSubscription, PushSubscriptionGetResponse, String)),
+    SetPushSubscription((SetPushSubscription, PushSubscriptionSetResponse, String)),
+    GetMailbox((GetMailbox, MailboxGetResponse, String)),
+    ChangesMailbox((ChangesMailbox, MaiboxChangesResponse, String)),
     QueryMailbox((QueryMailbox, QueryResponse, String)),
     QueryChangesMailbox((QueryChangesMailbox, QueryChangesResponse, String)),
-    SetMailbox(
-        (
-            SetMailbox,
-            SetResponse<Mailbox<Get>, mailbox::Property>,
-            String,
-        ),
-    ),
-    GetThread((GetThread, GetResponse<Thread>, String)),
-    ChangesThread((ChangesThread, ChangesResponse<()>, String)),
-    GetEmail((GetEmail, GetResponse<Email<Get>>, String)),
-    ChangesEmail((ChangesEmail, ChangesResponse<()>, String)),
+    SetMailbox((SetMailbox, MailboxSetResponse, String)),
+    GetThread((GetThread, ThreadGetResponse, String)),
+    ChangesThread((ChangesThread, ThreadChangesResponse, String)),
+    GetEmail((GetEmail, EmailGetResponse, String)),
+    ChangesEmail((ChangesEmail, EmailChangesResponse, String)),
     QueryEmail((QueryEmail, QueryResponse, String)),
     QueryChangesEmail((QueryChangesEmail, QueryChangesResponse, String)),
-    SetEmail((SetEmail, SetResponse<Email<Get>, email::Property>, String)),
-    CopyEmail((CopyEmail, CopyResponse<Email<Get>, email::Property>, String)),
+    SetEmail((SetEmail, EmailSetResponse, String)),
+    CopyEmail((CopyEmail, EmailCopyResponse, String)),
     ImportEmail((ImportEmail, EmailImportResponse, String)),
     ParseEmail((ParseEmail, EmailParseResponse, String)),
-    GetSearchSnippet((GetSearchSnippet, GetResponse<String>, String)),
-    GetIdentity((GetIdentity, GetResponse<Identity<Get>>, String)),
-    ChangesIdentity((ChangesIdentity, ChangesResponse<()>, String)),
-    SetIdentity(
+    GetSearchSnippet((GetSearchSnippet, SearchSnippetGetResponse, String)),
+    GetIdentity((GetIdentity, IdentityGetResponse, String)),
+    ChangesIdentity((ChangesIdentity, IdentityChangesResponse, String)),
+    SetIdentity((SetIdentity, IdentitySetResponse, String)),
+    GetEmailSubmission((GetEmailSubmission, EmailSubmissionGetResponse, String)),
+    ChangesEmailSubmission(
         (
-            SetIdentity,
-            SetResponse<Identity<Get>, identity::Property>,
+            ChangesEmailSubmission,
+            EmailSubmissionChangesResponse,
             String,
         ),
     ),
-    GetEmailSubmission(
-        (
-            GetEmailSubmission,
-            GetResponse<EmailSubmission<Get>>,
-            String,
-        ),
-    ),
-    ChangesEmailSubmission((ChangesEmailSubmission, ChangesResponse<()>, String)),
     QueryEmailSubmission((QueryEmailSubmission, QueryResponse, String)),
     QueryChangesEmailSubmission((QueryChangesEmailSubmission, QueryChangesResponse, String)),
-    SetEmailSubmission(
-        (
-            SetEmailSubmission,
-            SetResponse<EmailSubmission<Get>, email_submission::Property>,
-            String,
-        ),
-    ),
-    GetVacationResponse(
-        (
-            GetVacationResponse,
-            GetResponse<VacationResponse<Get>>,
-            String,
-        ),
-    ),
-    SetVacationResponse(
-        (
-            SetVacationResponse,
-            SetResponse<VacationResponse<Get>, vacation_response::Property>,
-            String,
-        ),
-    ),
+    SetEmailSubmission((SetEmailSubmission, EmailSubmissionSetResponse, String)),
+    GetVacationResponse((GetVacationResponse, VacationResponseGetResponse, String)),
+    SetVacationResponse((SetVacationResponse, VacationResponseSetResponse, String)),
     Echo((Echo, serde_json::Value, String)),
     Error((Error, MethodError, String)),
 }
@@ -221,226 +209,243 @@ impl MethodResponse {
         )
     }
 
-    pub fn as_copy_copy(&self) -> Option<&CopyBlobResponse> {
+    pub fn unwrap_copy_blob(self) -> crate::Result<CopyBlobResponse> {
         match self {
-            Self::CopyBlob((_, response, _)) => response.into(),
-            _ => None,
+            Self::CopyBlob((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_get_push_subscription(&self) -> Option<&GetResponse<PushSubscription<Get>>> {
+    pub fn unwrap_get_push_subscription(self) -> crate::Result<PushSubscriptionGetResponse> {
         match self {
-            Self::GetPushSubscription((_, response, _)) => response.into(),
-            _ => None,
+            Self::GetPushSubscription((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_set_push_subscription(
-        &self,
-    ) -> Option<&SetResponse<PushSubscription<Get>, push_subscription::Property>> {
+    pub fn unwrap_set_push_subscription(self) -> crate::Result<PushSubscriptionSetResponse> {
         match self {
-            Self::SetPushSubscription((_, response, _)) => response.into(),
-            _ => None,
+            Self::SetPushSubscription((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_get_mailbox(&self) -> Option<&GetResponse<Mailbox<Get>>> {
+    pub fn unwrap_get_mailbox(self) -> crate::Result<MailboxGetResponse> {
         match self {
-            Self::GetMailbox((_, response, _)) => response.into(),
-            _ => None,
+            Self::GetMailbox((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_changes_mailbox(&self) -> Option<&ChangesResponse<mailbox::ChangesResponse>> {
+    pub fn unwrap_changes_mailbox(self) -> crate::Result<MaiboxChangesResponse> {
         match self {
-            Self::ChangesMailbox((_, response, _)) => response.into(),
-            _ => None,
+            Self::ChangesMailbox((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_query_mailbox(&self) -> Option<&QueryResponse> {
+    pub fn unwrap_query_mailbox(self) -> crate::Result<QueryResponse> {
         match self {
-            Self::QueryMailbox((_, response, _)) => response.into(),
-            _ => None,
+            Self::QueryMailbox((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_query_changes_mailbox(&self) -> Option<&QueryChangesResponse> {
+    pub fn unwrap_query_changes_mailbox(self) -> crate::Result<QueryChangesResponse> {
         match self {
-            Self::QueryChangesMailbox((_, response, _)) => response.into(),
-            _ => None,
+            Self::QueryChangesMailbox((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_set_mailbox(&self) -> Option<&SetResponse<Mailbox<Get>, mailbox::Property>> {
+    pub fn unwrap_set_mailbox(self) -> crate::Result<MailboxSetResponse> {
         match self {
-            Self::SetMailbox((_, response, _)) => response.into(),
-            _ => None,
+            Self::SetMailbox((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_get_thread(&self) -> Option<&GetResponse<Thread>> {
+    pub fn unwrap_get_thread(self) -> crate::Result<ThreadGetResponse> {
         match self {
-            Self::GetThread((_, response, _)) => response.into(),
-            _ => None,
+            Self::GetThread((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_changes_thread(&self) -> Option<&ChangesResponse<()>> {
+    pub fn unwrap_changes_thread(self) -> crate::Result<ThreadChangesResponse> {
         match self {
-            Self::ChangesThread((_, response, _)) => response.into(),
-            _ => None,
+            Self::ChangesThread((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_get_email(&self) -> Option<&GetResponse<Email>> {
+    pub fn unwrap_get_email(self) -> crate::Result<EmailGetResponse> {
         match self {
-            Self::GetEmail((_, response, _)) => response.into(),
-            _ => None,
+            Self::GetEmail((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_changes_email(&self) -> Option<&ChangesResponse<()>> {
+    pub fn unwrap_changes_email(self) -> crate::Result<EmailChangesResponse> {
         match self {
-            Self::ChangesEmail((_, response, _)) => response.into(),
-            _ => None,
+            Self::ChangesEmail((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_query_email(&self) -> Option<&QueryResponse> {
+    pub fn unwrap_query_email(self) -> crate::Result<QueryResponse> {
         match self {
-            Self::QueryEmail((_, response, _)) => response.into(),
-            _ => None,
+            Self::QueryEmail((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_query_changes_email(&self) -> Option<&QueryChangesResponse> {
+    pub fn unwrap_query_changes_email(self) -> crate::Result<QueryChangesResponse> {
         match self {
-            Self::QueryChangesEmail((_, response, _)) => response.into(),
-            _ => None,
+            Self::QueryChangesEmail((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_set_email(&self) -> Option<&SetResponse<Email, email::Property>> {
+    pub fn unwrap_set_email(self) -> crate::Result<EmailSetResponse> {
         match self {
-            Self::SetEmail((_, response, _)) => response.into(),
-            _ => None,
+            Self::SetEmail((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_copy_email(&self) -> Option<&CopyResponse<Email<Get>, email::Property>> {
+    pub fn unwrap_copy_email(self) -> crate::Result<EmailCopyResponse> {
         match self {
-            Self::CopyEmail((_, response, _)) => response.into(),
-            _ => None,
+            Self::CopyEmail((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_import_email(&self) -> Option<&EmailImportResponse> {
+    pub fn unwrap_import_email(self) -> crate::Result<EmailImportResponse> {
         match self {
-            Self::ImportEmail((_, response, _)) => response.into(),
-            _ => None,
+            Self::ImportEmail((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_parse_email(&self) -> Option<&EmailParseResponse> {
+    pub fn unwrap_parse_email(self) -> crate::Result<EmailParseResponse> {
         match self {
-            Self::ParseEmail((_, response, _)) => response.into(),
-            _ => None,
+            Self::ParseEmail((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_get_search_snippet(&self) -> Option<&GetResponse<String>> {
+    pub fn unwrap_get_search_snippet(self) -> crate::Result<SearchSnippetGetResponse> {
         match self {
-            Self::GetSearchSnippet((_, response, _)) => response.into(),
-            _ => None,
+            Self::GetSearchSnippet((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_get_identity(&self) -> Option<&GetResponse<Identity>> {
+    pub fn unwrap_get_identity(self) -> crate::Result<IdentityGetResponse> {
         match self {
-            Self::GetIdentity((_, response, _)) => response.into(),
-            _ => None,
+            Self::GetIdentity((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_changes_identity(&self) -> Option<&ChangesResponse<()>> {
+    pub fn unwrap_changes_identity(self) -> crate::Result<IdentityChangesResponse> {
         match self {
-            Self::ChangesIdentity((_, response, _)) => response.into(),
-            _ => None,
+            Self::ChangesIdentity((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_set_identity(&self) -> Option<&SetResponse<Identity, identity::Property>> {
+    pub fn unwrap_set_identity(self) -> crate::Result<IdentitySetResponse> {
         match self {
-            Self::SetIdentity((_, response, _)) => response.into(),
-            _ => None,
+            Self::SetIdentity((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_get_email_submission(&self) -> Option<&GetResponse<EmailSubmission>> {
+    pub fn unwrap_get_email_submission(self) -> crate::Result<EmailSubmissionGetResponse> {
         match self {
-            Self::GetEmailSubmission((_, response, _)) => response.into(),
-            _ => None,
+            Self::GetEmailSubmission((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_changes_email_submission(&self) -> Option<&ChangesResponse<()>> {
+    pub fn unwrap_changes_email_submission(self) -> crate::Result<EmailSubmissionChangesResponse> {
         match self {
-            Self::ChangesEmailSubmission((_, response, _)) => response.into(),
-            _ => None,
+            Self::ChangesEmailSubmission((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_set_email_submission(
-        &self,
-    ) -> Option<&SetResponse<EmailSubmission, email_submission::Property>> {
+    pub fn unwrap_set_email_submission(self) -> crate::Result<EmailSubmissionSetResponse> {
         match self {
-            Self::SetEmailSubmission((_, response, _)) => response.into(),
-            _ => None,
+            Self::SetEmailSubmission((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_query_email_submission(&self) -> Option<&QueryResponse> {
+    pub fn unwrap_query_email_submission(self) -> crate::Result<QueryResponse> {
         match self {
-            Self::QueryEmailSubmission((_, response, _)) => response.into(),
-            _ => None,
+            Self::QueryEmailSubmission((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_query_changes_email_submission(&self) -> Option<&QueryChangesResponse> {
+    pub fn unwrap_query_changes_email_submission(self) -> crate::Result<QueryChangesResponse> {
         match self {
-            Self::QueryChangesEmailSubmission((_, response, _)) => response.into(),
-            _ => None,
+            Self::QueryChangesEmailSubmission((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_get_vacation_response(&self) -> Option<&GetResponse<VacationResponse>> {
+    pub fn unwrap_get_vacation_response(self) -> crate::Result<VacationResponseGetResponse> {
         match self {
-            Self::GetVacationResponse((_, response, _)) => response.into(),
-            _ => None,
+            Self::GetVacationResponse((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_set_vacation_response(
-        &self,
-    ) -> Option<&SetResponse<VacationResponse, vacation_response::Property>> {
+    pub fn unwrap_set_vacation_response(self) -> crate::Result<VacationResponseSetResponse> {
         match self {
-            Self::SetVacationResponse((_, response, _)) => response.into(),
-            _ => None,
+            Self::SetVacationResponse((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 
-    pub fn as_echo(&self) -> Option<&serde_json::Value> {
+    pub fn unwrap_echo(self) -> crate::Result<serde_json::Value> {
         match self {
-            Self::Echo((_, response, _)) => response.into(),
-            _ => None,
-        }
-    }
-
-    pub fn as_error(&self) -> Option<&MethodError> {
-        match self {
-            Self::Error((_, response, _)) => response.into(),
-            _ => None,
+            Self::Echo((_, response, _)) => Ok(response),
+            Self::Error((_, err, _)) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
         }
     }
 

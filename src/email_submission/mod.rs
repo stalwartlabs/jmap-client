@@ -2,7 +2,7 @@ pub mod get;
 pub mod query;
 pub mod set;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -148,4 +148,21 @@ pub enum Property {
     DsnBlobIds,
     #[serde(rename = "mdnBlobIds")]
     MdnBlobIds,
+}
+
+impl Display for Property {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Property::Id => write!(f, "id"),
+            Property::IdentityId => write!(f, "identityId"),
+            Property::EmailId => write!(f, "emailId"),
+            Property::ThreadId => write!(f, "threadId"),
+            Property::Envelope => write!(f, "envelope"),
+            Property::SendAt => write!(f, "sendAt"),
+            Property::UndoStatus => write!(f, "undoStatus"),
+            Property::DeliveryStatus => write!(f, "deliveryStatus"),
+            Property::DsnBlobIds => write!(f, "dsnBlobIds"),
+            Property::MdnBlobIds => write!(f, "mdnBlobIds"),
+        }
+    }
 }

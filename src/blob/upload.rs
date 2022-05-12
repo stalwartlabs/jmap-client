@@ -82,4 +82,8 @@ impl UploadResponse {
     pub fn size(&self) -> usize {
         self.size
     }
+
+    pub fn unwrap_blob_id(self) -> String {
+        self.blob_id
+    }
 }

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use serde::{Deserialize, Serialize};
 
@@ -32,7 +32,7 @@ pub struct CopyRequest<T: Create> {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct CopyResponse<T, U> {
+pub struct CopyResponse<T, U: Display> {
     #[serde(rename = "fromAccountId")]
     from_account_id: String,
 
@@ -102,7 +102,7 @@ impl<T: Create> CopyRequest<T> {
     }
 }
 
-impl<T, U> CopyResponse<T, U> {
+impl<T, U: Display> CopyResponse<T, U> {
     pub fn from_account_id(&self) -> &str {
         &self.from_account_id
     }

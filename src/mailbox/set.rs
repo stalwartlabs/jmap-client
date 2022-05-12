@@ -58,7 +58,7 @@ impl Create for Mailbox<Set> {
 
 impl SetArguments {
     pub fn on_destroy_remove_emails(&mut self, value: bool) -> &mut Self {
-        self.on_destroy_remove_emails = value;
+        self.on_destroy_remove_emails = value.into();
         self
     }
 }

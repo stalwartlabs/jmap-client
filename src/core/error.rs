@@ -102,6 +102,37 @@ impl MethodError {
     }
 }
 
+impl Display for MethodError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.p_type {
+            MethodErrorType::ServerUnavailable => write!(f, "Server unavailable"),
+            MethodErrorType::ServerFail => write!(f, "Server fail"),
+            MethodErrorType::ServerPartialFail => write!(f, "Server partial fail"),
+            MethodErrorType::UnknownMethod => write!(f, "Unknown method"),
+            MethodErrorType::InvalidArguments => write!(f, "Invalid arguments"),
+            MethodErrorType::InvalidResultReference => write!(f, "Invalid result reference"),
+            MethodErrorType::Forbidden => write!(f, "Forbidden"),
+            MethodErrorType::AccountNotFound => write!(f, "Account not found"),
+            MethodErrorType::AccountNotSupportedByMethod => {
+                write!(f, "Account not supported by method")
+            }
+            MethodErrorType::AccountReadOnly => write!(f, "Account read only"),
+            MethodErrorType::RequestTooLarge => write!(f, "Request too large"),
+            MethodErrorType::CannotCalculateChanges => write!(f, "Cannot calculate changes"),
+            MethodErrorType::StateMismatch => write!(f, "State mismatch"),
+            MethodErrorType::AlreadyExists => write!(f, "Already exists"),
+            MethodErrorType::FromAccountNotFound => write!(f, "From account not found"),
+            MethodErrorType::FromAccountNotSupportedByMethod => {
+                write!(f, "From account not supported by method")
+            }
+            MethodErrorType::AnchorNotFound => write!(f, "Anchor not found"),
+            MethodErrorType::UnsupportedSort => write!(f, "Unsupported sort"),
+            MethodErrorType::UnsupportedFilter => write!(f, "Unsupported filter"),
+            MethodErrorType::TooManyChanges => write!(f, "Too many changes"),
+        }
+    }
+}
+
 impl Display for ProblemDetails {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.p_type {

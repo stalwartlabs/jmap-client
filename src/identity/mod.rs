@@ -1,6 +1,8 @@
 pub mod get;
 pub mod set;
 
+use std::fmt::Display;
+
 use crate::core::set::list_not_set;
 use crate::{email::EmailAddress, Get};
 use serde::{Deserialize, Serialize};
@@ -64,4 +66,19 @@ pub enum Property {
     HtmlSignature,
     #[serde(rename = "mayDelete")]
     MayDelete,
+}
+
+impl Display for Property {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Property::Id => write!(f, "id"),
+            Property::Name => write!(f, "name"),
+            Property::Email => write!(f, "email"),
+            Property::ReplyTo => write!(f, "replyTo"),
+            Property::Bcc => write!(f, "bcc"),
+            Property::TextSignature => write!(f, "textSignature"),
+            Property::HtmlSignature => write!(f, "htmlSignature"),
+            Property::MayDelete => write!(f, "mayDelete"),
+        }
+    }
 }

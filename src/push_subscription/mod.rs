@@ -1,6 +1,8 @@
 pub mod get;
 pub mod set;
 
+use std::fmt::Display;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -60,6 +62,20 @@ pub enum Property {
     Expires,
     #[serde(rename = "types")]
     Types,
+}
+
+impl Display for Property {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Property::Id => write!(f, "id"),
+            Property::DeviceClientId => write!(f, "deviceClientId"),
+            Property::Url => write!(f, "url"),
+            Property::Keys => write!(f, "keys"),
+            Property::VerificationCode => write!(f, "verificationCode"),
+            Property::Expires => write!(f, "expires"),
+            Property::Types => write!(f, "types"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

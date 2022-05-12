@@ -64,9 +64,4 @@ impl Keys {
             auth: base64::encode_config(&auth, base64::URL_SAFE),
         }
     }
-
-    pub fn generate() -> Option<Self> {
-        let (p256dh, auth) = ece::generate_keypair_and_auth_secret().ok()?;
-        Self::new(&p256dh.pub_as_raw().ok()?, &auth).into()
-    }
 }

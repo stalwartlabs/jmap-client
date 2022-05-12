@@ -1,6 +1,9 @@
 pub mod get;
+pub mod helpers;
 pub mod query;
 pub mod set;
+
+use std::fmt::Display;
 
 use crate::core::set::string_not_set;
 use crate::mailbox::set::role_not_set;
@@ -10,7 +13,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct SetArguments {
     #[serde(rename = "onDestroyRemoveEmails")]
-    on_destroy_remove_emails: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    on_destroy_remove_emails: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Default)]
@@ -147,6 +151,24 @@ pub enum Property {
     MyRights,
     #[serde(rename = "isSubscribed")]
     IsSubscribed,
+}
+
+impl Display for Property {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Property::Id => write!(f, "id"),
+            Property::Name => write!(f, "name"),
+            Property::ParentId => write!(f, "parentId"),
+            Property::Role => write!(f, "role"),
+            Property::SortOrder => write!(f, "sortOrder"),
+            Property::TotalEmails => write!(f, "totalEmails"),
+            Property::UnreadEmails => write!(f, "unreadEmails"),
+            Property::TotalThreads => write!(f, "totalThreads"),
+            Property::UnreadThreads => write!(f, "unreadThreads"),
+            Property::MyRights => write!(f, "myRights"),
+            Property::IsSubscribed => write!(f, "isSubscribed"),
+        }
+    }
 }
 
 impl ChangesResponse {

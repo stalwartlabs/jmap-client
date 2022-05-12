@@ -1,6 +1,11 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    fmt::{self, Display, Formatter},
+};
+
+use crate::Error;
 
 use super::request::ResultReference;
 
@@ -32,7 +37,7 @@ pub struct SetRequest<T: Create, A: Default> {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct SetResponse<T, U> {
+pub struct SetResponse<T, U: Display> {
     #[serde(rename = "accountId")]
     account_id: String,
 
@@ -62,7 +67,10 @@ pub struct SetResponse<T, U> {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct SetError<U> {
+pub struct SetError<U>
+where
+    U: Display,
+{
     #[serde(rename = "type")]
     type_: SetErrorType,
     description: Option<String>,
@@ -189,7 +197,7 @@ impl<T: Create, A: Default> SetRequest<T, A> {
     }
 }
 
-impl<T, U> SetResponse<T, U> {
+impl<T, U: Display> SetResponse<T, U> {
     pub fn account_id(&self) -> &str {
         &self.account_id
     }
@@ -202,52 +210,66 @@ impl<T, U> SetResponse<T, U> {
         &self.new_state
     }
 
-    pub fn created(&self) -> Option<impl Iterator<Item = (&String, &T)>> {
-        self.created.as_ref().map(|map| map.iter())
+    pub fn created(&mut self, id: &str) -> crate::Result<T> {
+        if let Some(result) = self.created.as_mut().and_then(|r| r.remove(id)) {
+            Ok(result)
+        } else if let Some(error) = self.not_created.as_mut().and_then(|r| r.remove(id)) {
+            Err(error.to_string_error().into())
+        } else {
+            Err(Error::Internal(format!("Id {} not found.", id)))
+        }
     }
 
-    pub fn updated(&self) -> Option<impl Iterator<Item = (&String, &Option<T>)>> {
-        self.updated.as_ref().map(|map| map.iter())
+    pub fn updated(&mut self, id: &str) -> crate::Result<Option<T>> {
+        if let Some(result) = self.updated.as_mut().and_then(|r| r.remove(id)) {
+            Ok(result)
+        } else if let Some(error) = self.not_updated.as_mut().and_then(|r| r.remove(id)) {
+            Err(error.to_string_error().into())
+        } else {
+            Err(Error::Internal(format!("Id {} not found.", id)))
+        }
     }
 
-    pub fn destroyed(&self) -> Option<&[String]> {
-        self.destroyed.as_deref()
+    pub fn destroyed(&mut self, id: &str) -> crate::Result<()> {
+        if self
+            .destroyed
+            .as_ref()
+            .map_or(false, |r| r.iter().any(|i| i == id))
+        {
+            Ok(())
+        } else if let Some(error) = self.not_destroyed.as_mut().and_then(|r| r.remove(id)) {
+            Err(error.to_string_error().into())
+        } else {
+            Err(Error::Internal(format!("Id {} not found.", id)))
+        }
     }
 
-    pub fn not_created(&self) -> Option<impl Iterator<Item = (&String, &SetError<U>)>> {
-        self.not_created.as_ref().map(|map| map.iter())
+    pub fn created_ids(&self) -> Option<impl Iterator<Item = &String>> {
+        self.created.as_ref().map(|map| map.keys())
     }
 
-    pub fn not_updated(&self) -> Option<impl Iterator<Item = (&String, &SetError<U>)>> {
-        self.not_updated.as_ref().map(|map| map.iter())
+    pub fn updated_ids(&self) -> Option<impl Iterator<Item = &String>> {
+        self.updated.as_ref().map(|map| map.keys())
     }
 
-    pub fn not_destroyed(&self) -> Option<impl Iterator<Item = (&String, &SetError<U>)>> {
-        self.not_destroyed.as_ref().map(|map| map.iter())
+    pub fn destroyed_ids(&self) -> Option<impl Iterator<Item = &String>> {
+        self.destroyed.as_ref().map(|list| list.iter())
     }
 
-    pub fn created_details(&self, id: &str) -> Option<&T> {
-        self.created.as_ref().and_then(|map| map.get(id))
+    pub fn not_created_ids(&self) -> Option<impl Iterator<Item = &String>> {
+        self.not_created.as_ref().map(|map| map.keys())
     }
 
-    pub fn updated_details(&self, id: &str) -> Option<&T> {
-        self.updated.as_ref().and_then(|map| map.get(id))?.as_ref()
+    pub fn not_updated_ids(&self) -> Option<impl Iterator<Item = &String>> {
+        self.not_updated.as_ref().map(|map| map.keys())
     }
 
-    pub fn not_created_details(&self, id: &str) -> Option<&SetError<U>> {
-        self.not_created.as_ref().and_then(|map| map.get(id))
-    }
-
-    pub fn not_updated_details(&self, id: &str) -> Option<&SetError<U>> {
-        self.not_updated.as_ref().and_then(|map| map.get(id))
-    }
-
-    pub fn not_destroyed_details(&self, id: &str) -> Option<&SetError<U>> {
-        self.not_destroyed.as_ref().and_then(|map| map.get(id))
+    pub fn not_destroyed_ids(&self) -> Option<impl Iterator<Item = &String>> {
+        self.not_destroyed.as_ref().map(|map| map.keys())
     }
 }
 
-impl<U> SetError<U> {
+impl<U: Display> SetError<U> {
     pub fn error(&self) -> &SetErrorType {
         &self.type_
     }
@@ -258,6 +280,67 @@ impl<U> SetError<U> {
 
     pub fn properties(&self) -> Option<&[U]> {
         self.properties.as_deref()
+    }
+
+    pub fn to_string_error(&self) -> SetError<String> {
+        SetError {
+            type_: self.type_.clone(),
+            description: self.description.as_ref().map(|s| s.to_string()),
+            properties: self
+                .properties
+                .as_ref()
+                .map(|s| s.iter().map(|s| s.to_string()).collect()),
+        }
+    }
+}
+
+impl<U: Display> Display for SetError<U> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        self.type_.fmt(f)?;
+        if let Some(description) = &self.description {
+            write!(f, ": {}", description)?;
+        }
+        if let Some(properties) = &self.properties {
+            write!(
+                f,
+                " (properties: {})",
+                properties
+                    .iter()
+                    .map(|v| v.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            )?;
+        }
+        Ok(())
+    }
+}
+
+impl Display for SetErrorType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            SetErrorType::Forbidden => write!(f, "Forbidden"),
+            SetErrorType::OverQuota => write!(f, "OverQuota"),
+            SetErrorType::TooLarge => write!(f, "TooLarge"),
+            SetErrorType::RateLimit => write!(f, "RateLimit"),
+            SetErrorType::NotFound => write!(f, "NotFound"),
+            SetErrorType::InvalidPatch => write!(f, "InvalidPatch"),
+            SetErrorType::WillDestroy => write!(f, "WillDestroy"),
+            SetErrorType::InvalidProperties => write!(f, "InvalidProperties"),
+            SetErrorType::Singleton => write!(f, "Singleton"),
+            SetErrorType::MailboxHasChild => write!(f, "MailboxHasChild"),
+            SetErrorType::MailboxHasEmail => write!(f, "MailboxHasEmail"),
+            SetErrorType::BlobNotFound => write!(f, "BlobNotFound"),
+            SetErrorType::TooManyKeywords => write!(f, "TooManyKeywords"),
+            SetErrorType::TooManyMailboxes => write!(f, "TooManyMailboxes"),
+            SetErrorType::ForbiddenFrom => write!(f, "ForbiddenFrom"),
+            SetErrorType::InvalidEmail => write!(f, "InvalidEmail"),
+            SetErrorType::TooManyRecipients => write!(f, "TooManyRecipients"),
+            SetErrorType::NoRecipients => write!(f, "NoRecipients"),
+            SetErrorType::InvalidRecipients => write!(f, "InvalidRecipients"),
+            SetErrorType::ForbiddenMailFrom => write!(f, "ForbiddenMailFrom"),
+            SetErrorType::ForbiddenToSend => write!(f, "ForbiddenToSend"),
+            SetErrorType::CannotUnsend => write!(f, "CannotUnsend"),
+        }
     }
 }
 

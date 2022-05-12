@@ -3,7 +3,13 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::core::set::{from_timestamp, SetError};
+use crate::{
+    core::{
+        request::ResultReference,
+        set::{from_timestamp, SetError},
+    },
+    Error,
+};
 
 use super::{Email, Property};
 
@@ -28,7 +34,13 @@ pub struct EmailImport {
     blob_id: String,
 
     #[serde(rename = "mailboxIds")]
-    mailbox_ids: HashMap<String, bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    mailbox_ids: Option<HashMap<String, bool>>,
+
+    #[serde(rename = "#mailboxIds")]
+    #[serde(skip_deserializing)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    mailbox_ids_ref: Option<ResultReference>,
 
     #[serde(rename = "keywords")]
     keywords: HashMap<String, bool>,
@@ -86,19 +98,35 @@ impl EmailImport {
         EmailImport {
             create_id,
             blob_id,
-            mailbox_ids: HashMap::new(),
+            mailbox_ids: None,
+            mailbox_ids_ref: None,
             keywords: HashMap::new(),
             received_at: None,
         }
     }
 
-    pub fn mailbox_id(&mut self, mailbox_id: impl Into<String>) -> &mut Self {
-        self.mailbox_ids.insert(mailbox_id.into(), true);
+    pub fn mailbox_ids<T, U>(&mut self, mailbox_ids: T) -> &mut Self
+    where
+        T: IntoIterator<Item = U>,
+        U: Into<String>,
+    {
+        self.mailbox_ids = Some(mailbox_ids.into_iter().map(|s| (s.into(), true)).collect());
+        self.mailbox_ids_ref = None;
         self
     }
 
-    pub fn keyword(&mut self, keyword: impl Into<String>) -> &mut Self {
-        self.keywords.insert(keyword.into(), true);
+    pub fn mailbox_ids_ref(&mut self, reference: ResultReference) -> &mut Self {
+        self.mailbox_ids_ref = reference.into();
+        self.mailbox_ids = None;
+        self
+    }
+
+    pub fn keywords<T, U>(&mut self, keywords: T) -> &mut Self
+    where
+        T: IntoIterator<Item = U>,
+        U: Into<String>,
+    {
+        self.keywords = keywords.into_iter().map(|s| (s.into(), true)).collect();
         self
     }
 
@@ -125,19 +153,21 @@ impl EmailImportResponse {
         &self.new_state
     }
 
-    pub fn created(&self) -> Option<impl Iterator<Item = &String>> {
+    pub fn created(&mut self, id: &str) -> crate::Result<Email> {
+        if let Some(result) = self.created.as_mut().and_then(|r| r.remove(id)) {
+            Ok(result)
+        } else if let Some(error) = self.not_created.as_mut().and_then(|r| r.remove(id)) {
+            Err(error.to_string_error().into())
+        } else {
+            Err(Error::Internal(format!("Id {} not found.", id)))
+        }
+    }
+
+    pub fn created_ids(&self) -> Option<impl Iterator<Item = &String>> {
         self.created.as_ref().map(|map| map.keys())
     }
 
-    pub fn not_created(&self) -> Option<impl Iterator<Item = &String>> {
+    pub fn not_created_ids(&self) -> Option<impl Iterator<Item = &String>> {
         self.not_created.as_ref().map(|map| map.keys())
-    }
-
-    pub fn created_details(&self, id: &str) -> Option<&Email> {
-        self.created.as_ref().and_then(|map| map.get(id))
-    }
-
-    pub fn not_created_reason(&self, id: &str) -> Option<&SetError<Property>> {
-        self.not_created.as_ref().and_then(|map| map.get(id))
     }
 }

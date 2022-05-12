@@ -1,4 +1,6 @@
+use crate::core::error::MethodError;
 use crate::core::error::ProblemDetails;
+use crate::core::set::SetError;
 use std::{collections::HashMap, fmt::Display};
 
 use serde::{Deserialize, Serialize};
@@ -130,12 +132,15 @@ pub struct Set;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[derive(Debug)]
 pub enum Error {
     Transport(reqwest::Error),
     Parse(serde_json::Error),
     Internal(String),
     Problem(ProblemDetails),
-    ServerError(String),
+    Server(String),
+    Method(MethodError),
+    Set(SetError<String>),
 }
 
 impl From<reqwest::Error> for Error {
@@ -150,6 +155,24 @@ impl From<serde_json::Error> for Error {
     }
 }
 
+impl From<MethodError> for Error {
+    fn from(e: MethodError) -> Self {
+        Error::Method(e)
+    }
+}
+
+impl From<SetError<String>> for Error {
+    fn from(e: SetError<String>) -> Self {
+        Error::Set(e)
+    }
+}
+
+impl From<&str> for Error {
+    fn from(s: &str) -> Self {
+        Error::Internal(s.to_string())
+    }
+}
+
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -157,7 +180,9 @@ impl Display for Error {
             Error::Parse(e) => write!(f, "Parse error: {}", e),
             Error::Internal(e) => write!(f, "Internal error: {}", e),
             Error::Problem(e) => write!(f, "Problem details: {}", e),
-            Error::ServerError(e) => write!(f, "Server error: {}", e),
+            Error::Server(e) => write!(f, "Server error: {}", e),
+            Error::Method(e) => write!(f, "Method error: {}", e),
+            Error::Set(e) => write!(f, "Set error: {}", e),
         }
     }
 }

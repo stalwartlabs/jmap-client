@@ -1,6 +1,8 @@
 pub mod get;
 pub mod set;
 
+use std::fmt::Display;
+
 use crate::core::set::date_not_set;
 use crate::core::set::string_not_set;
 use crate::Get;
@@ -60,4 +62,18 @@ pub enum Property {
     TextBody,
     #[serde(rename = "htmlBody")]
     HtmlBody,
+}
+
+impl Display for Property {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Property::Id => write!(f, "id"),
+            Property::IsEnabled => write!(f, "isEnabled"),
+            Property::FromDate => write!(f, "fromDate"),
+            Property::ToDate => write!(f, "toDate"),
+            Property::Subject => write!(f, "subject"),
+            Property::TextBody => write!(f, "textBody"),
+            Property::HtmlBody => write!(f, "htmlBody"),
+        }
+    }
 }

@@ -4,11 +4,13 @@ use reqwest::{
     header::{self},
     Response,
 };
+use serde::de::DeserializeOwned;
 
 use crate::{
     blob,
     core::{
-        request::Request,
+        request::{self, Request},
+        response,
         session::{Session, URLPart},
     },
     event_source, Error,
@@ -58,7 +60,7 @@ impl Client {
         let default_account_id = session
             .primary_accounts()
             .next()
-            .map(|a| a.0.to_string())
+            .map(|a| a.1.to_string())
             .unwrap_or_default();
 
         headers.insert(
@@ -94,8 +96,30 @@ impl Client {
         &self.headers
     }
 
-    pub async fn update_session(&mut self, new_state: &str) -> crate::Result<()> {
-        if new_state != self.session.state() {
+    pub async fn send<R>(
+        &mut self,
+        request: &request::Request<'_>,
+    ) -> crate::Result<response::Response<R>>
+    where
+        R: DeserializeOwned,
+    {
+        let response: response::Response<R> = serde_json::from_slice(
+            &Client::handle_error(
+                reqwest::Client::builder()
+                    .timeout(Duration::from_millis(self.timeout))
+                    .default_headers(self.headers.clone())
+                    .build()?
+                    .post(self.session.api_url())
+                    .body(serde_json::to_string(&request)?)
+                    .send()
+                    .await?,
+            )
+            .await?
+            .bytes()
+            .await?,
+        )?;
+
+        if response.session_state() != self.session.state() {
             let session: Session = serde_json::from_slice(
                 &Client::handle_error(
                     reqwest::Client::builder()
@@ -115,7 +139,8 @@ impl Client {
             self.event_source_url = URLPart::parse(session.event_source_url())?;
             self.session = session;
         }
-        Ok(())
+
+        Ok(response)
     }
 
     pub fn set_default_account_id(&mut self, defaul_account_id: impl Into<String>) {
@@ -126,7 +151,7 @@ impl Client {
         &self.default_account_id
     }
 
-    pub fn request(&mut self) -> Request<'_> {
+    pub fn build(&mut self) -> Request<'_> {
         Request::new(self)
     }
 
@@ -154,18 +179,28 @@ impl Client {
                 &response.bytes().await?,
             )?))
         } else {
-            Err(Error::ServerError(format!("{}", response.status())))
+            Err(Error::Server(format!("{}", response.status())))
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::core::response::Response;
 
-    #[test]
-    fn test_serialize() {
-        let r: Response = serde_json::from_slice(
+    fn _test_serialize() {
+
+        /*let coco = request
+        .send()
+        .await
+        .unwrap()
+        .unwrap_method_responses()
+        .pop()
+        .unwrap()
+        .unwrap_get_email()
+        .unwrap();*/
+        //coco.list().first().unwrap().subject().unwrap();
+
+        /*let r: Response = serde_json::from_slice(
             br#"{"sessionState": "123", "methodResponses": [[ "Email/query", {
                 "accountId": "A1",
                 "queryState": "abcdefg",
@@ -202,9 +237,9 @@ mod tests {
                 "notFound": []
             }, "t2" ]]}"#,
         )
-        .unwrap();
+        .unwrap();*/
 
-        println!("{:?}", r);
+        //println!("{:?}", r);
 
         /*let mut client = Client::connect("coco");
         let mut request = client.request();

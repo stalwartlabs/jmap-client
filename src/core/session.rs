@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::email::{MailCapabilities, SubmissionCapabilities};
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Session {
     #[serde(rename = "capabilities")]
     capabilities: HashMap<String, Capabilities>,
@@ -34,7 +34,7 @@ pub struct Session {
     state: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Account {
     #[serde(rename = "name")]
     name: String,
@@ -49,7 +49,7 @@ pub struct Account {
     account_capabilities: HashMap<String, Capabilities>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Capabilities {
     Core(CoreCapabilities),
@@ -59,7 +59,7 @@ pub enum Capabilities {
     Other(serde_json::Value),
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoreCapabilities {
     #[serde(rename = "maxSizeUpload")]
     max_size_upload: usize,
@@ -86,7 +86,7 @@ pub struct CoreCapabilities {
     collation_algorithms: Vec<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmptyCapabilities {}
 
 impl Session {
@@ -232,6 +232,14 @@ impl<T: URLParser> URLPart<T> {
                 _ => {
                     buf.push(ch);
                 }
+            }
+        }
+
+        if !buf.is_empty() {
+            if !in_parameter {
+                parts.push(URLPart::Value(buf.clone()));
+            } else {
+                return Err(crate::Error::Internal(format!("Invalid URL: {}", url)));
             }
         }
 
