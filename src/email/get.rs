@@ -1,7 +1,8 @@
 use crate::Get;
 
 use super::{
-    Email, EmailAddress, EmailAddressGroup, EmailBodyPart, EmailBodyValue, EmailHeader, Field,
+    Email, EmailAddress, EmailAddressGroup, EmailBodyPart, EmailBodyValue, EmailHeader, Header,
+    HeaderValue,
 };
 
 impl Email<Get> {
@@ -109,12 +110,17 @@ impl Email<Get> {
         *self.has_attachment.as_ref().unwrap_or(&false)
     }
 
-    pub fn header(&self, id: &str) -> Option<&Field> {
-        self.others.get(id).and_then(|v| v.as_ref())
+    pub fn header(&self, id: &Header) -> Option<&HeaderValue> {
+        self.headers.get(id).and_then(|v| v.as_ref())
     }
 
-    pub fn has_header(&self, id: &str) -> bool {
-        self.others.contains_key(id)
+    pub fn has_header(&self, id: &Header) -> bool {
+        self.headers.contains_key(id)
+    }
+
+    #[cfg(feature = "debug")]
+    pub fn into_test(self) -> super::TestEmail {
+        self.into()
     }
 }
 
@@ -133,6 +139,10 @@ impl EmailBodyPart<Get> {
 
     pub fn headers(&self) -> Option<&[EmailHeader]> {
         self.headers.as_deref()
+    }
+
+    pub fn header(&self, id: &Header) -> Option<&HeaderValue> {
+        self.header.as_ref().and_then(|v| v.get(id))
     }
 
     pub fn name(&self) -> Option<&str> {

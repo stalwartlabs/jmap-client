@@ -18,7 +18,8 @@ chrono = { version = "0.4", features = ["serde"]}
 reqwest = "0.11"
 base64 = "0.13"
 
-#[dev-dependencies]
+[features]
+debug = []
 
 [profile.bench]
 debug = true

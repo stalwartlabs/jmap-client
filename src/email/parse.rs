@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::Error;
+
 use super::{BodyProperty, Email, Property};
 
 #[derive(Debug, Clone, Serialize)]
@@ -13,22 +15,28 @@ pub struct EmailParseRequest {
     blob_ids: Vec<String>,
 
     #[serde(rename = "properties")]
-    properties: Vec<Property>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    properties: Option<Vec<Property>>,
 
     #[serde(rename = "bodyProperties")]
-    body_properties: Vec<BodyProperty>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    body_properties: Option<Vec<BodyProperty>>,
 
     #[serde(rename = "fetchTextBodyValues")]
-    fetch_text_body_values: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fetch_text_body_values: Option<bool>,
 
     #[serde(rename = "fetchHTMLBodyValues")]
-    fetch_html_body_values: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fetch_html_body_values: Option<bool>,
 
     #[serde(rename = "fetchAllBodyValues")]
-    fetch_all_body_values: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fetch_all_body_values: Option<bool>,
 
     #[serde(rename = "maxBodyValueBytes")]
-    max_body_value_bytes: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    max_body_value_bytes: Option<usize>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -51,12 +59,12 @@ impl EmailParseRequest {
         EmailParseRequest {
             account_id,
             blob_ids: Vec::new(),
-            properties: Vec::new(),
-            body_properties: Vec::new(),
-            fetch_text_body_values: false,
-            fetch_html_body_values: false,
-            fetch_all_body_values: false,
-            max_body_value_bytes: 0,
+            properties: None,
+            body_properties: None,
+            fetch_text_body_values: None,
+            fetch_html_body_values: None,
+            fetch_all_body_values: None,
+            max_body_value_bytes: None,
         }
     }
 
@@ -70,7 +78,7 @@ impl EmailParseRequest {
     }
 
     pub fn properties(&mut self, properties: impl IntoIterator<Item = Property>) -> &mut Self {
-        self.properties = properties.into_iter().collect();
+        self.properties = Some(properties.into_iter().collect());
         self
     }
 
@@ -78,27 +86,27 @@ impl EmailParseRequest {
         &mut self,
         body_properties: impl IntoIterator<Item = BodyProperty>,
     ) -> &mut Self {
-        self.body_properties = body_properties.into_iter().collect();
+        self.body_properties = Some(body_properties.into_iter().collect());
         self
     }
 
     pub fn fetch_text_body_values(&mut self, fetch_text_body_values: bool) -> &mut Self {
-        self.fetch_text_body_values = fetch_text_body_values;
+        self.fetch_text_body_values = fetch_text_body_values.into();
         self
     }
 
     pub fn fetch_html_body_values(&mut self, fetch_html_body_values: bool) -> &mut Self {
-        self.fetch_html_body_values = fetch_html_body_values;
+        self.fetch_html_body_values = fetch_html_body_values.into();
         self
     }
 
     pub fn fetch_all_body_values(&mut self, fetch_all_body_values: bool) -> &mut Self {
-        self.fetch_all_body_values = fetch_all_body_values;
+        self.fetch_all_body_values = fetch_all_body_values.into();
         self
     }
 
     pub fn max_body_value_bytes(&mut self, max_body_value_bytes: usize) -> &mut Self {
-        self.max_body_value_bytes = max_body_value_bytes;
+        self.max_body_value_bytes = max_body_value_bytes.into();
         self
     }
 }
@@ -108,12 +116,26 @@ impl EmailParseResponse {
         &self.account_id
     }
 
-    pub fn parsed(&self) -> Option<impl Iterator<Item = &String>> {
-        self.parsed.as_ref().map(|map| map.keys())
+    pub fn parsed(&mut self, blob_id: &str) -> crate::Result<Email> {
+        if let Some(result) = self.parsed.as_mut().and_then(|r| r.remove(blob_id)) {
+            Ok(result)
+        } else if self
+            .not_parsable
+            .as_ref()
+            .map(|np| np.iter().any(|id| id == blob_id))
+            .unwrap_or(false)
+        {
+            Err(Error::Internal(format!(
+                "blobId {} is not parsable.",
+                blob_id
+            )))
+        } else {
+            Err(Error::Internal(format!("blobId {} not found.", blob_id)))
+        }
     }
 
-    pub fn parsed_details(&self, id: &str) -> Option<&Email> {
-        self.parsed.as_ref().and_then(|map| map.get(id))
+    pub fn parsed_list(&self) -> Option<impl Iterator<Item = (&String, &Email)>> {
+        self.parsed.as_ref().map(|map| map.iter())
     }
 
     pub fn not_parsable(&self) -> Option<&[String]> {

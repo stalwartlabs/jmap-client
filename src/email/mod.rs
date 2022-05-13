@@ -7,7 +7,7 @@ pub mod search_snippet;
 pub mod set;
 
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::{de::Visitor, Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fmt::{self, Display, Formatter},
@@ -56,47 +56,67 @@ pub struct Email<State = Get> {
     #[serde(skip_serializing_if = "Option::is_none")]
     received_at: Option<DateTime<Utc>>,
 
-    #[serde(rename = "messageId", alias = "header:Message-ID:asMessageIds")]
+    #[cfg_attr(
+        not(feature = "debug"),
+        serde(alias = "header:Message-ID:asMessageIds")
+    )]
+    #[serde(rename = "messageId")]
     #[serde(skip_serializing_if = "Option::is_none")]
     message_id: Option<Vec<String>>,
 
-    #[serde(rename = "inReplyTo", alias = "header:In-Reply-To:asMessageIds")]
+    #[serde(rename = "inReplyTo")]
+    #[cfg_attr(
+        not(feature = "debug"),
+        serde(alias = "header:In-Reply-To:asMessageIds")
+    )]
     #[serde(skip_serializing_if = "Option::is_none")]
     in_reply_to: Option<Vec<String>>,
 
-    #[serde(rename = "references", alias = "header:References:asMessageIds")]
+    #[serde(rename = "references")]
+    #[cfg_attr(
+        not(feature = "debug"),
+        serde(alias = "header:References:asMessageIds")
+    )]
     #[serde(skip_serializing_if = "Option::is_none")]
     references: Option<Vec<String>>,
 
-    #[serde(rename = "sender", alias = "header:Sender:asAddresses")]
+    #[serde(rename = "sender")]
+    #[cfg_attr(not(feature = "debug"), serde(alias = "header:Sender:asAddresses"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     sender: Option<Vec<EmailAddress>>,
 
-    #[serde(rename = "from", alias = "header:From:asAddresses")]
+    #[serde(rename = "from")]
+    #[cfg_attr(not(feature = "debug"), serde(alias = "header:From:asAddresses"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     from: Option<Vec<EmailAddress>>,
 
-    #[serde(rename = "to", alias = "header:To:asAddresses")]
+    #[serde(rename = "to")]
+    #[cfg_attr(not(feature = "debug"), serde(alias = "header:To:asAddresses"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     to: Option<Vec<EmailAddress>>,
 
-    #[serde(rename = "cc", alias = "header:Cc:asAddresses")]
+    #[serde(rename = "cc")]
+    #[cfg_attr(not(feature = "debug"), serde(alias = "header:Cc:asAddresses"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     cc: Option<Vec<EmailAddress>>,
 
-    #[serde(rename = "bcc", alias = "header:Bcc:asAddresses")]
+    #[serde(rename = "bcc")]
+    #[cfg_attr(not(feature = "debug"), serde(alias = "header:Bcc:asAddresses"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     bcc: Option<Vec<EmailAddress>>,
 
-    #[serde(rename = "replyTo", alias = "header:Reply-To:asAddresses")]
+    #[serde(rename = "replyTo")]
+    #[cfg_attr(not(feature = "debug"), serde(alias = "header:Reply-To:asAddresses"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     reply_to: Option<Vec<EmailAddress>>,
 
-    #[serde(rename = "subject", alias = "header:Subject:asText")]
+    #[serde(rename = "subject")]
+    #[cfg_attr(not(feature = "debug"), serde(alias = "header:Subject:asText"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     subject: Option<String>,
 
-    #[serde(rename = "sentAt", alias = "header:Date:asDate")]
+    #[serde(rename = "sentAt")]
+    #[cfg_attr(not(feature = "debug"), serde(alias = "header:Date:asDate"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     sent_at: Option<DateTime<Utc>>,
 
@@ -130,7 +150,12 @@ pub struct Email<State = Get> {
 
     #[serde(flatten)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
-    others: HashMap<String, Option<Field>>,
+    headers: HashMap<Header, Option<HeaderValue>>,
+
+    #[serde(flatten)]
+    #[serde(skip_deserializing)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    patch: HashMap<String, bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -185,6 +210,10 @@ pub struct EmailBodyPart<State = Get> {
     #[serde(rename = "subParts")]
     #[serde(skip_serializing_if = "Option::is_none")]
     sub_parts: Option<Vec<EmailBodyPart>>,
+
+    #[serde(flatten)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    header: Option<HashMap<Header, HeaderValue>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -200,17 +229,6 @@ pub struct EmailBodyValue<State = Get> {
 
     #[serde(rename = "isTruncated")]
     is_truncated: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum Field {
-    Text(String),
-    TextList(Vec<String>),
-    Date(DateTime<Utc>),
-    Addresses(Vec<EmailAddress>),
-    GroupedAddresses(Vec<EmailAddressGroup>),
-    Bool(bool),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -240,86 +258,100 @@ pub struct EmailHeader<State = Get> {
     value: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub enum Property {
-    #[serde(rename = "id")]
     Id,
-    #[serde(rename = "blobId")]
     BlobId,
-    #[serde(rename = "threadId")]
     ThreadId,
-    #[serde(rename = "mailboxIds")]
     MailboxIds,
-    #[serde(rename = "keywords")]
     Keywords,
-    #[serde(rename = "size")]
     Size,
-    #[serde(rename = "receivedAt")]
     ReceivedAt,
-    #[serde(rename = "messageId")]
     MessageId,
-    #[serde(rename = "inReplyTo")]
     InReplyTo,
-    #[serde(rename = "references")]
     References,
-    #[serde(rename = "sender")]
     Sender,
-    #[serde(rename = "from")]
     From,
-    #[serde(rename = "to")]
     To,
-    #[serde(rename = "cc")]
     Cc,
-    #[serde(rename = "bcc")]
     Bcc,
-    #[serde(rename = "replyTo")]
     ReplyTo,
-    #[serde(rename = "subject")]
     Subject,
-    #[serde(rename = "sentAt")]
     SentAt,
-    #[serde(rename = "bodyStructure")]
     BodyStructure,
-    #[serde(rename = "bodyValues")]
     BodyValues,
-    #[serde(rename = "textBody")]
     TextBody,
-    #[serde(rename = "htmlBody")]
     HtmlBody,
-    #[serde(rename = "attachments")]
     Attachments,
-    #[serde(rename = "hasAttachment")]
     HasAttachment,
-    #[serde(rename = "preview")]
     Preview,
+    Header(Header),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum BodyProperty {
-    #[serde(rename = "partId")]
-    PartId,
-    #[serde(rename = "blobId")]
-    BlobId,
-    #[serde(rename = "size")]
-    Size,
-    #[serde(rename = "headers")]
-    Headers,
-    #[serde(rename = "name")]
-    Name,
-    #[serde(rename = "type")]
-    Type,
-    #[serde(rename = "charset")]
-    Charset,
-    #[serde(rename = "disposition")]
-    Disposition,
-    #[serde(rename = "cid")]
-    Cid,
-    #[serde(rename = "language")]
-    Language,
-    #[serde(rename = "location")]
-    Location,
-    #[serde(rename = "subParts")]
-    SubParts,
+#[serde(untagged)]
+pub enum HeaderValue {
+    AsDate(DateTime<Utc>),
+    AsDateAll(Vec<DateTime<Utc>>),
+    AsText(String),
+    AsTextAll(Vec<String>),
+    AsTextListAll(Vec<Vec<String>>),
+    AsAddressesAll(Vec<Vec<EmailAddress>>),
+    AsAddresses(Vec<EmailAddress>),
+    AsGroupedAddressesAll(Vec<Vec<EmailAddressGroup>>),
+    AsGroupedAddresses(Vec<EmailAddressGroup>),
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone)]
+pub struct Header {
+    pub name: String,
+    pub form: HeaderForm,
+    pub all: bool,
+}
+
+#[derive(PartialEq, Eq, Hash, Debug, Clone, PartialOrd, Ord)]
+pub enum HeaderForm {
+    Raw,
+    Text,
+    Addresses,
+    GroupedAddresses,
+    MessageIds,
+    Date,
+    URLs,
+}
+
+impl Property {
+    fn parse(value: &str) -> Option<Self> {
+        match value {
+            "id" => Some(Property::Id),
+            "blobId" => Some(Property::BlobId),
+            "threadId" => Some(Property::ThreadId),
+            "mailboxIds" => Some(Property::MailboxIds),
+            "keywords" => Some(Property::Keywords),
+            "size" => Some(Property::Size),
+            "receivedAt" => Some(Property::ReceivedAt),
+            "messageId" => Some(Property::MessageId),
+            "inReplyTo" => Some(Property::InReplyTo),
+            "references" => Some(Property::References),
+            "sender" => Some(Property::Sender),
+            "from" => Some(Property::From),
+            "to" => Some(Property::To),
+            "cc" => Some(Property::Cc),
+            "bcc" => Some(Property::Bcc),
+            "replyTo" => Some(Property::ReplyTo),
+            "subject" => Some(Property::Subject),
+            "sentAt" => Some(Property::SentAt),
+            "hasAttachment" => Some(Property::HasAttachment),
+            "preview" => Some(Property::Preview),
+            "bodyValues" => Some(Property::BodyValues),
+            "textBody" => Some(Property::TextBody),
+            "htmlBody" => Some(Property::HtmlBody),
+            "attachments" => Some(Property::Attachments),
+            "bodyStructure" => Some(Property::BodyStructure),
+            _ if value.starts_with("header:") => Some(Property::Header(Header::parse(value)?)),
+            _ => None,
+        }
+    }
 }
 
 impl Display for Property {
@@ -350,7 +382,300 @@ impl Display for Property {
             Property::Attachments => write!(f, "attachments"),
             Property::HasAttachment => write!(f, "hasAttachment"),
             Property::Preview => write!(f, "preview"),
+            Property::Header(header) => header.fmt(f),
         }
+    }
+}
+
+impl Serialize for Property {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+struct PropertyVisitor;
+
+impl<'de> Visitor<'de> for PropertyVisitor {
+    type Value = Property;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a valid JMAP e-mail property")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Property::parse(v).ok_or_else(|| {
+            serde::de::Error::custom(format!("Failed to parse JMAP property '{}'", v))
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for Property {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(PropertyVisitor)
+    }
+}
+
+impl Serialize for Header {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+struct HeaderVisitor;
+
+impl<'de> Visitor<'de> for HeaderVisitor {
+    type Value = Header;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a valid JMAP header")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Header::parse(v)
+            .ok_or_else(|| serde::de::Error::custom(format!("Failed to parse JMAP header '{}'", v)))
+    }
+}
+
+impl<'de> Deserialize<'de> for Header {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(HeaderVisitor)
+    }
+}
+
+impl HeaderForm {
+    pub fn parse(value: &str) -> Option<HeaderForm> {
+        match value {
+            "asText" => Some(HeaderForm::Text),
+            "asAddresses" => Some(HeaderForm::Addresses),
+            "asGroupedAddresses" => Some(HeaderForm::GroupedAddresses),
+            "asMessageIds" => Some(HeaderForm::MessageIds),
+            "asDate" => Some(HeaderForm::Date),
+            "asURLs" => Some(HeaderForm::URLs),
+            _ => None,
+        }
+    }
+}
+
+impl Header {
+    pub fn as_raw(name: impl Into<String>, all: bool) -> Header {
+        Header {
+            name: name.into(),
+            form: HeaderForm::Raw,
+            all,
+        }
+    }
+
+    pub fn as_text(name: impl Into<String>, all: bool) -> Header {
+        Header {
+            name: name.into(),
+            form: HeaderForm::Text,
+            all,
+        }
+    }
+
+    pub fn as_addresses(name: impl Into<String>, all: bool) -> Header {
+        Header {
+            name: name.into(),
+            form: HeaderForm::Addresses,
+            all,
+        }
+    }
+
+    pub fn as_grouped_addresses(name: impl Into<String>, all: bool) -> Header {
+        Header {
+            name: name.into(),
+            form: HeaderForm::GroupedAddresses,
+            all,
+        }
+    }
+
+    pub fn as_message_ids(name: impl Into<String>, all: bool) -> Header {
+        Header {
+            name: name.into(),
+            form: HeaderForm::MessageIds,
+            all,
+        }
+    }
+
+    pub fn as_date(name: impl Into<String>, all: bool) -> Header {
+        Header {
+            name: name.into(),
+            form: HeaderForm::Date,
+            all,
+        }
+    }
+
+    pub fn as_urls(name: impl Into<String>, all: bool) -> Header {
+        Header {
+            name: name.into(),
+            form: HeaderForm::URLs,
+            all,
+        }
+    }
+
+    pub fn parse(value: &str) -> Option<Header> {
+        let mut all = false;
+        let mut form = HeaderForm::Raw;
+        let mut header = None;
+        for (pos, part) in value.split(':').enumerate() {
+            match pos {
+                0 if part == "header" => (),
+                1 => {
+                    header = part.into();
+                }
+                2 | 3 if part == "all" => all = true,
+                2 => {
+                    form = HeaderForm::parse(part)?;
+                }
+                _ => return None,
+            }
+        }
+        Header {
+            name: header?.to_string(),
+            form,
+            all,
+        }
+        .into()
+    }
+}
+
+impl Display for Header {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "header:")?;
+        self.name.fmt(f)?;
+        self.form.fmt(f)?;
+        if self.all {
+            write!(f, ":all")
+        } else {
+            Ok(())
+        }
+    }
+}
+
+impl Display for HeaderForm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            HeaderForm::Raw => Ok(()),
+            HeaderForm::Text => write!(f, ":asText"),
+            HeaderForm::Addresses => write!(f, ":asAddresses"),
+            HeaderForm::GroupedAddresses => write!(f, ":asGroupedAddresses"),
+            HeaderForm::MessageIds => write!(f, ":asMessageIds"),
+            HeaderForm::Date => write!(f, ":asDate"),
+            HeaderForm::URLs => write!(f, ":asURLs"),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum BodyProperty {
+    PartId,
+    BlobId,
+    Size,
+    Headers,
+    Name,
+    Type,
+    Charset,
+    Disposition,
+    Cid,
+    Language,
+    Location,
+    SubParts,
+    Header(Header),
+}
+
+impl BodyProperty {
+    fn parse(value: &str) -> Option<BodyProperty> {
+        match value {
+            "partId" => Some(BodyProperty::PartId),
+            "blobId" => Some(BodyProperty::BlobId),
+            "size" => Some(BodyProperty::Size),
+            "name" => Some(BodyProperty::Name),
+            "type" => Some(BodyProperty::Type),
+            "charset" => Some(BodyProperty::Charset),
+            "headers" => Some(BodyProperty::Headers),
+            "disposition" => Some(BodyProperty::Disposition),
+            "cid" => Some(BodyProperty::Cid),
+            "language" => Some(BodyProperty::Language),
+            "location" => Some(BodyProperty::Location),
+            "subParts" => Some(BodyProperty::SubParts),
+            _ if value.starts_with("header:") => Some(BodyProperty::Header(Header::parse(value)?)),
+            _ => None,
+        }
+    }
+}
+
+impl Display for BodyProperty {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BodyProperty::PartId => write!(f, "partId"),
+            BodyProperty::BlobId => write!(f, "blobId"),
+            BodyProperty::Size => write!(f, "size"),
+            BodyProperty::Name => write!(f, "name"),
+            BodyProperty::Type => write!(f, "type"),
+            BodyProperty::Charset => write!(f, "charset"),
+            BodyProperty::Header(header) => header.fmt(f),
+            BodyProperty::Headers => write!(f, "headers"),
+            BodyProperty::Disposition => write!(f, "disposition"),
+            BodyProperty::Cid => write!(f, "cid"),
+            BodyProperty::Language => write!(f, "language"),
+            BodyProperty::Location => write!(f, "location"),
+            BodyProperty::SubParts => write!(f, "subParts"),
+        }
+    }
+}
+
+impl Serialize for BodyProperty {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+struct BodyPropertyVisitor;
+
+impl<'de> Visitor<'de> for BodyPropertyVisitor {
+    type Value = BodyProperty;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a valid JMAP body property")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        BodyProperty::parse(v).ok_or_else(|| {
+            serde::de::Error::custom(format!("Failed to parse JMAP body property '{}'", v))
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for BodyProperty {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(BodyPropertyVisitor)
     }
 }
 
@@ -387,7 +712,8 @@ pub struct SubmissionCapabilities {
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct QueryArguments {
     #[serde(rename = "collapseThreads")]
-    collapse_threads: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    collapse_threads: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Default)]
@@ -395,19 +721,27 @@ pub struct GetArguments {
     #[serde(rename = "bodyProperties")]
     #[serde(skip_serializing_if = "Option::is_none")]
     body_properties: Option<Vec<BodyProperty>>,
+
     #[serde(rename = "fetchTextBodyValues")]
-    fetch_text_body_values: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fetch_text_body_values: Option<bool>,
+
     #[serde(rename = "fetchHTMLBodyValues")]
-    fetch_html_body_values: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fetch_html_body_values: Option<bool>,
+
     #[serde(rename = "fetchAllBodyValues")]
-    fetch_all_body_values: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fetch_all_body_values: Option<bool>,
+
     #[serde(rename = "maxBodyValueBytes")]
-    max_body_value_bytes: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    max_body_value_bytes: Option<usize>,
 }
 
 impl QueryArguments {
     pub fn collapse_threads(&mut self, collapse_threads: bool) {
-        self.collapse_threads = collapse_threads;
+        self.collapse_threads = collapse_threads.into();
     }
 }
 
@@ -421,22 +755,22 @@ impl GetArguments {
     }
 
     pub fn fetch_text_body_values(&mut self, fetch_text_body_values: bool) -> &mut Self {
-        self.fetch_text_body_values = fetch_text_body_values;
+        self.fetch_text_body_values = fetch_text_body_values.into();
         self
     }
 
     pub fn fetch_html_body_values(&mut self, fetch_html_body_values: bool) -> &mut Self {
-        self.fetch_html_body_values = fetch_html_body_values;
+        self.fetch_html_body_values = fetch_html_body_values.into();
         self
     }
 
     pub fn fetch_all_body_values(&mut self, fetch_all_body_values: bool) -> &mut Self {
-        self.fetch_all_body_values = fetch_all_body_values;
+        self.fetch_all_body_values = fetch_all_body_values.into();
         self
     }
 
     pub fn max_body_value_bytes(&mut self, max_body_value_bytes: usize) -> &mut Self {
-        self.max_body_value_bytes = max_body_value_bytes;
+        self.max_body_value_bytes = max_body_value_bytes.into();
         self
     }
 }
@@ -474,5 +808,152 @@ impl SubmissionCapabilities {
 
     pub fn submission_extensions(&self) -> &[String] {
         &self.submission_extensions
+    }
+}
+
+#[cfg(feature = "debug")]
+use std::collections::BTreeMap;
+
+#[cfg(feature = "debug")]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct TestEmail {
+    #[serde(rename = "mailboxIds")]
+    pub mailbox_ids: Option<BTreeMap<String, bool>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keywords: Option<BTreeMap<String, bool>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub size: Option<usize>,
+
+    #[serde(rename = "receivedAt")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub received_at: Option<DateTime<Utc>>,
+
+    #[serde(rename = "messageId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message_id: Option<Vec<String>>,
+
+    #[serde(rename = "inReplyTo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub in_reply_to: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub references: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sender: Option<Vec<EmailAddress>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from: Option<Vec<EmailAddress>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub to: Option<Vec<EmailAddress>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cc: Option<Vec<EmailAddress>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bcc: Option<Vec<EmailAddress>>,
+
+    #[serde(rename = "replyTo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reply_to: Option<Vec<EmailAddress>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subject: Option<String>,
+
+    #[serde(rename = "sentAt")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sent_at: Option<DateTime<Utc>>,
+
+    #[serde(rename = "bodyStructure")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub body_structure: Option<Box<EmailBodyPart>>,
+
+    #[serde(rename = "bodyValues")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub body_values: Option<BTreeMap<String, EmailBodyValue>>,
+
+    #[serde(rename = "textBody")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text_body: Option<Vec<EmailBodyPart>>,
+
+    #[serde(rename = "htmlBody")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub html_body: Option<Vec<EmailBodyPart>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attachments: Option<Vec<EmailBodyPart>>,
+
+    #[serde(rename = "hasAttachment")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub has_attachment: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preview: Option<String>,
+
+    #[serde(flatten)]
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub headers: BTreeMap<Header, Option<HeaderValue>>,
+}
+
+#[cfg(feature = "debug")]
+impl From<Email> for TestEmail {
+    fn from(email: Email) -> Self {
+        TestEmail {
+            mailbox_ids: email.mailbox_ids.map(|ids| ids.into_iter().collect()),
+            keywords: email
+                .keywords
+                .map(|keywords| keywords.into_iter().collect()),
+            size: email.size,
+            received_at: email.received_at,
+            message_id: email.message_id,
+            in_reply_to: email.in_reply_to,
+            references: email.references,
+            sender: email.sender,
+            from: email.from,
+            to: email.to,
+            cc: email.cc,
+            bcc: email.bcc,
+            reply_to: email.reply_to,
+            subject: email.subject,
+            sent_at: email.sent_at,
+            body_structure: email.body_structure.map(|b| b.into_sorted_part().into()),
+            body_values: email
+                .body_values
+                .map(|body_values| body_values.into_iter().collect()),
+            text_body: email
+                .text_body
+                .map(|parts| parts.into_iter().map(|b| b.into_sorted_part()).collect()),
+            html_body: email
+                .html_body
+                .map(|parts| parts.into_iter().map(|b| b.into_sorted_part()).collect()),
+            attachments: email
+                .attachments
+                .map(|parts| parts.into_iter().map(|b| b.into_sorted_part()).collect()),
+            has_attachment: email.has_attachment,
+            preview: email.preview,
+            headers: email.headers.into_iter().collect(),
+        }
+    }
+}
+
+#[cfg(feature = "debug")]
+impl EmailBodyPart {
+    pub fn sort_headers(&mut self) {
+        if let Some(headers) = self.headers.as_mut() {
+            headers.sort_unstable_by_key(|h| (h.name.clone(), h.value.clone()));
+        }
+        if let Some(subparts) = self.sub_parts.as_mut() {
+            for sub_part in subparts {
+                sub_part.sort_headers();
+            }
+        }
+    }
+
+    pub fn into_sorted_part(mut self) -> Self {
+        self.sort_headers();
+        self
     }
 }

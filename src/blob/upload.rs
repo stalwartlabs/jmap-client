@@ -23,10 +23,10 @@ pub struct UploadResponse {
 impl Client {
     pub async fn upload(
         &self,
-        account_id: &str,
-        content_type: Option<&str>,
         blob: Vec<u8>,
+        content_type: Option<&str>,
     ) -> crate::Result<UploadResponse> {
+        let account_id = self.default_account_id();
         let mut upload_url =
             String::with_capacity(self.session().upload_url().len() + account_id.len());
 

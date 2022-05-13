@@ -80,8 +80,9 @@ impl Client {
         })
     }
 
-    pub fn set_timeout(&mut self, timeout: u64) {
+    pub fn set_timeout(&mut self, timeout: u64) -> &mut Self {
         self.timeout = timeout;
+        self
     }
 
     pub fn timeout(&self) -> u64 {
@@ -143,8 +144,9 @@ impl Client {
         Ok(response)
     }
 
-    pub fn set_default_account_id(&mut self, defaul_account_id: impl Into<String>) {
+    pub fn set_default_account_id(&mut self, defaul_account_id: impl Into<String>) -> &mut Self {
         self.default_account_id = defaul_account_id.into();
+        self
     }
 
     pub fn default_account_id(&self) -> &str {
@@ -186,8 +188,23 @@ impl Client {
 
 #[cfg(test)]
 mod tests {
+    use crate::email::{EmailBodyPart, Header, Property};
 
-    fn _test_serialize() {
+    #[test]
+    fn test_serialize() {
+        println!(
+            "{:?}",
+            serde_json::from_slice::<EmailBodyPart>(
+                br#"{
+                "partId": "0",
+                "header:X-Custom-Header": "123",
+                "type": "text/html",
+                "charset": "us-ascii",
+                "size": 175
+              }"#
+            )
+            .unwrap()
+        );
 
         /*let coco = request
         .send()

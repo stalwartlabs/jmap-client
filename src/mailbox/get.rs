@@ -7,6 +7,10 @@ impl Mailbox<Get> {
         self.id.as_ref().unwrap()
     }
 
+    pub fn unwrap_id(self) -> String {
+        self.id.unwrap()
+    }
+
     pub fn name(&self) -> &str {
         self.name.as_ref().unwrap()
     }

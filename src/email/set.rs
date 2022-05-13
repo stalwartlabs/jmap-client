@@ -9,7 +9,8 @@ use crate::{
 };
 
 use super::{
-    Email, EmailAddress, EmailAddressGroup, EmailBodyPart, EmailBodyValue, EmailHeader, Field,
+    Email, EmailAddress, EmailAddressGroup, EmailBodyPart, EmailBodyValue, EmailHeader, Header,
+    HeaderValue,
 };
 
 impl Email<Set> {
@@ -31,10 +32,7 @@ impl Email<Set> {
 
     pub fn mailbox_id(&mut self, mailbox_id: &str, set: bool) -> &mut Self {
         self.mailbox_ids = None;
-        self.others.insert(
-            format!("mailboxIds/{}", mailbox_id),
-            Field::Bool(set).into(),
-        );
+        self.patch.insert(format!("mailboxIds/{}", mailbox_id), set);
         self
     }
 
@@ -49,8 +47,7 @@ impl Email<Set> {
 
     pub fn keyword(&mut self, keyword: &str, set: bool) -> &mut Self {
         self.keywords = None;
-        self.others
-            .insert(format!("keywords/{}", keyword), Field::Bool(set).into());
+        self.patch.insert(format!("keywords/{}", keyword), set);
         self
     }
 
@@ -174,8 +171,8 @@ impl Email<Set> {
         self
     }
 
-    pub fn header(&mut self, header: String, value: impl Into<Field>) -> &mut Self {
-        self.others.insert(header, Some(value.into()));
+    pub fn header(&mut self, header: Header, value: impl Into<HeaderValue>) -> &mut Self {
+        self.headers.insert(header, Some(value.into()));
         self
     }
 }
@@ -211,7 +208,8 @@ impl Create for Email<Set> {
             attachments: Default::default(),
             has_attachment: Default::default(),
             preview: Default::default(),
-            others: Default::default(),
+            headers: Default::default(),
+            patch: Default::default(),
         }
     }
 
@@ -235,6 +233,7 @@ impl EmailBodyPart {
             language: None,
             location: None,
             sub_parts: None,
+            header: None,
             _state: Default::default(),
         }
     }

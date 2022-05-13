@@ -6,7 +6,9 @@ use crate::{
     },
 };
 
-use super::{import::EmailImportResponse, Email, Property};
+use super::{
+    import::EmailImportResponse, parse::EmailParseResponse, BodyProperty, Email, Property,
+};
 
 impl Client {
     pub async fn email_import<T, U>(
@@ -20,10 +22,7 @@ impl Client {
         T: IntoIterator<Item = U>,
         U: Into<String>,
     {
-        let blob_id = self
-            .upload(self.default_account_id(), None, raw_message)
-            .await?
-            .unwrap_blob_id();
+        let blob_id = self.upload(raw_message, None).await?.unwrap_blob_id();
         let mut request = self.build();
         let import_request = request
             .import_email()
@@ -107,12 +106,12 @@ impl Client {
     pub async fn email_get(
         &mut self,
         id: &str,
-        properties: Option<Vec<Property>>,
+        properties: Option<impl IntoIterator<Item = Property>>,
     ) -> crate::Result<Option<Email>> {
         let mut request = self.build();
         let get_request = request.get_email().ids([id]);
         if let Some(properties) = properties {
-            get_request.properties(properties.into_iter());
+            get_request.properties(properties);
         }
         request
             .send_single::<EmailGetResponse>()
@@ -134,5 +133,34 @@ impl Client {
             query_request.sort(sort.into_iter());
         }
         request.send_single::<QueryResponse>().await
+    }
+
+    pub async fn email_parse(
+        &mut self,
+        blob_id: &str,
+        properties: Option<impl IntoIterator<Item = Property>>,
+        body_properties: Option<impl IntoIterator<Item = BodyProperty>>,
+        max_body_value_bytes: Option<usize>,
+    ) -> crate::Result<Email> {
+        let mut request = self.build();
+        let parse_request = request.parse_email().blob_ids([blob_id]);
+        if let Some(properties) = properties {
+            parse_request.properties(properties);
+        }
+
+        if let Some(body_properties) = body_properties {
+            parse_request.body_properties(body_properties);
+        }
+
+        if let Some(max_body_value_bytes) = max_body_value_bytes {
+            parse_request
+                .fetch_all_body_values(true)
+                .max_body_value_bytes(max_body_value_bytes);
+        }
+
+        request
+            .send_single::<EmailParseResponse>()
+            .await
+            .and_then(|mut r| r.parsed(blob_id))
     }
 }

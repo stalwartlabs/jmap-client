@@ -5,7 +5,8 @@ use reqwest::header::CONTENT_TYPE;
 use crate::{client::Client, core::session::URLPart};
 
 impl Client {
-    pub async fn download(&self, account_id: &str, blob_id: &str) -> crate::Result<Vec<u8>> {
+    pub async fn download(&self, blob_id: &str) -> crate::Result<Vec<u8>> {
+        let account_id = self.default_account_id();
         let mut download_url = String::with_capacity(
             self.session().download_url().len() + account_id.len() + blob_id.len(),
         );

@@ -14,21 +14,24 @@ pub struct QueryRequest<F, S, A: Default> {
     sort: Option<Vec<Comparator<S>>>,
 
     #[serde(rename = "position")]
-    position: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    position: Option<i32>,
 
     #[serde(rename = "anchor")]
     #[serde(skip_serializing_if = "Option::is_none")]
     anchor: Option<String>,
 
     #[serde(rename = "anchorOffset")]
-    anchor_offset: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    anchor_offset: Option<i32>,
 
     #[serde(rename = "limit")]
     #[serde(skip_serializing_if = "Option::is_none")]
     limit: Option<usize>,
 
     #[serde(rename = "calculateTotal")]
-    calculate_total: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    calculate_total: Option<bool>,
 
     #[serde(flatten)]
     arguments: A,
@@ -78,7 +81,7 @@ pub struct QueryResponse {
     query_state: String,
 
     #[serde(rename = "canCalculateChanges")]
-    can_calculate_changes: bool,
+    can_calculate_changes: Option<bool>,
 
     #[serde(rename = "position")]
     position: i32,
@@ -99,11 +102,11 @@ impl<F, S, A: Default> QueryRequest<F, S, A> {
             account_id,
             filter: None,
             sort: None,
-            position: 0,
+            position: None,
             anchor: None,
-            anchor_offset: 0,
+            anchor_offset: None,
             limit: None,
-            calculate_total: false,
+            calculate_total: None,
             arguments: A::default(),
         }
     }
@@ -124,7 +127,7 @@ impl<F, S, A: Default> QueryRequest<F, S, A> {
     }
 
     pub fn position(&mut self, position: i32) -> &mut Self {
-        self.position = position;
+        self.position = position.into();
         self
     }
 
@@ -134,7 +137,7 @@ impl<F, S, A: Default> QueryRequest<F, S, A> {
     }
 
     pub fn anchor_offset(&mut self, anchor_offset: i32) -> &mut Self {
-        self.anchor_offset = anchor_offset;
+        self.anchor_offset = anchor_offset.into();
         self
     }
 
@@ -174,7 +177,7 @@ impl QueryResponse {
     }
 
     pub fn can_calculate_changes(&self) -> bool {
-        self.can_calculate_changes
+        self.can_calculate_changes.unwrap_or(false)
     }
 }
 
