@@ -33,7 +33,7 @@ pub enum URI {
     Calendars,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum Method {
     #[serde(rename = "Core/echo")]
     Echo,

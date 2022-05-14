@@ -1,10 +1,15 @@
 use crate::{
     client::Client,
     core::{
-        query::{Comparator, Filter, QueryResponse},
+        changes::{ChangesRequest, ChangesResponse},
+        get::GetRequest,
+        query::{Comparator, Filter, QueryRequest, QueryResponse},
+        query_changes::{QueryChangesRequest, QueryChangesResponse},
+        request::{Arguments, Request},
         response::{MailboxGetResponse, MailboxSetResponse},
-        set::Create,
+        set::{Create, SetRequest},
     },
+    Method, Set,
 };
 
 use super::{Mailbox, Property, Role};
@@ -126,5 +131,82 @@ impl Client {
             query_request.sort(sort.into_iter());
         }
         request.send_single::<QueryResponse>().await
+    }
+}
+
+impl Request<'_> {
+    pub fn get_mailbox(&mut self) -> &mut GetRequest<super::Property, ()> {
+        self.add_method_call(
+            Method::GetMailbox,
+            Arguments::mailbox_get(self.params(Method::GetMailbox)),
+        )
+        .mailbox_get_mut()
+    }
+
+    pub async fn send_get_mailbox(self) -> crate::Result<MailboxGetResponse> {
+        self.send_single().await
+    }
+
+    pub fn changes_mailbox(&mut self, since_state: impl Into<String>) -> &mut ChangesRequest {
+        self.add_method_call(
+            Method::ChangesMailbox,
+            Arguments::changes(self.params(Method::ChangesMailbox), since_state.into()),
+        )
+        .changes_mut()
+    }
+
+    pub async fn send_changes_mailbox(
+        self,
+    ) -> crate::Result<ChangesResponse<super::ChangesResponse>> {
+        self.send_single().await
+    }
+
+    pub fn query_mailbox(
+        &mut self,
+    ) -> &mut QueryRequest<super::query::Filter, super::query::Comparator, super::QueryArguments>
+    {
+        self.add_method_call(
+            Method::QueryMailbox,
+            Arguments::mailbox_query(self.params(Method::QueryMailbox)),
+        )
+        .mailbox_query_mut()
+    }
+
+    pub async fn send_query_mailbox(self) -> crate::Result<QueryResponse> {
+        self.send_single().await
+    }
+
+    pub fn query_mailbox_changes(
+        &mut self,
+        since_query_state: impl Into<String>,
+    ) -> &mut QueryChangesRequest<
+        super::query::Filter,
+        super::query::Comparator,
+        super::QueryArguments,
+    > {
+        self.add_method_call(
+            Method::QueryChangesMailbox,
+            Arguments::mailbox_query_changes(
+                self.params(Method::QueryChangesMailbox),
+                since_query_state.into(),
+            ),
+        )
+        .mailbox_query_changes_mut()
+    }
+
+    pub async fn send_query_mailbox_changes(self) -> crate::Result<QueryChangesResponse> {
+        self.send_single().await
+    }
+
+    pub fn set_mailbox(&mut self) -> &mut SetRequest<Mailbox<Set>, super::SetArguments> {
+        self.add_method_call(
+            Method::SetMailbox,
+            Arguments::mailbox_set(self.params(Method::SetMailbox)),
+        )
+        .mailbox_set_mut()
+    }
+
+    pub async fn send_set_mailbox(self) -> crate::Result<MailboxSetResponse> {
+        self.send_single().await
     }
 }

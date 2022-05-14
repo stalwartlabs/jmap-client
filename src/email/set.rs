@@ -289,8 +289,8 @@ impl From<String> for EmailBodyValue {
     fn from(value: String) -> Self {
         EmailBodyValue {
             value,
-            is_encoding_problem: false,
-            is_truncated: false,
+            is_encoding_problem: None,
+            is_truncated: None,
             _state: Default::default(),
         }
     }
@@ -300,8 +300,8 @@ impl From<&str> for EmailBodyValue {
     fn from(value: &str) -> Self {
         EmailBodyValue {
             value: value.to_string(),
-            is_encoding_problem: false,
-            is_truncated: false,
+            is_encoding_problem: None,
+            is_truncated: None,
             _state: Default::default(),
         }
     }

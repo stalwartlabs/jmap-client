@@ -1,26 +1,37 @@
 use crate::{
     client::Client,
     core::{
-        query::{Comparator, Filter, QueryResponse},
-        response::{EmailGetResponse, EmailSetResponse},
+        changes::{ChangesRequest, ChangesResponse},
+        copy::CopyRequest,
+        get::GetRequest,
+        query::{Comparator, Filter, QueryRequest, QueryResponse},
+        query_changes::{QueryChangesRequest, QueryChangesResponse},
+        request::{Arguments, Request},
+        response::{EmailCopyResponse, EmailGetResponse, EmailSetResponse},
+        set::SetRequest,
     },
+    Method, Set,
 };
 
 use super::{
-    import::EmailImportResponse, parse::EmailParseResponse, BodyProperty, Email, Property,
+    import::{EmailImportRequest, EmailImportResponse},
+    parse::{EmailParseRequest, EmailParseResponse},
+    BodyProperty, Email, Property,
 };
 
 impl Client {
-    pub async fn email_import<T, U>(
+    pub async fn email_import<T, U, V, W>(
         &mut self,
         raw_message: Vec<u8>,
         mailbox_ids: T,
-        keywords: Option<T>,
+        keywords: Option<V>,
         received_at: Option<i64>,
     ) -> crate::Result<Email>
     where
         T: IntoIterator<Item = U>,
         U: Into<String>,
+        V: IntoIterator<Item = W>,
+        W: Into<String>,
     {
         let blob_id = self.upload(raw_message, None).await?.unwrap_blob_id();
         let mut request = self.build();
@@ -119,6 +130,16 @@ impl Client {
             .map(|mut r| r.unwrap_list().pop())
     }
 
+    pub async fn email_changes(
+        &mut self,
+        since_state: impl Into<String>,
+        max_changes: usize,
+    ) -> crate::Result<ChangesResponse<()>> {
+        let mut request = self.build();
+        request.changes_email(since_state).max_changes(max_changes);
+        request.send_single().await
+    }
+
     pub async fn email_query(
         &mut self,
         filter: Option<impl Into<Filter<super::query::Filter>>>,
@@ -162,5 +183,119 @@ impl Client {
             .send_single::<EmailParseResponse>()
             .await
             .and_then(|mut r| r.parsed(blob_id))
+    }
+}
+
+impl Request<'_> {
+    pub fn get_email(&mut self) -> &mut GetRequest<super::Property, super::GetArguments> {
+        self.add_method_call(
+            Method::GetEmail,
+            Arguments::email_get(self.params(Method::GetEmail)),
+        )
+        .email_get_mut()
+    }
+
+    pub async fn send_get_email(self) -> crate::Result<EmailGetResponse> {
+        self.send_single().await
+    }
+
+    pub fn changes_email(&mut self, since_state: impl Into<String>) -> &mut ChangesRequest {
+        self.add_method_call(
+            Method::ChangesEmail,
+            Arguments::changes(self.params(Method::ChangesEmail), since_state.into()),
+        )
+        .changes_mut()
+    }
+
+    pub async fn send_changes_email(self) -> crate::Result<ChangesResponse<()>> {
+        self.send_single().await
+    }
+
+    pub fn query_email(
+        &mut self,
+    ) -> &mut QueryRequest<super::query::Filter, super::query::Comparator, super::QueryArguments>
+    {
+        self.add_method_call(
+            Method::QueryEmail,
+            Arguments::email_query(self.params(Method::QueryEmail)),
+        )
+        .email_query_mut()
+    }
+
+    pub async fn send_query_email(self) -> crate::Result<QueryResponse> {
+        self.send_single().await
+    }
+
+    pub fn query_email_changes(
+        &mut self,
+        since_query_state: impl Into<String>,
+    ) -> &mut QueryChangesRequest<
+        super::query::Filter,
+        super::query::Comparator,
+        super::QueryArguments,
+    > {
+        self.add_method_call(
+            Method::QueryChangesEmail,
+            Arguments::email_query_changes(
+                self.params(Method::QueryChangesEmail),
+                since_query_state.into(),
+            ),
+        )
+        .email_query_changes_mut()
+    }
+
+    pub async fn send_query_email_changes(self) -> crate::Result<QueryChangesResponse> {
+        self.send_single().await
+    }
+
+    pub fn set_email(&mut self) -> &mut SetRequest<Email<Set>, ()> {
+        self.add_method_call(
+            Method::SetEmail,
+            Arguments::email_set(self.params(Method::SetEmail)),
+        )
+        .email_set_mut()
+    }
+
+    pub async fn send_set_email(self) -> crate::Result<EmailSetResponse> {
+        self.send_single().await
+    }
+
+    pub fn copy_email(
+        &mut self,
+        from_account_id: impl Into<String>,
+    ) -> &mut CopyRequest<Email<Set>> {
+        self.add_method_call(
+            Method::CopyEmail,
+            Arguments::email_copy(self.params(Method::CopyEmail), from_account_id.into()),
+        )
+        .email_copy_mut()
+    }
+
+    pub async fn send_copy_email(self) -> crate::Result<EmailCopyResponse> {
+        self.send_single().await
+    }
+
+    pub fn import_email(&mut self) -> &mut EmailImportRequest {
+        self.add_method_call(
+            Method::ImportEmail,
+            Arguments::email_import(self.params(Method::ImportEmail)),
+        )
+        .email_import_mut()
+    }
+
+    pub async fn send_import_email(self) -> crate::Result<EmailImportResponse> {
+        self.send_single().await
+    }
+
+    pub fn parse_email(&mut self) -> &mut EmailParseRequest {
+        self.add_method_call(
+            Method::ParseEmail,
+            Arguments::email_parse(self.params(Method::ParseEmail)),
+        )
+        .email_parse_mut()
+    }
+
+    pub async fn send_parse_email(self) -> crate::Result<EmailParseResponse> {
+        self.send_single().await
     }
 }

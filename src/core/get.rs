@@ -1,9 +1,16 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
-use super::request::ResultReference;
+use crate::Method;
+
+use super::{request::ResultReference, RequestParams};
 
 #[derive(Debug, Clone, Serialize)]
-pub struct GetRequest<T, A: Default> {
+pub struct GetRequest<T: Display, A: Default> {
+    #[serde(skip)]
+    method: (Method, usize),
+
     #[serde(rename = "accountId")]
     account_id: String,
 
@@ -35,10 +42,11 @@ pub struct GetResponse<T> {
     not_found: Vec<String>,
 }
 
-impl<T, A: Default> GetRequest<T, A> {
-    pub fn new(account_id: String) -> Self {
+impl<T: Display, A: Default> GetRequest<T, A> {
+    pub fn new(params: RequestParams) -> Self {
         GetRequest {
-            account_id,
+            account_id: params.account_id,
+            method: (params.method, params.call_id),
             ids: None,
             ids_ref: None,
             properties: None,
@@ -75,6 +83,14 @@ impl<T, A: Default> GetRequest<T, A> {
     pub fn arguments(&mut self) -> &mut A {
         &mut self.arguments
     }
+
+    pub fn result_reference(&self, property: T) -> ResultReference {
+        ResultReference::new(
+            self.method.0,
+            self.method.1,
+            format!("/list/*/{}", property),
+        )
+    }
 }
 
 impl<T> GetResponse<T> {
@@ -96,6 +112,9 @@ impl<T> GetResponse<T> {
 
     pub fn unwrap_list(&mut self) -> Vec<T> {
         std::mem::take(&mut self.list)
+    }
+    pub fn pop(&mut self) -> Option<T> {
+        self.list.pop()
     }
 
     pub fn unwrap_not_found(&mut self) -> Vec<String> {

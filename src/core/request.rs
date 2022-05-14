@@ -23,6 +23,7 @@ use super::{
     query_changes::QueryChangesRequest,
     response::{MethodResponse, Response, SingleMethodResponse},
     set::SetRequest,
+    RequestParams,
 };
 
 #[derive(Serialize)]
@@ -98,103 +99,103 @@ pub enum Arguments {
 }
 
 impl Arguments {
-    pub fn changes(account_id: String, since_state: String) -> Self {
-        Arguments::Changes(ChangesRequest::new(account_id, since_state))
+    pub fn changes(params: RequestParams, since_state: String) -> Self {
+        Arguments::Changes(ChangesRequest::new(params, since_state))
     }
 
-    pub fn push_get(account_id: String) -> Self {
-        Arguments::PushGet(GetRequest::new(account_id))
+    pub fn push_get(params: RequestParams) -> Self {
+        Arguments::PushGet(GetRequest::new(params))
     }
 
-    pub fn push_set(account_id: String) -> Self {
-        Arguments::PushSet(SetRequest::new(account_id))
+    pub fn push_set(params: RequestParams) -> Self {
+        Arguments::PushSet(SetRequest::new(params))
     }
 
-    pub fn blob_copy(from_account_id: String, account_id: String) -> Self {
-        Arguments::BlobCopy(CopyBlobRequest::new(from_account_id, account_id))
+    pub fn blob_copy(params: RequestParams, from_account_id: String) -> Self {
+        Arguments::BlobCopy(CopyBlobRequest::new(params, from_account_id))
     }
 
-    pub fn mailbox_get(account_id: String) -> Self {
-        Arguments::MailboxGet(GetRequest::new(account_id))
+    pub fn mailbox_get(params: RequestParams) -> Self {
+        Arguments::MailboxGet(GetRequest::new(params))
     }
 
-    pub fn mailbox_query(account_id: String) -> Self {
-        Arguments::MailboxQuery(QueryRequest::new(account_id))
+    pub fn mailbox_query(params: RequestParams) -> Self {
+        Arguments::MailboxQuery(QueryRequest::new(params))
     }
 
-    pub fn mailbox_query_changes(account_id: String, since_query_state: String) -> Self {
-        Arguments::MailboxQueryChanges(QueryChangesRequest::new(account_id, since_query_state))
+    pub fn mailbox_query_changes(params: RequestParams, since_query_state: String) -> Self {
+        Arguments::MailboxQueryChanges(QueryChangesRequest::new(params, since_query_state))
     }
 
-    pub fn mailbox_set(account_id: String) -> Self {
-        Arguments::MailboxSet(SetRequest::new(account_id))
+    pub fn mailbox_set(params: RequestParams) -> Self {
+        Arguments::MailboxSet(SetRequest::new(params))
     }
 
-    pub fn thread_get(account_id: String) -> Self {
-        Arguments::ThreadGet(GetRequest::new(account_id))
+    pub fn thread_get(params: RequestParams) -> Self {
+        Arguments::ThreadGet(GetRequest::new(params))
     }
 
-    pub fn email_get(account_id: String) -> Self {
-        Arguments::EmailGet(GetRequest::new(account_id))
+    pub fn email_get(params: RequestParams) -> Self {
+        Arguments::EmailGet(GetRequest::new(params))
     }
 
-    pub fn email_query(account_id: String) -> Self {
-        Arguments::EmailQuery(QueryRequest::new(account_id))
+    pub fn email_query(params: RequestParams) -> Self {
+        Arguments::EmailQuery(QueryRequest::new(params))
     }
 
-    pub fn email_query_changes(account_id: String, since_query_state: String) -> Self {
-        Arguments::EmailQueryChanges(QueryChangesRequest::new(account_id, since_query_state))
+    pub fn email_query_changes(params: RequestParams, since_query_state: String) -> Self {
+        Arguments::EmailQueryChanges(QueryChangesRequest::new(params, since_query_state))
     }
 
-    pub fn email_set(account_id: String) -> Self {
-        Arguments::EmailSet(SetRequest::new(account_id))
+    pub fn email_set(params: RequestParams) -> Self {
+        Arguments::EmailSet(SetRequest::new(params))
     }
 
-    pub fn email_copy(from_account_id: String, account_id: String) -> Self {
-        Arguments::EmailCopy(CopyRequest::new(from_account_id, account_id))
+    pub fn email_copy(params: RequestParams, from_account_id: String) -> Self {
+        Arguments::EmailCopy(CopyRequest::new(params, from_account_id))
     }
 
-    pub fn email_import(account_id: String) -> Self {
-        Arguments::EmailImport(EmailImportRequest::new(account_id))
+    pub fn email_import(params: RequestParams) -> Self {
+        Arguments::EmailImport(EmailImportRequest::new(params))
     }
 
-    pub fn email_parse(account_id: String) -> Self {
-        Arguments::EmailParse(EmailParseRequest::new(account_id))
+    pub fn email_parse(params: RequestParams) -> Self {
+        Arguments::EmailParse(EmailParseRequest::new(params))
     }
 
-    pub fn identity_get(account_id: String) -> Self {
-        Arguments::IdentityGet(GetRequest::new(account_id))
+    pub fn identity_get(params: RequestParams) -> Self {
+        Arguments::IdentityGet(GetRequest::new(params))
     }
 
-    pub fn identity_set(account_id: String) -> Self {
-        Arguments::IdentitySet(SetRequest::new(account_id))
+    pub fn identity_set(params: RequestParams) -> Self {
+        Arguments::IdentitySet(SetRequest::new(params))
     }
 
-    pub fn email_submission_get(account_id: String) -> Self {
-        Arguments::EmailSubmissionGet(GetRequest::new(account_id))
+    pub fn email_submission_get(params: RequestParams) -> Self {
+        Arguments::EmailSubmissionGet(GetRequest::new(params))
     }
 
-    pub fn email_submission_query(account_id: String) -> Self {
-        Arguments::EmailSubmissionQuery(QueryRequest::new(account_id))
+    pub fn email_submission_query(params: RequestParams) -> Self {
+        Arguments::EmailSubmissionQuery(QueryRequest::new(params))
     }
 
-    pub fn email_submission_query_changes(account_id: String, since_query_state: String) -> Self {
-        Arguments::EmailSubmissionQueryChanges(QueryChangesRequest::new(
-            account_id,
-            since_query_state,
-        ))
+    pub fn email_submission_query_changes(
+        params: RequestParams,
+        since_query_state: String,
+    ) -> Self {
+        Arguments::EmailSubmissionQueryChanges(QueryChangesRequest::new(params, since_query_state))
     }
 
-    pub fn email_submission_set(account_id: String) -> Self {
-        Arguments::EmailSubmissionSet(SetRequest::new(account_id))
+    pub fn email_submission_set(params: RequestParams) -> Self {
+        Arguments::EmailSubmissionSet(SetRequest::new(params))
     }
 
-    pub fn vacation_response_get(account_id: String) -> Self {
-        Arguments::VacationResponseGet(GetRequest::new(account_id))
+    pub fn vacation_response_get(params: RequestParams) -> Self {
+        Arguments::VacationResponseGet(GetRequest::new(params))
     }
 
-    pub fn vacation_response_set(account_id: String) -> Self {
-        Arguments::VacationResponseSet(SetRequest::new(account_id))
+    pub fn vacation_response_set(params: RequestParams) -> Self {
+        Arguments::VacationResponseSet(SetRequest::new(params))
     }
 
     pub fn changes_mut(&mut self) -> &mut ChangesRequest {
@@ -431,308 +432,41 @@ impl<'x> Request<'x> {
         }
     }
 
-    fn add_method_call(&mut self, method: Method, arguments: Arguments) -> &mut Arguments {
+    pub fn params(&self, method: Method) -> RequestParams {
+        RequestParams {
+            account_id: self.default_account_id.clone(),
+            method,
+            call_id: self.method_calls.len(),
+        }
+    }
+
+    pub fn add_method_call(&mut self, method: Method, arguments: Arguments) -> &mut Arguments {
         let call_id = format!("s{}", self.method_calls.len());
         self.method_calls.push((method, arguments, call_id));
         &mut self.method_calls.last_mut().unwrap().1
     }
 
-    pub fn get_push(&mut self) -> &mut GetRequest<push_subscription::Property, ()> {
-        self.add_method_call(
-            Method::GetPushSubscription,
-            Arguments::push_get(self.default_account_id.clone()),
-        )
-        .push_get_mut()
-    }
-
-    pub fn set_push(&mut self) -> &mut SetRequest<PushSubscription<Set>, ()> {
-        self.add_method_call(
-            Method::SetPushSubscription,
-            Arguments::push_set(self.default_account_id.clone()),
-        )
-        .push_set_mut()
-    }
-
-    pub fn copy_blob(
-        &mut self,
-        from_account_id: impl Into<String>,
-        account_id: impl Into<String>,
-    ) -> &mut CopyBlobRequest {
-        self.add_method_call(
-            Method::CopyBlob,
-            Arguments::blob_copy(from_account_id.into(), account_id.into()),
-        )
-        .blob_copy_mut()
-    }
-
-    pub fn get_mailbox(&mut self) -> &mut GetRequest<mailbox::Property, ()> {
-        self.add_method_call(
-            Method::GetMailbox,
-            Arguments::mailbox_get(self.default_account_id.clone()),
-        )
-        .mailbox_get_mut()
-    }
-
-    pub fn changes_mailbox(&mut self, since_state: impl Into<String>) -> &mut ChangesRequest {
-        self.add_method_call(
-            Method::ChangesMailbox,
-            Arguments::changes(self.default_account_id.clone(), since_state.into()),
-        )
-        .changes_mut()
-    }
-
-    pub fn query_mailbox(
-        &mut self,
-    ) -> &mut QueryRequest<
-        mailbox::query::Filter,
-        mailbox::query::Comparator,
-        mailbox::QueryArguments,
-    > {
-        self.add_method_call(
-            Method::QueryMailbox,
-            Arguments::mailbox_query(self.default_account_id.clone()),
-        )
-        .mailbox_query_mut()
-    }
-
-    pub fn query_mailbox_changes(
-        &mut self,
-        since_query_state: impl Into<String>,
-    ) -> &mut QueryChangesRequest<
-        mailbox::query::Filter,
-        mailbox::query::Comparator,
-        mailbox::QueryArguments,
-    > {
-        self.add_method_call(
-            Method::QueryChangesMailbox,
-            Arguments::mailbox_query_changes(
-                self.default_account_id.clone(),
-                since_query_state.into(),
-            ),
-        )
-        .mailbox_query_changes_mut()
-    }
-
-    pub fn set_mailbox(&mut self) -> &mut SetRequest<Mailbox<Set>, mailbox::SetArguments> {
-        self.add_method_call(
-            Method::SetMailbox,
-            Arguments::mailbox_set(self.default_account_id.clone()),
-        )
-        .mailbox_set_mut()
-    }
-
-    pub fn get_thread(&mut self) -> &mut GetRequest<thread::Property, ()> {
-        self.add_method_call(
-            Method::GetThread,
-            Arguments::thread_get(self.default_account_id.clone()),
-        )
-        .thread_get_mut()
-    }
-
-    pub fn changes_thread(&mut self, since_state: impl Into<String>) -> &mut ChangesRequest {
-        self.add_method_call(
-            Method::ChangesThread,
-            Arguments::changes(self.default_account_id.clone(), since_state.into()),
-        )
-        .changes_mut()
-    }
-    pub fn get_email(&mut self) -> &mut GetRequest<email::Property, email::GetArguments> {
-        self.add_method_call(
-            Method::GetEmail,
-            Arguments::email_get(self.default_account_id.clone()),
-        )
-        .email_get_mut()
-    }
-
-    pub fn changes_email(&mut self, since_state: impl Into<String>) -> &mut ChangesRequest {
-        self.add_method_call(
-            Method::ChangesEmail,
-            Arguments::changes(self.default_account_id.clone(), since_state.into()),
-        )
-        .changes_mut()
-    }
-
-    pub fn query_email(
-        &mut self,
-    ) -> &mut QueryRequest<email::query::Filter, email::query::Comparator, email::QueryArguments>
-    {
-        self.add_method_call(
-            Method::QueryEmail,
-            Arguments::email_query(self.default_account_id.clone()),
-        )
-        .email_query_mut()
-    }
-
-    pub fn query_email_changes(
-        &mut self,
-        since_query_state: impl Into<String>,
-    ) -> &mut QueryChangesRequest<
-        email::query::Filter,
-        email::query::Comparator,
-        email::QueryArguments,
-    > {
-        self.add_method_call(
-            Method::QueryChangesEmail,
-            Arguments::email_query_changes(
-                self.default_account_id.clone(),
-                since_query_state.into(),
-            ),
-        )
-        .email_query_changes_mut()
-    }
-
-    pub fn set_email(&mut self) -> &mut SetRequest<Email<Set>, ()> {
-        self.add_method_call(
-            Method::SetEmail,
-            Arguments::email_set(self.default_account_id.clone()),
-        )
-        .email_set_mut()
-    }
-
-    pub fn copy_email(
-        &mut self,
-        from_account_id: impl Into<String>,
-        account_id: impl Into<String>,
-    ) -> &mut CopyRequest<Email<Set>> {
-        self.add_method_call(
-            Method::CopyEmail,
-            Arguments::email_copy(from_account_id.into(), account_id.into()),
-        )
-        .email_copy_mut()
-    }
-
-    pub fn import_email(&mut self) -> &mut EmailImportRequest {
-        self.add_method_call(
-            Method::ImportEmail,
-            Arguments::email_import(self.default_account_id.clone()),
-        )
-        .email_import_mut()
-    }
-
-    pub fn parse_email(&mut self) -> &mut EmailParseRequest {
-        self.add_method_call(
-            Method::ParseEmail,
-            Arguments::email_parse(self.default_account_id.clone()),
-        )
-        .email_parse_mut()
-    }
-
-    pub fn get_identity(&mut self) -> &mut GetRequest<identity::Property, ()> {
-        self.add_method_call(
-            Method::GetIdentity,
-            Arguments::identity_get(self.default_account_id.clone()),
-        )
-        .identity_get_mut()
-    }
-
-    pub fn set_identity(&mut self) -> &mut SetRequest<Identity<Set>, ()> {
-        self.add_method_call(
-            Method::SetIdentity,
-            Arguments::identity_set(self.default_account_id.clone()),
-        )
-        .identity_set_mut()
-    }
-
-    pub fn get_email_submission(&mut self) -> &mut GetRequest<email_submission::Property, ()> {
-        if !self.using.contains(&URI::Submission) {
-            self.using.push(URI::Submission);
+    pub fn add_capability(&mut self, uri: URI) {
+        if !self.using.contains(&uri) {
+            self.using.push(uri);
         }
-        self.add_method_call(
-            Method::GetEmailSubmission,
-            Arguments::email_submission_get(self.default_account_id.clone()),
-        )
-        .email_submission_get_mut()
     }
 
-    pub fn changes_email_submission(
-        &mut self,
-        since_state: impl Into<String>,
-    ) -> &mut ChangesRequest {
-        if !self.using.contains(&URI::Submission) {
-            self.using.push(URI::Submission);
-        }
-        self.add_method_call(
-            Method::ChangesEmailSubmission,
-            Arguments::changes(self.default_account_id.clone(), since_state.into()),
-        )
-        .changes_mut()
-    }
-
-    pub fn query_email_submission(
-        &mut self,
-    ) -> &mut QueryRequest<email_submission::query::Filter, email_submission::query::Comparator, ()>
-    {
-        if !self.using.contains(&URI::Submission) {
-            self.using.push(URI::Submission);
-        }
-        self.add_method_call(
-            Method::QueryEmailSubmission,
-            Arguments::email_submission_query(self.default_account_id.clone()),
-        )
-        .email_submission_query_mut()
-    }
-
-    pub fn query_email_submission_changes(
-        &mut self,
-        since_query_state: impl Into<String>,
-    ) -> &mut QueryChangesRequest<
-        email_submission::query::Filter,
-        email_submission::query::Comparator,
-        (),
-    > {
-        if !self.using.contains(&URI::Submission) {
-            self.using.push(URI::Submission);
-        }
-        self.add_method_call(
-            Method::QueryChangesEmailSubmission,
-            Arguments::email_submission_query_changes(
-                self.default_account_id.clone(),
-                since_query_state.into(),
-            ),
-        )
-        .email_submission_query_changes_mut()
-    }
-
-    pub fn set_email_submission(
-        &mut self,
-    ) -> &mut SetRequest<EmailSubmission<Set>, email_submission::SetArguments> {
-        if !self.using.contains(&URI::Submission) {
-            self.using.push(URI::Submission);
-        }
-        self.add_method_call(
-            Method::SetEmailSubmission,
-            Arguments::email_submission_set(self.default_account_id.clone()),
-        )
-        .email_submission_set_mut()
-    }
-
-    pub fn get_vacation_response(&mut self) -> &mut GetRequest<vacation_response::Property, ()> {
-        if !self.using.contains(&URI::VacationResponse) {
-            self.using.push(URI::VacationResponse);
-        }
-        self.add_method_call(
-            Method::GetVacationResponse,
-            Arguments::vacation_response_get(self.default_account_id.clone()),
-        )
-        .vacation_response_get_mut()
-    }
-
-    pub fn set_vacation_response(&mut self) -> &mut SetRequest<VacationResponse<Set>, ()> {
-        if !self.using.contains(&URI::VacationResponse) {
-            self.using.push(URI::VacationResponse);
-        }
-        self.add_method_call(
-            Method::SetVacationResponse,
-            Arguments::vacation_response_set(self.default_account_id.clone()),
-        )
-        .vacation_response_set_mut()
-    }
-
-    pub fn result_reference(&self, path: impl Into<String>) -> ResultReference {
+    pub fn last_result_reference(&self, path: impl Into<String>) -> ResultReference {
         let last_method = self.method_calls.last().unwrap();
         ResultReference {
             result_of: last_method.2.clone(),
-            name: last_method.0.clone(),
+            name: last_method.0,
+            path: path.into(),
+        }
+    }
+}
+
+impl ResultReference {
+    pub fn new(method: Method, call_id: usize, path: impl Into<String>) -> Self {
+        ResultReference {
+            result_of: format!("s{}", call_id),
+            name: method,
             path: path.into(),
         }
     }

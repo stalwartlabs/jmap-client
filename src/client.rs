@@ -188,7 +188,7 @@ impl Client {
 
 #[cfg(test)]
 mod tests {
-    use crate::email::{EmailBodyPart, Header, Property};
+    use crate::email::EmailBodyPart;
 
     #[test]
     fn test_serialize() {

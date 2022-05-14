@@ -7,7 +7,7 @@ use std::{
 
 use crate::Error;
 
-use super::request::ResultReference;
+use super::{request::ResultReference, RequestParams};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SetRequest<T: Create, A: Default> {
@@ -72,7 +72,7 @@ where
     U: Display,
 {
     #[serde(rename = "type")]
-    type_: SetErrorType,
+    pub type_: SetErrorType,
     description: Option<String>,
     properties: Option<Vec<U>>,
 }
@@ -131,9 +131,9 @@ pub trait Create: Sized {
 }
 
 impl<T: Create, A: Default> SetRequest<T, A> {
-    pub fn new(account_id: String) -> Self {
+    pub fn new(params: RequestParams) -> Self {
         Self {
-            account_id,
+            account_id: params.account_id,
             if_in_state: None,
             create: None,
             update: None,
@@ -166,12 +166,27 @@ impl<T: Create, A: Default> SetRequest<T, A> {
             .unwrap()
     }
 
+    pub fn create_item(&mut self, item: T) -> String {
+        let create_id = self.create.as_ref().map_or(0, |c| c.len());
+        let create_id_str = format!("c{}", create_id);
+        self.create
+            .get_or_insert_with(HashMap::new)
+            .insert(create_id_str.clone(), item);
+        create_id_str
+    }
+
     pub fn update(&mut self, id: impl Into<String>) -> &mut T {
         let id: String = id.into();
         self.update
             .get_or_insert_with(HashMap::new)
             .insert(id.clone(), T::new(None));
         self.update.as_mut().unwrap().get_mut(&id).unwrap()
+    }
+
+    pub fn update_item(&mut self, id: impl Into<String>, item: T) {
+        self.update
+            .get_or_insert_with(HashMap::new)
+            .insert(id.into(), item);
     }
 
     pub fn destroy<U, V>(&mut self, ids: U) -> &mut Self

@@ -225,10 +225,12 @@ pub struct EmailBodyValue<State = Get> {
     value: String,
 
     #[serde(rename = "isEncodingProblem")]
-    is_encoding_problem: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    is_encoding_problem: Option<bool>,
 
     #[serde(rename = "isTruncated")]
-    is_truncated: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    is_truncated: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

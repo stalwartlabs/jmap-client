@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use super::RequestParams;
+
 #[derive(Debug, Clone, Serialize)]
 pub struct ChangesRequest {
     #[serde(rename = "accountId")]
@@ -38,9 +40,9 @@ pub struct ChangesResponse<A> {
 }
 
 impl ChangesRequest {
-    pub fn new(account_id: String, since_state: String) -> Self {
+    pub fn new(params: RequestParams, since_state: String) -> Self {
         ChangesRequest {
-            account_id,
+            account_id: params.account_id,
             since_state,
             max_changes: None,
         }

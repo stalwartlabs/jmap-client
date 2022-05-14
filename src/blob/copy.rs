@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::core::set::SetError;
+use crate::core::{set::SetError, RequestParams};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct CopyBlobRequest {
@@ -27,10 +27,10 @@ pub struct CopyBlobResponse {
 }
 
 impl CopyBlobRequest {
-    pub fn new(from_account_id: String, account_id: String) -> Self {
+    pub fn new(params: RequestParams, from_account_id: String) -> Self {
         CopyBlobRequest {
             from_account_id,
-            account_id,
+            account_id: params.account_id,
             blob_ids: vec![],
         }
     }

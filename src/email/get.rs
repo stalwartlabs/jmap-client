@@ -10,8 +10,16 @@ impl Email<Get> {
         self.id.as_ref().unwrap()
     }
 
+    pub fn unwrap_id(self) -> String {
+        self.id.unwrap()
+    }
+
     pub fn blob_id(&self) -> &str {
         self.blob_id.as_ref().unwrap()
+    }
+
+    pub fn unwrap_blob_id(self) -> String {
+        self.blob_id.unwrap()
     }
 
     pub fn thread_id(&self) -> &str {
@@ -184,11 +192,11 @@ impl EmailBodyValue<Get> {
     }
 
     pub fn is_encoding_problem(&self) -> bool {
-        self.is_encoding_problem
+        self.is_encoding_problem.unwrap_or(false)
     }
 
     pub fn is_truncated(&self) -> bool {
-        self.is_truncated
+        self.is_truncated.unwrap_or(false)
     }
 }
 

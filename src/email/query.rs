@@ -224,14 +224,13 @@ impl Filter {
         }
     }
 
-    pub fn header<U, V>(value: U) -> Self
-    where
-        U: IntoIterator<Item = V>,
-        V: Into<String>,
-    {
-        Filter::Header {
-            value: value.into_iter().map(|v| v.into()).collect(),
+    pub fn header(header: impl Into<String>, v: Option<impl Into<String>>) -> Self {
+        let mut value = Vec::with_capacity(2);
+        value.push(header.into());
+        if let Some(v) = v {
+            value.push(v.into());
         }
+        Filter::Header { value }
     }
 }
 

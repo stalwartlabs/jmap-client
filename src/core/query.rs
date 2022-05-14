@@ -1,7 +1,14 @@
 use serde::{Deserialize, Serialize};
 
+use crate::Method;
+
+use super::{request::ResultReference, RequestParams};
+
 #[derive(Debug, Clone, Serialize)]
 pub struct QueryRequest<F, S, A: Default> {
+    #[serde(skip)]
+    method: (Method, usize),
+
     #[serde(rename = "accountId")]
     account_id: String,
 
@@ -97,9 +104,10 @@ pub struct QueryResponse {
 }
 
 impl<F, S, A: Default> QueryRequest<F, S, A> {
-    pub fn new(account_id: String) -> Self {
+    pub fn new(params: RequestParams) -> Self {
         QueryRequest {
-            account_id,
+            account_id: params.account_id,
+            method: (params.method, params.call_id),
             filter: None,
             sort: None,
             position: None,
@@ -146,8 +154,17 @@ impl<F, S, A: Default> QueryRequest<F, S, A> {
         self
     }
 
+    pub fn calculate_total(&mut self, calculate_total: bool) -> &mut Self {
+        self.calculate_total = Some(calculate_total);
+        self
+    }
+
     pub fn arguments(&mut self) -> &mut A {
         &mut self.arguments
+    }
+
+    pub fn result_reference(&self) -> ResultReference {
+        ResultReference::new(self.method.0, self.method.1, "/ids")
     }
 }
 
@@ -158,6 +175,14 @@ impl QueryResponse {
 
     pub fn ids(&self) -> &[String] {
         &self.ids
+    }
+
+    pub fn id(&self, pos: usize) -> &str {
+        self.ids[pos].as_str()
+    }
+
+    pub fn unwrap_ids(self) -> Vec<String> {
+        self.ids
     }
 
     pub fn total(&self) -> Option<usize> {
@@ -190,8 +215,13 @@ impl<A> Comparator<A> {
         }
     }
 
-    pub fn is_ascending(mut self, is_ascending: bool) -> Self {
-        self.is_ascending = is_ascending;
+    pub fn descending(mut self) -> Self {
+        self.is_ascending = false;
+        self
+    }
+
+    pub fn ascending(mut self) -> Self {
+        self.is_ascending = true;
         self
     }
 

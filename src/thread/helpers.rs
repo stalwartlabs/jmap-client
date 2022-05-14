@@ -1,4 +1,13 @@
-use crate::{client::Client, core::response::ThreadGetResponse};
+use crate::{
+    client::Client,
+    core::{
+        changes::{ChangesRequest, ChangesResponse},
+        get::GetRequest,
+        request::{Arguments, Request},
+        response::ThreadGetResponse,
+    },
+    Method,
+};
 
 use super::Thread;
 
@@ -10,5 +19,31 @@ impl Client {
             .send_single::<ThreadGetResponse>()
             .await
             .map(|mut r| r.unwrap_list().pop())
+    }
+}
+
+impl Request<'_> {
+    pub fn get_thread(&mut self) -> &mut GetRequest<super::Property, ()> {
+        self.add_method_call(
+            Method::GetThread,
+            Arguments::thread_get(self.params(Method::GetThread)),
+        )
+        .thread_get_mut()
+    }
+
+    pub async fn send_get_thread(self) -> crate::Result<ThreadGetResponse> {
+        self.send_single().await
+    }
+
+    pub fn changes_thread(&mut self, since_state: impl Into<String>) -> &mut ChangesRequest {
+        self.add_method_call(
+            Method::ChangesThread,
+            Arguments::changes(self.params(Method::ChangesThread), since_state.into()),
+        )
+        .changes_mut()
+    }
+
+    pub async fn send_changes_thread(self) -> crate::Result<ChangesResponse<()>> {
+        self.send_single().await
     }
 }

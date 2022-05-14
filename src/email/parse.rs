@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::Error;
+use crate::{core::RequestParams, Error};
 
 use super::{BodyProperty, Email, Property};
 
@@ -55,9 +55,9 @@ pub struct EmailParseResponse {
 }
 
 impl EmailParseRequest {
-    pub fn new(account_id: String) -> Self {
+    pub fn new(params: RequestParams) -> Self {
         EmailParseRequest {
-            account_id,
+            account_id: params.account_id,
             blob_ids: Vec::new(),
             properties: None,
             body_properties: None,

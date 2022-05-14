@@ -2,7 +2,10 @@ use std::{collections::HashMap, fmt::Display};
 
 use serde::{Deserialize, Serialize};
 
-use super::set::{Create, SetError};
+use super::{
+    set::{Create, SetError},
+    RequestParams,
+};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct CopyRequest<T: Create> {
@@ -53,11 +56,11 @@ pub struct CopyResponse<T, U: Display> {
 }
 
 impl<T: Create> CopyRequest<T> {
-    pub fn new(from_account_id: String, account_id: String) -> Self {
+    pub fn new(params: RequestParams, from_account_id: String) -> Self {
         CopyRequest {
             from_account_id,
             if_from_in_state: None,
-            account_id,
+            account_id: params.account_id,
             if_in_state: None,
             create: HashMap::new(),
             on_success_destroy_original: false,
