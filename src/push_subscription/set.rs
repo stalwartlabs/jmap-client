@@ -1,6 +1,6 @@
 use crate::{
     core::set::{from_timestamp, Create},
-    Object, Set,
+    Set, TypeState,
 };
 
 use super::{Keys, PushSubscription};
@@ -31,7 +31,7 @@ impl PushSubscription<Set> {
         self
     }
 
-    pub fn types(&mut self, types: Option<impl Iterator<Item = Object>>) -> &mut Self {
+    pub fn types(&mut self, types: Option<impl Iterator<Item = TypeState>>) -> &mut Self {
         self.types = types.map(|s| s.collect());
         self
     }

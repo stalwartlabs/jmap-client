@@ -87,12 +87,19 @@ pub struct Mailbox<State = Get> {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Role {
+    #[serde(rename = "archive", alias = "ARCHIVE")]
     Archive,
+    #[serde(rename = "drafts", alias = "DRAFTS")]
     Drafts,
+    #[serde(rename = "importante", alias = "IMPORTANT")]
     Important,
+    #[serde(rename = "inbox", alias = "INBOX")]
     Inbox,
+    #[serde(rename = "junk", alias = "JUNK")]
     Junk,
+    #[serde(rename = "sent", alias = "SENT")]
     Sent,
+    #[serde(rename = "trash", alias = "TRASH")]
     Trash,
     None,
 }
@@ -127,7 +134,7 @@ pub struct MailboxRights {
     may_submit: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Copy)]
 pub enum Property {
     #[serde(rename = "id")]
     Id,

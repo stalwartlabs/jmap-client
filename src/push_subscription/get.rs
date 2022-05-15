@@ -1,4 +1,4 @@
-use crate::{Get, Object};
+use crate::{Get, TypeState};
 
 use super::{Keys, PushSubscription};
 
@@ -27,7 +27,7 @@ impl PushSubscription<Get> {
         self.expires.map(|v| v.timestamp())
     }
 
-    pub fn types(&self) -> Option<&[Object]> {
+    pub fn types(&self) -> Option<&[TypeState]> {
         self.types.as_deref()
     }
 }

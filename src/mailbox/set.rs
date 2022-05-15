@@ -13,6 +13,11 @@ impl Mailbox<Set> {
         self
     }
 
+    pub fn parent_id_ref(&mut self, parent_id_ref: &str) -> &mut Self {
+        self.parent_id = format!("#{}", parent_id_ref).into();
+        self
+    }
+
     pub fn role(&mut self, role: Role) -> &mut Self {
         if !matches!(role, Role::None) {
             self.role = Some(role);

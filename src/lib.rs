@@ -17,6 +17,8 @@ pub mod push_subscription;
 pub mod thread;
 pub mod vacation_response;
 
+pub use futures_util;
+
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub enum URI {
     #[serde(rename = "urn:ietf:params:jmap:core")]
@@ -100,17 +102,13 @@ pub enum Method {
 }
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq, Hash, Clone)]
-pub enum Object {
-    Core,
+pub enum TypeState {
     Mailbox,
     Thread,
     Email,
     EmailDelivery,
-    SearchSnippet,
     Identity,
     EmailSubmission,
-    VacationResponse,
-    PushSubscription,
 }
 
 #[derive(Deserialize)]
@@ -120,9 +118,9 @@ pub enum StateChangeType {
 
 #[derive(Deserialize)]
 pub struct StateChange {
-    #[serde(rename(serialize = "@type"))]
+    #[serde(rename = "@type")]
     pub type_: StateChangeType,
-    pub changed: HashMap<String, HashMap<Object, String>>,
+    pub changed: HashMap<String, HashMap<TypeState, String>>,
 }
 
 #[derive(Debug, Clone)]
@@ -183,6 +181,19 @@ impl Display for Error {
             Error::Server(e) => write!(f, "Server error: {}", e),
             Error::Method(e) => write!(f, "Method error: {}", e),
             Error::Set(e) => write!(f, "Set error: {}", e),
+        }
+    }
+}
+
+impl Display for TypeState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TypeState::Mailbox => write!(f, "Mailbox"),
+            TypeState::Thread => write!(f, "Thread"),
+            TypeState::Email => write!(f, "Email"),
+            TypeState::EmailDelivery => write!(f, "EmailDelivery"),
+            TypeState::Identity => write!(f, "Identity"),
+            TypeState::EmailSubmission => write!(f, "EmailSubmission"),
         }
     }
 }

@@ -260,7 +260,7 @@ pub struct EmailHeader<State = Get> {
     value: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Property {
     Id,
     BlobId,

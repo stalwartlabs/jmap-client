@@ -12,7 +12,7 @@ pub struct Thread {
     email_ids: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Copy)]
 pub enum Property {
     #[serde(rename = "id")]
     Id,

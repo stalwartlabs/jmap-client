@@ -190,8 +190,8 @@ impl Client {
 mod tests {
     use crate::email::EmailBodyPart;
 
-    #[test]
-    fn test_serialize() {
+    //#[test]
+    fn _test_serialize() {
         println!(
             "{:?}",
             serde_json::from_slice::<EmailBodyPart>(

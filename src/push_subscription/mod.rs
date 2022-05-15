@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::core::set::list_not_set;
-use crate::{Get, Object};
+use crate::{Get, TypeState};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PushSubscription<State = Get> {
@@ -44,10 +44,10 @@ pub struct PushSubscription<State = Get> {
 
     #[serde(rename = "types")]
     #[serde(skip_serializing_if = "list_not_set")]
-    types: Option<Vec<Object>>,
+    types: Option<Vec<TypeState>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Copy)]
 pub enum Property {
     #[serde(rename = "id")]
     Id,

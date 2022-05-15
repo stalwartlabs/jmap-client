@@ -41,12 +41,16 @@ pub enum Comparator {
 }
 
 impl Filter {
-    pub fn parent_id(value: Option<String>) -> Self {
-        Filter::ParentId { value }
+    pub fn parent_id(value: Option<impl Into<String>>) -> Self {
+        Filter::ParentId {
+            value: value.map(Into::into),
+        }
     }
 
-    pub fn name(value: String) -> Self {
-        Filter::Name { value }
+    pub fn name(value: impl Into<String>) -> Self {
+        Filter::Name {
+            value: value.into(),
+        }
     }
 
     pub fn role(value: Role) -> Self {

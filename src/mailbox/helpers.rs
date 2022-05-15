@@ -120,7 +120,7 @@ impl Client {
     pub async fn mailbox_query(
         &mut self,
         filter: Option<impl Into<Filter<super::query::Filter>>>,
-        sort: Option<Vec<Comparator<super::query::Comparator>>>,
+        sort: Option<impl IntoIterator<Item = Comparator<super::query::Comparator>>>,
     ) -> crate::Result<QueryResponse> {
         let mut request = self.build();
         let query_request = request.query_mailbox();
@@ -131,6 +131,18 @@ impl Client {
             query_request.sort(sort.into_iter());
         }
         request.send_single::<QueryResponse>().await
+    }
+
+    pub async fn mailbox_changes(
+        &mut self,
+        since_state: impl Into<String>,
+        max_changes: usize,
+    ) -> crate::Result<ChangesResponse<super::ChangesResponse>> {
+        let mut request = self.build();
+        request
+            .changes_mailbox(since_state)
+            .max_changes(max_changes);
+        request.send_single().await
     }
 }
 
