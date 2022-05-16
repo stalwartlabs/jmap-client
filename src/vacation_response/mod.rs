@@ -6,7 +6,9 @@ use std::fmt::Display;
 
 use crate::core::set::date_not_set;
 use crate::core::set::string_not_set;
+use crate::core::Type;
 use crate::Get;
+use crate::Set;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -76,5 +78,17 @@ impl Display for Property {
             Property::TextBody => write!(f, "textBody"),
             Property::HtmlBody => write!(f, "htmlBody"),
         }
+    }
+}
+
+impl Type for VacationResponse<Set> {
+    fn requires_account_id() -> bool {
+        true
+    }
+}
+
+impl Type for Property {
+    fn requires_account_id() -> bool {
+        true
     }
 }

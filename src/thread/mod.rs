@@ -5,6 +5,8 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
+use crate::core::Type;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Thread {
     id: String,
@@ -18,6 +20,12 @@ pub enum Property {
     Id,
     #[serde(rename = "emailIds")]
     EmailIds,
+}
+
+impl Type for Property {
+    fn requires_account_id() -> bool {
+        true
+    }
 }
 
 impl Display for Property {

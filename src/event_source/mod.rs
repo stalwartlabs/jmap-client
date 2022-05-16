@@ -26,10 +26,15 @@ impl URLParser for URLParameter {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Changes {
+    id: Option<String>,
     changes: HashMap<String, HashMap<TypeState, String>>,
 }
 
 impl Changes {
+    pub fn id(&self) -> Option<&str> {
+        self.id.as_deref()
+    }
+
     pub fn account_changes(&mut self, account_id: &str) -> Option<HashMap<TypeState, String>> {
         self.changes.remove(account_id)
     }
@@ -38,7 +43,11 @@ impl Changes {
         self.changes.keys()
     }
 
-    pub fn into_innter(self) -> HashMap<String, HashMap<TypeState, String>> {
+    pub fn changes(&self, account_id: &str) -> Option<impl Iterator<Item = (&TypeState, &String)>> {
+        self.changes.get(account_id).map(|changes| changes.iter())
+    }
+
+    pub fn into_inner(self) -> HashMap<String, HashMap<TypeState, String>> {
         self.changes
     }
 }

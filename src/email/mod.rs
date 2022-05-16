@@ -13,7 +13,10 @@ use std::{
     fmt::{self, Display, Formatter},
 };
 
-use crate::{core::request::ResultReference, Get};
+use crate::{
+    core::{request::ResultReference, Type},
+    Get, Set,
+};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Email<State = Get> {
@@ -810,6 +813,18 @@ impl SubmissionCapabilities {
 
     pub fn submission_extensions(&self) -> &[String] {
         &self.submission_extensions
+    }
+}
+
+impl Type for Email<Set> {
+    fn requires_account_id() -> bool {
+        true
+    }
+}
+
+impl Type for Property {
+    fn requires_account_id() -> bool {
+        true
     }
 }
 

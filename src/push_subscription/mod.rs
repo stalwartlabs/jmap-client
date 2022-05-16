@@ -8,7 +8,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::core::set::list_not_set;
-use crate::{Get, TypeState};
+use crate::core::Type;
+use crate::{Get, Set, TypeState};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PushSubscription<State = Get> {
@@ -83,4 +84,16 @@ impl Display for Property {
 pub struct Keys {
     p256dh: String,
     auth: String,
+}
+
+impl Type for PushSubscription<Set> {
+    fn requires_account_id() -> bool {
+        false
+    }
+}
+
+impl Type for Property {
+    fn requires_account_id() -> bool {
+        false
+    }
 }

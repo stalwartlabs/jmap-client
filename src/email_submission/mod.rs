@@ -8,7 +8,7 @@ use std::{collections::HashMap, fmt::Display};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::{email::Email, Get};
+use crate::{core::Type, email::Email, Get, Set};
 
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct SetArguments {
@@ -165,5 +165,17 @@ impl Display for Property {
             Property::DsnBlobIds => write!(f, "dsnBlobIds"),
             Property::MdnBlobIds => write!(f, "mdnBlobIds"),
         }
+    }
+}
+
+impl Type for EmailSubmission<Set> {
+    fn requires_account_id() -> bool {
+        true
+    }
+}
+
+impl Type for Property {
+    fn requires_account_id() -> bool {
+        true
     }
 }

@@ -63,10 +63,16 @@ impl EventParser {
                 Ok(Event {
                     event: EventType::State,
                     data,
+                    id,
                     ..
                 }) => {
                     return match serde_json::from_slice::<StateChange>(&data) {
                         Ok(state_change) => Some(Ok(Changes {
+                            id: if !id.is_empty() {
+                                Some(String::from_utf8(id).unwrap_or_default())
+                            } else {
+                                None
+                            },
                             changes: state_change.changed,
                         })),
                         Err(err) => Some(Err(err.into())),
@@ -74,12 +80,19 @@ impl EventParser {
                 }
                 Ok(Event {
                     event: EventType::Ping,
+                    #[cfg(feature = "debug")]
+                    id,
                     ..
                 }) => {
                     #[cfg(feature = "debug")]
                     use std::iter::FromIterator;
                     #[cfg(feature = "debug")]
                     return Some(Ok(Changes {
+                        id: if !id.is_empty() {
+                            Some(String::from_utf8(id).unwrap_or_default())
+                        } else {
+                            None
+                        },
                         changes: std::collections::HashMap::from_iter([(
                             "ping".to_string(),
                             std::collections::HashMap::new(),

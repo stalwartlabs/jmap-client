@@ -5,6 +5,8 @@ pub mod set;
 use std::fmt::Display;
 
 use crate::core::set::list_not_set;
+use crate::core::Type;
+use crate::Set;
 use crate::{email::EmailAddress, Get};
 use serde::{Deserialize, Serialize};
 
@@ -81,5 +83,17 @@ impl Display for Property {
             Property::HtmlSignature => write!(f, "htmlSignature"),
             Property::MayDelete => write!(f, "mayDelete"),
         }
+    }
+}
+
+impl Type for Identity<Set> {
+    fn requires_account_id() -> bool {
+        true
+    }
+}
+
+impl Type for Property {
+    fn requires_account_id() -> bool {
+        true
     }
 }

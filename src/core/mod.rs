@@ -26,3 +26,7 @@ impl RequestParams {
         }
     }
 }
+
+pub trait Type {
+    fn requires_account_id() -> bool;
+}

@@ -5,9 +5,9 @@ pub mod set;
 
 use std::fmt::Display;
 
-use crate::core::set::string_not_set;
+use crate::core::{set::string_not_set, Type};
 use crate::mailbox::set::role_not_set;
-use crate::Get;
+use crate::{Get, Set};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Default)]
@@ -181,5 +181,17 @@ impl Display for Property {
 impl ChangesResponse {
     pub fn updated_properties(&self) -> Option<&[Property]> {
         self.updated_properties.as_deref()
+    }
+}
+
+impl Type for Mailbox<Set> {
+    fn requires_account_id() -> bool {
+        true
+    }
+}
+
+impl Type for Property {
+    fn requires_account_id() -> bool {
+        true
     }
 }

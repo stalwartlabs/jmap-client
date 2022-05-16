@@ -7,12 +7,13 @@ use std::{
 
 use crate::Error;
 
-use super::{request::ResultReference, RequestParams};
+use super::{request::ResultReference, RequestParams, Type};
 
 #[derive(Debug, Clone, Serialize)]
-pub struct SetRequest<T: Create, A: Default> {
+pub struct SetRequest<T: Create + Type, A: Default> {
     #[serde(rename = "accountId")]
-    account_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    account_id: Option<String>,
 
     #[serde(rename = "ifInState")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -39,13 +40,13 @@ pub struct SetRequest<T: Create, A: Default> {
 #[derive(Debug, Clone, Deserialize)]
 pub struct SetResponse<T, U: Display> {
     #[serde(rename = "accountId")]
-    account_id: String,
+    account_id: Option<String>,
 
     #[serde(rename = "oldState")]
     old_state: Option<String>,
 
     #[serde(rename = "newState")]
-    new_state: String,
+    new_state: Option<String>,
 
     #[serde(rename = "created")]
     created: Option<HashMap<String, T>>,
@@ -130,10 +131,14 @@ pub trait Create: Sized {
     fn create_id(&self) -> Option<String>;
 }
 
-impl<T: Create, A: Default> SetRequest<T, A> {
+impl<T: Create + Type, A: Default> SetRequest<T, A> {
     pub fn new(params: RequestParams) -> Self {
         Self {
-            account_id: params.account_id,
+            account_id: if T::requires_account_id() {
+                params.account_id.into()
+            } else {
+                None
+            },
             if_in_state: None,
             create: None,
             update: None,
@@ -144,7 +149,9 @@ impl<T: Create, A: Default> SetRequest<T, A> {
     }
 
     pub fn account_id(&mut self, account_id: impl Into<String>) -> &mut Self {
-        self.account_id = account_id.into();
+        if T::requires_account_id() {
+            self.account_id = Some(account_id.into());
+        }
         self
     }
 
@@ -214,7 +221,7 @@ impl<T: Create, A: Default> SetRequest<T, A> {
 
 impl<T, U: Display> SetResponse<T, U> {
     pub fn account_id(&self) -> &str {
-        &self.account_id
+        self.account_id.as_ref().unwrap()
     }
 
     pub fn old_state(&self) -> Option<&str> {
@@ -222,7 +229,7 @@ impl<T, U: Display> SetResponse<T, U> {
     }
 
     pub fn new_state(&self) -> &str {
-        &self.new_state
+        self.new_state.as_ref().unwrap()
     }
 
     pub fn created(&mut self, id: &str) -> crate::Result<T> {

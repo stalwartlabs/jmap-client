@@ -1,14 +1,66 @@
 use crate::{
+    client::Client,
     core::{
         get::GetRequest,
         request::{Arguments, Request},
         response::{PushSubscriptionGetResponse, PushSubscriptionSetResponse},
-        set::SetRequest,
+        set::{Create, SetRequest},
     },
     Method, Set,
 };
 
-use super::PushSubscription;
+use super::{Keys, PushSubscription};
+
+impl Client {
+    pub async fn push_subscription_create(
+        &mut self,
+        device_client_id: impl Into<String>,
+        url: impl Into<String>,
+        keys: Option<Keys>,
+    ) -> crate::Result<PushSubscription> {
+        let mut request = self.build();
+        let create_req = request
+            .set_push_subscription()
+            .create()
+            .device_client_id(device_client_id)
+            .url(url);
+
+        if let Some(keys) = keys {
+            create_req.keys(keys);
+        }
+
+        let id = create_req.create_id().unwrap();
+        request
+            .send_single::<PushSubscriptionSetResponse>()
+            .await?
+            .created(&id)
+    }
+
+    pub async fn push_subscription_verify(
+        &mut self,
+        id: &str,
+        verification_code: impl Into<String>,
+    ) -> crate::Result<Option<PushSubscription>> {
+        let mut request = self.build();
+        request
+            .set_push_subscription()
+            .update(id)
+            .verification_code(verification_code);
+        request
+            .send_single::<PushSubscriptionSetResponse>()
+            .await?
+            .updated(id)
+    }
+
+    pub async fn push_subscription_destroy(&mut self, id: &str) -> crate::Result<()> {
+        let mut request = self.build();
+        request.set_push_subscription().destroy([id]);
+        request
+            .send_single::<PushSubscriptionSetResponse>()
+            .await?
+            .destroyed(id)
+    }
+}
 
 impl Request<'_> {
     pub fn get_push_subscription(&mut self) -> &mut GetRequest<super::Property, ()> {
