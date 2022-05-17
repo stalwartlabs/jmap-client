@@ -33,14 +33,14 @@ pub struct Request<'x> {
     #[serde(skip)]
     default_account_id: String,
 
-    using: Vec<URI>,
+    pub using: Vec<URI>,
 
     #[serde(rename = "methodCalls")]
-    method_calls: Vec<(Method, Arguments, String)>,
+    pub method_calls: Vec<(Method, Arguments, String)>,
 
     #[serde(rename = "createdIds")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    created_ids: Option<HashMap<String, String>>,
+    pub created_ids: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -414,6 +414,11 @@ impl<'x> Request<'x> {
 
     pub async fn send(mut self) -> crate::Result<Response<MethodResponse>> {
         Option::take(&mut self.client).unwrap().send(&self).await
+    }
+
+    #[cfg(feature = "websockets")]
+    pub async fn send_ws(mut self) -> crate::Result<String> {
+        Option::take(&mut self.client).unwrap().send_ws(self).await
     }
 
     pub async fn send_single<T>(mut self) -> crate::Result<T>

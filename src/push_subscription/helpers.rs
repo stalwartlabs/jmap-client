@@ -6,7 +6,7 @@ use crate::{
         response::{PushSubscriptionGetResponse, PushSubscriptionSetResponse},
         set::{Create, SetRequest},
     },
-    Method, Set,
+    Method, Set, TypeState,
 };
 
 use super::{Keys, PushSubscription};
@@ -46,6 +46,19 @@ impl Client {
             .set_push_subscription()
             .update(id)
             .verification_code(verification_code);
+        request
+            .send_single::<PushSubscriptionSetResponse>()
+            .await?
+            .updated(id)
+    }
+
+    pub async fn push_subscription_update_types(
+        &mut self,
+        id: &str,
+        types: Option<impl IntoIterator<Item = TypeState>>,
+    ) -> crate::Result<Option<PushSubscription>> {
+        let mut request = self.build();
+        request.set_push_subscription().update(id).types(types);
         request
             .send_single::<PushSubscriptionSetResponse>()
             .await?

@@ -10,6 +10,7 @@ pub struct ProblemDetails {
     title: Option<String>,
     detail: Option<String>,
     limit: Option<usize>,
+    request_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -75,6 +76,24 @@ pub enum MethodErrorType {
 }
 
 impl ProblemDetails {
+    pub fn new(
+        p_type: ProblemType,
+        status: Option<u32>,
+        title: Option<String>,
+        detail: Option<String>,
+        limit: Option<usize>,
+        request_id: Option<String>,
+    ) -> Self {
+        ProblemDetails {
+            p_type,
+            status,
+            title,
+            detail,
+            limit,
+            request_id,
+        }
+    }
+
     pub fn error(&self) -> &ProblemType {
         &self.p_type
     }
@@ -93,6 +112,10 @@ impl ProblemDetails {
 
     pub fn limit(&self) -> Option<usize> {
         self.limit
+    }
+
+    pub fn request_id(&self) -> Option<&str> {
+        self.request_id.as_deref()
     }
 }
 

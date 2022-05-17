@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     blob::copy::CopyBlobResponse,
@@ -19,7 +19,7 @@ use super::{
     query::QueryResponse, query_changes::QueryChangesResponse, set::SetResponse,
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Response<T> {
     #[serde(rename = "methodResponses")]
     method_responses: Vec<T>,
@@ -29,9 +29,25 @@ pub struct Response<T> {
 
     #[serde(rename = "sessionState")]
     session_state: String,
+
+    request_id: Option<String>,
 }
 
 impl<T> Response<T> {
+    pub fn new(
+        method_responses: Vec<T>,
+        created_ids: Option<HashMap<String, String>>,
+        session_state: String,
+        request_id: Option<String>,
+    ) -> Self {
+        Response {
+            method_responses,
+            created_ids,
+            session_state,
+            request_id,
+        }
+    }
+
     pub fn method_responses(&self) -> &[T] {
         self.method_responses.as_ref()
     }
@@ -40,12 +56,20 @@ impl<T> Response<T> {
         self.method_responses
     }
 
+    pub fn unwrap_method_response(mut self) -> T {
+        self.method_responses.pop().unwrap()
+    }
+
     pub fn created_ids(&self) -> Option<impl Iterator<Item = (&String, &String)>> {
         self.created_ids.as_ref().map(|map| map.iter())
     }
 
     pub fn session_state(&self) -> &str {
         &self.session_state
+    }
+
+    pub fn request_id(&self) -> Option<&str> {
+        self.request_id.as_deref()
     }
 }
 

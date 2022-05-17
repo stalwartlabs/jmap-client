@@ -28,6 +28,8 @@ pub struct Client {
     timeout: u64,
     headers: header::HeaderMap,
     default_account_id: String,
+    #[cfg(feature = "websockets")]
+    ws: Option<crate::client_ws::WsStream>,
 }
 
 impl Client {
@@ -77,6 +79,8 @@ impl Client {
             timeout: DEFAULT_TIMEOUT_MS,
             headers,
             default_account_id,
+            #[cfg(feature = "websockets")]
+            ws: None,
         })
     }
 
@@ -183,6 +187,16 @@ impl Client {
         } else {
             Err(Error::Server(format!("{}", response.status())))
         }
+    }
+
+    #[cfg(feature = "websockets")]
+    pub fn set_ws_stream(&mut self, ws: crate::client_ws::WsStream) {
+        self.ws = Some(ws);
+    }
+
+    #[cfg(feature = "websockets")]
+    pub fn ws_stream(&mut self) -> Option<&mut crate::client_ws::WsStream> {
+        self.ws.as_mut()
     }
 }
 

@@ -1,7 +1,6 @@
-use std::time::Duration;
+use std::{pin::Pin, time::Duration};
 
 use crate::{client::Client, core::session::URLPart, event_source::parser::EventParser, TypeState};
-use async_stream::stream;
 use futures_util::{Stream, StreamExt};
 use reqwest::header::{HeaderValue, ACCEPT, CONTENT_TYPE};
 
@@ -14,7 +13,7 @@ impl Client {
         close_after_state: bool,
         ping: Option<u32>,
         last_event_id: Option<&str>,
-    ) -> crate::Result<impl Stream<Item = crate::Result<Changes>>> {
+    ) -> crate::Result<Pin<Box<impl Stream<Item = crate::Result<Changes>>>>> {
         let mut event_source_url = String::with_capacity(self.session().event_source_url().len());
 
         for part in self.event_source_url() {
@@ -74,8 +73,7 @@ impl Client {
         .bytes_stream();
         let mut parser = EventParser::default();
 
-        // TODO - use poll_next() to avoid pin_mut() call.
-        Ok(stream! {
+        Ok(Box::pin(async_stream::stream! {
             loop {
                 if let Some(changes) = parser.filter_state() {
                     yield changes;
@@ -96,6 +94,6 @@ impl Client {
                     break;
                 }
             }
-        })
+        }))
     }
 }

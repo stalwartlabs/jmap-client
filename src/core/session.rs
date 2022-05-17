@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::email::{MailCapabilities, SubmissionCapabilities};
+use crate::{
+    email::{MailCapabilities, SubmissionCapabilities},
+    URI,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Session {
@@ -55,6 +58,7 @@ pub enum Capabilities {
     Core(CoreCapabilities),
     Mail(MailCapabilities),
     Submission(SubmissionCapabilities),
+    WebSocket(WebSocketCapabilities),
     Empty(EmptyCapabilities),
     Other(serde_json::Value),
 }
@@ -87,6 +91,14 @@ pub struct CoreCapabilities {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebSocketCapabilities {
+    #[serde(rename = "url")]
+    url: String,
+    #[serde(rename = "supportsPush")]
+    supports_push: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmptyCapabilities {}
 
 impl Session {
@@ -94,8 +106,48 @@ impl Session {
         self.capabilities.keys()
     }
 
-    pub fn capability(&self, capability: &str) -> Option<&Capabilities> {
-        self.capabilities.get(capability)
+    pub fn capability(&self, capability: impl AsRef<str>) -> Option<&Capabilities> {
+        self.capabilities.get(capability.as_ref())
+    }
+
+    pub fn has_capability(&self, capability: impl AsRef<str>) -> bool {
+        self.capabilities.contains_key(capability.as_ref())
+    }
+
+    pub fn websocket_capabilities(&self) -> Option<&WebSocketCapabilities> {
+        self.capabilities
+            .get(URI::WebSocket.as_ref())
+            .and_then(|v| match v {
+                Capabilities::WebSocket(capabilities) => Some(capabilities),
+                _ => None,
+            })
+    }
+
+    pub fn core_capabilities(&self) -> Option<&CoreCapabilities> {
+        self.capabilities
+            .get(URI::Core.as_ref())
+            .and_then(|v| match v {
+                Capabilities::Core(capabilities) => Some(capabilities),
+                _ => None,
+            })
+    }
+
+    pub fn mail_capabilities(&self) -> Option<&MailCapabilities> {
+        self.capabilities
+            .get(URI::Mail.as_ref())
+            .and_then(|v| match v {
+                Capabilities::Mail(capabilities) => Some(capabilities),
+                _ => None,
+            })
+    }
+
+    pub fn submission_capabilities(&self) -> Option<&SubmissionCapabilities> {
+        self.capabilities
+            .get(URI::Submission.as_ref())
+            .and_then(|v| match v {
+                Capabilities::Submission(capabilities) => Some(capabilities),
+                _ => None,
+            })
     }
 
     pub fn accounts(&self) -> impl Iterator<Item = &String> {
@@ -188,6 +240,16 @@ impl CoreCapabilities {
 
     pub fn collation_algorithms(&self) -> &[String] {
         &self.collation_algorithms
+    }
+}
+
+impl WebSocketCapabilities {
+    pub fn url(&self) -> &str {
+        &self.url
+    }
+
+    pub fn supports_push(&self) -> bool {
+        self.supports_push
     }
 }
 

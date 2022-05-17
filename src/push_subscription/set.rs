@@ -31,8 +31,8 @@ impl PushSubscription<Set> {
         self
     }
 
-    pub fn types(&mut self, types: Option<impl Iterator<Item = TypeState>>) -> &mut Self {
-        self.types = types.map(|s| s.collect());
+    pub fn types(&mut self, types: Option<impl IntoIterator<Item = TypeState>>) -> &mut Self {
+        self.types = types.map(|s| s.into_iter().collect());
         self
     }
 }

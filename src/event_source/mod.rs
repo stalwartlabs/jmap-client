@@ -31,6 +31,10 @@ pub struct Changes {
 }
 
 impl Changes {
+    pub fn new(id: Option<String>, changes: HashMap<String, HashMap<TypeState, String>>) -> Self {
+        Self { id, changes }
+    }
+
     pub fn id(&self) -> Option<&str> {
         self.id.as_deref()
     }

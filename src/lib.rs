@@ -17,7 +17,8 @@ pub mod push_subscription;
 pub mod thread;
 pub mod vacation_response;
 
-pub use futures_util;
+#[cfg(feature = "websockets")]
+pub mod client_ws;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub enum URI {
@@ -33,6 +34,22 @@ pub enum URI {
     Contacts,
     #[serde(rename = "urn:ietf:params:jmap:calendars")]
     Calendars,
+    #[serde(rename = "urn:ietf:params:jmap:websocket")]
+    WebSocket,
+}
+
+impl AsRef<str> for URI {
+    fn as_ref(&self) -> &str {
+        match self {
+            URI::Core => "urn:ietf:params:jmap:core",
+            URI::Mail => "urn:ietf:params:jmap:mail",
+            URI::Submission => "urn:ietf:params:jmap:submission",
+            URI::VacationResponse => "urn:ietf:params:jmap:vacationresponse",
+            URI::Contacts => "urn:ietf:params:jmap:contacts",
+            URI::Calendars => "urn:ietf:params:jmap:calendars",
+            URI::WebSocket => "urn:ietf:params:jmap:websocket",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -111,12 +128,12 @@ pub enum TypeState {
     EmailSubmission,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum StateChangeType {
     StateChange,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct StateChange {
     #[serde(rename = "@type")]
     pub type_: StateChangeType,
@@ -139,6 +156,8 @@ pub enum Error {
     Server(String),
     Method(MethodError),
     Set(SetError<String>),
+    #[cfg(feature = "websockets")]
+    WebSocket(tokio_tungstenite::tungstenite::error::Error),
 }
 
 impl From<reqwest::Error> for Error {
@@ -159,6 +178,12 @@ impl From<MethodError> for Error {
     }
 }
 
+impl From<ProblemDetails> for Error {
+    fn from(e: ProblemDetails) -> Self {
+        Error::Problem(e)
+    }
+}
+
 impl From<SetError<String>> for Error {
     fn from(e: SetError<String>) -> Self {
         Error::Set(e)
@@ -168,6 +193,13 @@ impl From<SetError<String>> for Error {
 impl From<&str> for Error {
     fn from(s: &str) -> Self {
         Error::Internal(s.to_string())
+    }
+}
+
+#[cfg(feature = "websockets")]
+impl From<tokio_tungstenite::tungstenite::error::Error> for Error {
+    fn from(e: tokio_tungstenite::tungstenite::error::Error) -> Self {
+        Error::WebSocket(e)
     }
 }
 
@@ -181,6 +213,8 @@ impl Display for Error {
             Error::Server(e) => write!(f, "Server error: {}", e),
             Error::Method(e) => write!(f, "Method error: {}", e),
             Error::Set(e) => write!(f, "Set error: {}", e),
+            #[cfg(feature = "websockets")]
+            Error::WebSocket(e) => write!(f, "WebSocket error: {}", e),
         }
     }
 }
