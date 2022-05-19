@@ -202,36 +202,11 @@ impl Client {
 
 #[cfg(test)]
 mod tests {
-    use crate::email::EmailBodyPart;
+    use crate::core::response::{Response, TaggedMethodResponse};
 
-    //#[test]
-    fn _test_serialize() {
-        println!(
-            "{:?}",
-            serde_json::from_slice::<EmailBodyPart>(
-                br#"{
-                "partId": "0",
-                "header:X-Custom-Header": "123",
-                "type": "text/html",
-                "charset": "us-ascii",
-                "size": 175
-              }"#
-            )
-            .unwrap()
-        );
-
-        /*let coco = request
-        .send()
-        .await
-        .unwrap()
-        .unwrap_method_responses()
-        .pop()
-        .unwrap()
-        .unwrap_get_email()
-        .unwrap();*/
-        //coco.list().first().unwrap().subject().unwrap();
-
-        /*let r: Response = serde_json::from_slice(
+    #[test]
+    fn test_deserialize() {
+        let _r: Response<TaggedMethodResponse> = serde_json::from_slice(
             br#"{"sessionState": "123", "methodResponses": [[ "Email/query", {
                 "accountId": "A1",
                 "queryState": "abcdefg",
@@ -268,50 +243,8 @@ mod tests {
                 "notFound": []
             }, "t2" ]]}"#,
         )
-        .unwrap();*/
+        .unwrap();
 
         //println!("{:?}", r);
-
-        /*let mut client = Client::connect("coco");
-        let mut request = client.request();
-
-        let set = request.set_email();
-        set.create().from(["pepe"]).subject("coco");
-        set.update("id").keyword("keyword", true);
-        set.destroy(["1", "2"]);
-
-        let ref_ = request.result_reference("/pepe/1");
-
-        let get = request.get_email();
-        get.ids_ref(ref_);
-
-        println!("{}", serde_json::to_string_pretty(&request).unwrap());*/
-
-        /*let mut client = Client::connect("coco");
-
-        client.request().email_set().create(
-            "coco",
-            Email::new()
-                .from(["Pepe"])
-                .subject("Hello world!")
-                .sent_at(342374),
-        );*/
-
-        /*let query: QueryRequest<EmailFilter, EmailComparator, email::QueryArguments> =
-            QueryRequest::new("coco".to_string())
-                .filter(Filter::or([
-                    Filter::and([
-                        EmailFilter::in_mailbox("peperino"),
-                        EmailFilter::in_mailbox_other_than(["coco", "miel"]),
-                        EmailFilter::from("comoro"),
-                    ]),
-                    Filter::not([EmailFilter::after(428374234)]),
-                ]))
-                .sort([
-                    EmailComparator::has_keyword("cocomiel"),
-                    EmailComparator::size(),
-                ]);
-
-        println!("{}", serde_json::to_string_pretty(&query).unwrap());*/
     }
 }

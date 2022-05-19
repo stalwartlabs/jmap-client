@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
-use serde::{Deserialize, Serialize};
+use serde::{de::Visitor, Deserialize};
 
 use crate::{
     blob::copy::CopyBlobResponse,
@@ -19,7 +19,7 @@ use super::{
     query::QueryResponse, query_changes::QueryChangesResponse, set::SetResponse,
 };
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub struct Response<T> {
     #[serde(rename = "methodResponses")]
     method_responses: Vec<T>,
@@ -73,8 +73,8 @@ impl<T> Response<T> {
     }
 }
 
-impl Response<MethodResponse> {
-    pub fn method_response(&self, id: &str) -> Option<&MethodResponse> {
+impl Response<TaggedMethodResponse> {
+    pub fn method_response(&self, id: &str) -> Option<&TaggedMethodResponse> {
         self.method_responses
             .iter()
             .find(|response| response.call_id() == id)
@@ -86,6 +86,11 @@ impl Response<MethodResponse> {
 pub enum SingleMethodResponse<T> {
     Error((Error, MethodError, String)),
     Ok((String, T, String)),
+}
+
+#[derive(Debug, Deserialize)]
+pub enum Error {
+    Error,
 }
 
 pub type PushSubscriptionSetResponse =
@@ -111,555 +116,526 @@ pub type VacationResponseGetResponse = GetResponse<VacationResponse<Get>>;
 pub type VacationResponseSetResponse =
     SetResponse<VacationResponse<Get>, vacation_response::Property>;
 
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-pub enum MethodResponse {
-    CopyBlob((CopyBlob, CopyBlobResponse, String)),
-    GetPushSubscription((GetPushSubscription, PushSubscriptionGetResponse, String)),
-    SetPushSubscription((SetPushSubscription, PushSubscriptionSetResponse, String)),
-    GetMailbox((GetMailbox, MailboxGetResponse, String)),
-    ChangesMailbox((ChangesMailbox, MaiboxChangesResponse, String)),
-    QueryMailbox((QueryMailbox, QueryResponse, String)),
-    QueryChangesMailbox((QueryChangesMailbox, QueryChangesResponse, String)),
-    SetMailbox((SetMailbox, MailboxSetResponse, String)),
-    GetThread((GetThread, ThreadGetResponse, String)),
-    ChangesThread((ChangesThread, ThreadChangesResponse, String)),
-    GetEmail((GetEmail, EmailGetResponse, String)),
-    ChangesEmail((ChangesEmail, EmailChangesResponse, String)),
-    QueryEmail((QueryEmail, QueryResponse, String)),
-    QueryChangesEmail((QueryChangesEmail, QueryChangesResponse, String)),
-    SetEmail((SetEmail, EmailSetResponse, String)),
-    CopyEmail((CopyEmail, EmailCopyResponse, String)),
-    ImportEmail((ImportEmail, EmailImportResponse, String)),
-    ParseEmail((ParseEmail, EmailParseResponse, String)),
-    GetSearchSnippet((GetSearchSnippet, SearchSnippetGetResponse, String)),
-    GetIdentity((GetIdentity, IdentityGetResponse, String)),
-    ChangesIdentity((ChangesIdentity, IdentityChangesResponse, String)),
-    SetIdentity((SetIdentity, IdentitySetResponse, String)),
-    GetEmailSubmission((GetEmailSubmission, EmailSubmissionGetResponse, String)),
-    ChangesEmailSubmission(
-        (
-            ChangesEmailSubmission,
-            EmailSubmissionChangesResponse,
-            String,
-        ),
-    ),
-    QueryEmailSubmission((QueryEmailSubmission, QueryResponse, String)),
-    QueryChangesEmailSubmission((QueryChangesEmailSubmission, QueryChangesResponse, String)),
-    SetEmailSubmission((SetEmailSubmission, EmailSubmissionSetResponse, String)),
-    GetVacationResponse((GetVacationResponse, VacationResponseGetResponse, String)),
-    SetVacationResponse((SetVacationResponse, VacationResponseSetResponse, String)),
-    Echo((Echo, serde_json::Value, String)),
-    Error((Error, MethodError, String)),
+#[derive(Debug)]
+pub struct TaggedMethodResponse {
+    id: String,
+    response: MethodResponse,
 }
 
-impl MethodResponse {
+#[derive(Debug)]
+pub enum MethodResponse {
+    CopyBlob(CopyBlobResponse),
+    GetPushSubscription(PushSubscriptionGetResponse),
+    SetPushSubscription(PushSubscriptionSetResponse),
+    GetMailbox(MailboxGetResponse),
+    ChangesMailbox(MaiboxChangesResponse),
+    QueryMailbox(QueryResponse),
+    QueryChangesMailbox(QueryChangesResponse),
+    SetMailbox(MailboxSetResponse),
+    GetThread(ThreadGetResponse),
+    ChangesThread(ThreadChangesResponse),
+    GetEmail(EmailGetResponse),
+    ChangesEmail(EmailChangesResponse),
+    QueryEmail(QueryResponse),
+    QueryChangesEmail(QueryChangesResponse),
+    SetEmail(EmailSetResponse),
+    CopyEmail(EmailCopyResponse),
+    ImportEmail(EmailImportResponse),
+    ParseEmail(EmailParseResponse),
+    GetSearchSnippet(SearchSnippetGetResponse),
+    GetIdentity(IdentityGetResponse),
+    ChangesIdentity(IdentityChangesResponse),
+    SetIdentity(IdentitySetResponse),
+    GetEmailSubmission(EmailSubmissionGetResponse),
+    ChangesEmailSubmission(EmailSubmissionChangesResponse),
+    QueryEmailSubmission(QueryResponse),
+    QueryChangesEmailSubmission(QueryChangesResponse),
+    SetEmailSubmission(EmailSubmissionSetResponse),
+    GetVacationResponse(VacationResponseGetResponse),
+    SetVacationResponse(VacationResponseSetResponse),
+    Echo(serde_json::Value),
+    Error(MethodError),
+}
+
+impl TaggedMethodResponse {
     pub fn call_id(&self) -> &str {
-        match self {
-            Self::CopyBlob((_, _, id)) => id,
-            Self::GetPushSubscription((_, _, id)) => id,
-            Self::SetPushSubscription((_, _, id)) => id,
-            Self::GetMailbox((_, _, id)) => id,
-            Self::ChangesMailbox((_, _, id)) => id,
-            Self::QueryMailbox((_, _, id)) => id,
-            Self::QueryChangesMailbox((_, _, id)) => id,
-            Self::SetMailbox((_, _, id)) => id,
-            Self::GetThread((_, _, id)) => id,
-            Self::ChangesThread((_, _, id)) => id,
-            Self::GetEmail((_, _, id)) => id,
-            Self::ChangesEmail((_, _, id)) => id,
-            Self::QueryEmail((_, _, id)) => id,
-            Self::QueryChangesEmail((_, _, id)) => id,
-            Self::SetEmail((_, _, id)) => id,
-            Self::CopyEmail((_, _, id)) => id,
-            Self::ImportEmail((_, _, id)) => id,
-            Self::ParseEmail((_, _, id)) => id,
-            Self::GetSearchSnippet((_, _, id)) => id,
-            Self::GetIdentity((_, _, id)) => id,
-            Self::ChangesIdentity((_, _, id)) => id,
-            Self::SetIdentity((_, _, id)) => id,
-            Self::GetEmailSubmission((_, _, id)) => id,
-            Self::ChangesEmailSubmission((_, _, id)) => id,
-            Self::QueryEmailSubmission((_, _, id)) => id,
-            Self::QueryChangesEmailSubmission((_, _, id)) => id,
-            Self::SetEmailSubmission((_, _, id)) => id,
-            Self::GetVacationResponse((_, _, id)) => id,
-            Self::SetVacationResponse((_, _, id)) => id,
-            Self::Echo((_, _, id)) => id,
-            Self::Error((_, _, id)) => id,
-        }
+        self.id.as_str()
     }
 
     pub fn is_type(&self, type_: Method) -> bool {
         matches!(
-            (self, type_),
-            (Self::CopyBlob(_), Method::CopyBlob)
-                | (Self::GetPushSubscription(_), Method::GetPushSubscription)
-                | (Self::SetPushSubscription(_), Method::SetPushSubscription)
-                | (Self::GetMailbox(_), Method::GetMailbox)
-                | (Self::ChangesMailbox(_), Method::ChangesMailbox)
-                | (Self::QueryMailbox(_), Method::QueryMailbox)
-                | (Self::QueryChangesMailbox(_), Method::QueryChangesMailbox)
-                | (Self::SetMailbox(_), Method::SetMailbox)
-                | (Self::GetThread(_), Method::GetThread)
-                | (Self::ChangesThread(_), Method::ChangesThread)
-                | (Self::GetEmail(_), Method::GetEmail)
-                | (Self::ChangesEmail(_), Method::ChangesEmail)
-                | (Self::QueryEmail(_), Method::QueryEmail)
-                | (Self::QueryChangesEmail(_), Method::QueryChangesEmail)
-                | (Self::SetEmail(_), Method::SetEmail)
-                | (Self::CopyEmail(_), Method::CopyEmail)
-                | (Self::ImportEmail(_), Method::ImportEmail)
-                | (Self::ParseEmail(_), Method::ParseEmail)
-                | (Self::GetSearchSnippet(_), Method::GetSearchSnippet)
-                | (Self::GetIdentity(_), Method::GetIdentity)
-                | (Self::ChangesIdentity(_), Method::ChangesIdentity)
-                | (Self::SetIdentity(_), Method::SetIdentity)
-                | (Self::GetEmailSubmission(_), Method::GetEmailSubmission)
+            (&self.response, type_),
+            (MethodResponse::CopyBlob(_), Method::CopyBlob)
                 | (
-                    Self::ChangesEmailSubmission(_),
+                    MethodResponse::GetPushSubscription(_),
+                    Method::GetPushSubscription
+                )
+                | (
+                    MethodResponse::SetPushSubscription(_),
+                    Method::SetPushSubscription
+                )
+                | (MethodResponse::GetMailbox(_), Method::GetMailbox)
+                | (MethodResponse::ChangesMailbox(_), Method::ChangesMailbox)
+                | (MethodResponse::QueryMailbox(_), Method::QueryMailbox)
+                | (
+                    MethodResponse::QueryChangesMailbox(_),
+                    Method::QueryChangesMailbox
+                )
+                | (MethodResponse::SetMailbox(_), Method::SetMailbox)
+                | (MethodResponse::GetThread(_), Method::GetThread)
+                | (MethodResponse::ChangesThread(_), Method::ChangesThread)
+                | (MethodResponse::GetEmail(_), Method::GetEmail)
+                | (MethodResponse::ChangesEmail(_), Method::ChangesEmail)
+                | (MethodResponse::QueryEmail(_), Method::QueryEmail)
+                | (
+                    MethodResponse::QueryChangesEmail(_),
+                    Method::QueryChangesEmail
+                )
+                | (MethodResponse::SetEmail(_), Method::SetEmail)
+                | (MethodResponse::CopyEmail(_), Method::CopyEmail)
+                | (MethodResponse::ImportEmail(_), Method::ImportEmail)
+                | (MethodResponse::ParseEmail(_), Method::ParseEmail)
+                | (
+                    MethodResponse::GetSearchSnippet(_),
+                    Method::GetSearchSnippet
+                )
+                | (MethodResponse::GetIdentity(_), Method::GetIdentity)
+                | (MethodResponse::ChangesIdentity(_), Method::ChangesIdentity)
+                | (MethodResponse::SetIdentity(_), Method::SetIdentity)
+                | (
+                    MethodResponse::GetEmailSubmission(_),
+                    Method::GetEmailSubmission
+                )
+                | (
+                    MethodResponse::ChangesEmailSubmission(_),
                     Method::ChangesEmailSubmission
                 )
-                | (Self::QueryEmailSubmission(_), Method::QueryEmailSubmission)
                 | (
-                    Self::QueryChangesEmailSubmission(_),
+                    MethodResponse::QueryEmailSubmission(_),
+                    Method::QueryEmailSubmission
+                )
+                | (
+                    MethodResponse::QueryChangesEmailSubmission(_),
                     Method::QueryChangesEmailSubmission
                 )
-                | (Self::SetEmailSubmission(_), Method::SetEmailSubmission)
-                | (Self::GetVacationResponse(_), Method::GetVacationResponse)
-                | (Self::SetVacationResponse(_), Method::SetVacationResponse)
-                | (Self::Echo(_), Method::Echo)
-                | (Self::Error(_), Method::Error)
+                | (
+                    MethodResponse::SetEmailSubmission(_),
+                    Method::SetEmailSubmission
+                )
+                | (
+                    MethodResponse::GetVacationResponse(_),
+                    Method::GetVacationResponse
+                )
+                | (
+                    MethodResponse::SetVacationResponse(_),
+                    Method::SetVacationResponse
+                )
+                | (MethodResponse::Echo(_), Method::Echo)
+                | (MethodResponse::Error(_), Method::Error)
         )
     }
 
     pub fn unwrap_copy_blob(self) -> crate::Result<CopyBlobResponse> {
-        match self {
-            Self::CopyBlob((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::CopyBlob(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_get_push_subscription(self) -> crate::Result<PushSubscriptionGetResponse> {
-        match self {
-            Self::GetPushSubscription((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::GetPushSubscription(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_set_push_subscription(self) -> crate::Result<PushSubscriptionSetResponse> {
-        match self {
-            Self::SetPushSubscription((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::SetPushSubscription(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_get_mailbox(self) -> crate::Result<MailboxGetResponse> {
-        match self {
-            Self::GetMailbox((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::GetMailbox(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_changes_mailbox(self) -> crate::Result<MaiboxChangesResponse> {
-        match self {
-            Self::ChangesMailbox((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::ChangesMailbox(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_query_mailbox(self) -> crate::Result<QueryResponse> {
-        match self {
-            Self::QueryMailbox((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::QueryMailbox(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_query_changes_mailbox(self) -> crate::Result<QueryChangesResponse> {
-        match self {
-            Self::QueryChangesMailbox((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::QueryChangesMailbox(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_set_mailbox(self) -> crate::Result<MailboxSetResponse> {
-        match self {
-            Self::SetMailbox((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::SetMailbox(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_get_thread(self) -> crate::Result<ThreadGetResponse> {
-        match self {
-            Self::GetThread((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::GetThread(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_changes_thread(self) -> crate::Result<ThreadChangesResponse> {
-        match self {
-            Self::ChangesThread((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::ChangesThread(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_get_email(self) -> crate::Result<EmailGetResponse> {
-        match self {
-            Self::GetEmail((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::GetEmail(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_changes_email(self) -> crate::Result<EmailChangesResponse> {
-        match self {
-            Self::ChangesEmail((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::ChangesEmail(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_query_email(self) -> crate::Result<QueryResponse> {
-        match self {
-            Self::QueryEmail((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::QueryEmail(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_query_changes_email(self) -> crate::Result<QueryChangesResponse> {
-        match self {
-            Self::QueryChangesEmail((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::QueryChangesEmail(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_set_email(self) -> crate::Result<EmailSetResponse> {
-        match self {
-            Self::SetEmail((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::SetEmail(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_copy_email(self) -> crate::Result<EmailCopyResponse> {
-        match self {
-            Self::CopyEmail((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::CopyEmail(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_import_email(self) -> crate::Result<EmailImportResponse> {
-        match self {
-            Self::ImportEmail((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::ImportEmail(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_parse_email(self) -> crate::Result<EmailParseResponse> {
-        match self {
-            Self::ParseEmail((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::ParseEmail(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_get_search_snippet(self) -> crate::Result<SearchSnippetGetResponse> {
-        match self {
-            Self::GetSearchSnippet((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::GetSearchSnippet(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_get_identity(self) -> crate::Result<IdentityGetResponse> {
-        match self {
-            Self::GetIdentity((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::GetIdentity(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_changes_identity(self) -> crate::Result<IdentityChangesResponse> {
-        match self {
-            Self::ChangesIdentity((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::ChangesIdentity(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_set_identity(self) -> crate::Result<IdentitySetResponse> {
-        match self {
-            Self::SetIdentity((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::SetIdentity(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_get_email_submission(self) -> crate::Result<EmailSubmissionGetResponse> {
-        match self {
-            Self::GetEmailSubmission((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::GetEmailSubmission(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_changes_email_submission(self) -> crate::Result<EmailSubmissionChangesResponse> {
-        match self {
-            Self::ChangesEmailSubmission((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::ChangesEmailSubmission(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_set_email_submission(self) -> crate::Result<EmailSubmissionSetResponse> {
-        match self {
-            Self::SetEmailSubmission((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::SetEmailSubmission(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_query_email_submission(self) -> crate::Result<QueryResponse> {
-        match self {
-            Self::QueryEmailSubmission((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::QueryEmailSubmission(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_query_changes_email_submission(self) -> crate::Result<QueryChangesResponse> {
-        match self {
-            Self::QueryChangesEmailSubmission((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::QueryChangesEmailSubmission(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_get_vacation_response(self) -> crate::Result<VacationResponseGetResponse> {
-        match self {
-            Self::GetVacationResponse((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::GetVacationResponse(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_set_vacation_response(self) -> crate::Result<VacationResponseSetResponse> {
-        match self {
-            Self::SetVacationResponse((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::SetVacationResponse(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn unwrap_echo(self) -> crate::Result<serde_json::Value> {
-        match self {
-            Self::Echo((_, response, _)) => Ok(response),
-            Self::Error((_, err, _)) => Err(err.into()),
+        match self.response {
+            MethodResponse::Echo(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
             _ => Err("Response type mismatch".into()),
         }
     }
 
     pub fn is_error(&self) -> bool {
-        matches!(self, Self::Error(_))
+        matches!(self.response, MethodResponse::Error(_))
     }
 }
 
-#[derive(Debug, Deserialize)]
-pub enum Echo {
-    #[serde(rename = "Core/echo")]
-    V,
+impl<'de> Deserialize<'de> for TaggedMethodResponse {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_seq(TaggedMethodResponseVisitor)
+    }
 }
 
-#[derive(Debug, Deserialize)]
-pub enum CopyBlob {
-    #[serde(rename = "Blob/copy")]
-    V,
-}
+struct TaggedMethodResponseVisitor;
 
-#[derive(Debug, Deserialize)]
-pub enum GetPushSubscription {
-    #[serde(rename = "PushSubscription/get")]
-    V,
-}
+impl<'de> Visitor<'de> for TaggedMethodResponseVisitor {
+    type Value = TaggedMethodResponse;
 
-#[derive(Debug, Deserialize)]
-pub enum SetPushSubscription {
-    #[serde(rename = "PushSubscription/set")]
-    V,
-}
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a valid JMAP method response")
+    }
 
-#[derive(Debug, Deserialize)]
-pub enum GetMailbox {
-    #[serde(rename = "Mailbox/get")]
-    V,
-}
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: serde::de::SeqAccess<'de>,
+    {
+        let response = match seq
+            .next_element::<Method>()?
+            .ok_or_else(|| serde::de::Error::custom("Expected a method name"))?
+        {
+            Method::Echo => MethodResponse::Echo(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::CopyBlob => MethodResponse::CopyBlob(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::GetPushSubscription => MethodResponse::GetPushSubscription(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::SetPushSubscription => MethodResponse::SetPushSubscription(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::GetMailbox => MethodResponse::GetMailbox(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::ChangesMailbox => MethodResponse::ChangesMailbox(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::QueryMailbox => MethodResponse::QueryMailbox(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::QueryChangesMailbox => MethodResponse::QueryChangesMailbox(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::SetMailbox => MethodResponse::SetMailbox(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::GetThread => MethodResponse::GetThread(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::ChangesThread => MethodResponse::ChangesThread(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::GetEmail => MethodResponse::GetEmail(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::ChangesEmail => MethodResponse::ChangesEmail(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::QueryEmail => MethodResponse::QueryEmail(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::QueryChangesEmail => MethodResponse::QueryChangesEmail(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::SetEmail => MethodResponse::SetEmail(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::CopyEmail => MethodResponse::CopyEmail(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::ImportEmail => MethodResponse::ImportEmail(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::ParseEmail => MethodResponse::ParseEmail(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::GetSearchSnippet => MethodResponse::GetSearchSnippet(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::GetIdentity => MethodResponse::GetIdentity(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::ChangesIdentity => MethodResponse::ChangesIdentity(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::SetIdentity => MethodResponse::SetIdentity(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::GetEmailSubmission => MethodResponse::GetEmailSubmission(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::ChangesEmailSubmission => MethodResponse::ChangesEmailSubmission(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::QueryEmailSubmission => MethodResponse::QueryEmailSubmission(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::QueryChangesEmailSubmission => MethodResponse::QueryChangesEmailSubmission(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::SetEmailSubmission => MethodResponse::SetEmailSubmission(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::GetVacationResponse => MethodResponse::GetVacationResponse(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::SetVacationResponse => MethodResponse::SetVacationResponse(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::Error => MethodResponse::Error(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+        };
 
-#[derive(Debug, Deserialize)]
-pub enum ChangesMailbox {
-    #[serde(rename = "Mailbox/changes")]
-    V,
-}
+        let id = seq
+            .next_element::<String>()?
+            .ok_or_else(|| serde::de::Error::custom("Expected method call id"))?;
 
-#[derive(Debug, Deserialize)]
-pub enum QueryMailbox {
-    #[serde(rename = "Mailbox/query")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum QueryChangesMailbox {
-    #[serde(rename = "Mailbox/queryChanges")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum SetMailbox {
-    #[serde(rename = "Mailbox/set")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum GetThread {
-    #[serde(rename = "Thread/get")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum ChangesThread {
-    #[serde(rename = "Thread/changes")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum GetEmail {
-    #[serde(rename = "Email/get")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum ChangesEmail {
-    #[serde(rename = "Email/changes")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum QueryEmail {
-    #[serde(rename = "Email/query")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum QueryChangesEmail {
-    #[serde(rename = "Email/queryChanges")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum SetEmail {
-    #[serde(rename = "Email/set")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum CopyEmail {
-    #[serde(rename = "Email/copy")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum ImportEmail {
-    #[serde(rename = "Email/import")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum ParseEmail {
-    #[serde(rename = "Email/parse")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum GetSearchSnippet {
-    #[serde(rename = "SearchSnippet/get")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum GetIdentity {
-    #[serde(rename = "Identity/get")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum ChangesIdentity {
-    #[serde(rename = "Identity/changes")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum SetIdentity {
-    #[serde(rename = "Identity/set")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum GetEmailSubmission {
-    #[serde(rename = "EmailSubmission/get")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum ChangesEmailSubmission {
-    #[serde(rename = "EmailSubmission/changes")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum QueryEmailSubmission {
-    #[serde(rename = "EmailSubmission/query")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum QueryChangesEmailSubmission {
-    #[serde(rename = "EmailSubmission/queryChanges")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum SetEmailSubmission {
-    #[serde(rename = "EmailSubmission/set")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum GetVacationResponse {
-    #[serde(rename = "VacationResponse/get")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum SetVacationResponse {
-    #[serde(rename = "VacationResponse/set")]
-    V,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum Error {
-    #[serde(rename = "error")]
-    V,
+        Ok(TaggedMethodResponse { response, id })
+    }
 }

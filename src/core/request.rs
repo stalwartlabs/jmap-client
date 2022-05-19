@@ -21,7 +21,7 @@ use super::{
     get::GetRequest,
     query::QueryRequest,
     query_changes::QueryChangesRequest,
-    response::{MethodResponse, Response, SingleMethodResponse},
+    response::{Response, SingleMethodResponse, TaggedMethodResponse},
     set::SetRequest,
     RequestParams,
 };
@@ -412,7 +412,7 @@ impl<'x> Request<'x> {
         }
     }
 
-    pub async fn send(mut self) -> crate::Result<Response<MethodResponse>> {
+    pub async fn send(mut self) -> crate::Result<Response<TaggedMethodResponse>> {
         Option::take(&mut self.client).unwrap().send(&self).await
     }
 
