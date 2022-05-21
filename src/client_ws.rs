@@ -13,7 +13,7 @@ use crate::{
     core::{
         error::{ProblemDetails, ProblemType},
         request::{Arguments, Request},
-        response::{MethodResponse, Response},
+        response::{Response, TaggedMethodResponse},
     },
     event_source::Changes,
     Method, StateChangeType, TypeState, URI,
@@ -46,7 +46,7 @@ pub struct WebSocketResponse {
     request_id: Option<String>,
 
     #[serde(rename = "methodResponses")]
-    method_responses: Vec<MethodResponse>,
+    method_responses: Vec<TaggedMethodResponse>,
 
     #[serde(rename = "createdIds")]
     created_ids: Option<HashMap<String, String>>,
@@ -141,7 +141,7 @@ enum WebSocketMessage_ {
 
 #[derive(Debug)]
 pub enum WebSocketMessage {
-    Response(Response<MethodResponse>),
+    Response(Response<TaggedMethodResponse>),
     StateChange(Changes),
 }
 
