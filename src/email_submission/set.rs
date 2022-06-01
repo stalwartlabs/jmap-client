@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{core::set::SetObject, Get, Set};
+use crate::{core::set::SetObject, email::Email, Get, Set};
 
-use super::{Address, EmailSubmission, Envelope, UndoStatus};
+use super::{Address, EmailSubmission, Envelope, SetArguments, UndoStatus};
 
 impl EmailSubmission<Set> {
     pub fn identity_id(&mut self, identity_id: impl Into<String>) -> &mut Self {
@@ -32,7 +32,7 @@ impl EmailSubmission<Set> {
 }
 
 impl SetObject for EmailSubmission<Set> {
-    type SetArguments = ();
+    type SetArguments = SetArguments;
 
     fn new(_create_id: Option<usize>) -> Self {
         EmailSubmission {
@@ -57,7 +57,7 @@ impl SetObject for EmailSubmission<Set> {
 }
 
 impl SetObject for EmailSubmission<Get> {
-    type SetArguments = ();
+    type SetArguments = SetArguments;
 
     fn new(_create_id: Option<usize>) -> Self {
         unimplemented!()
@@ -140,5 +140,41 @@ impl From<Address<Get>> for Address<Set> {
             email: addr.email,
             parameters: addr.parameters,
         }
+    }
+}
+
+impl SetArguments {
+    pub fn on_success_update_email(&mut self, id: impl Into<String>) -> &mut Email<Set> {
+        self.on_success_update_email_(format!("#{}", id.into()))
+    }
+
+    pub fn on_success_update_email_id(&mut self, id: impl Into<String>) -> &mut Email<Set> {
+        self.on_success_update_email_(id)
+    }
+
+    fn on_success_update_email_(&mut self, id: impl Into<String>) -> &mut Email<Set> {
+        let id = id.into();
+        self.on_success_update_email
+            .get_or_insert_with(HashMap::new)
+            .insert(id.clone(), Email::new(None));
+        self.on_success_update_email
+            .as_mut()
+            .unwrap()
+            .get_mut(&id)
+            .unwrap()
+    }
+
+    pub fn on_success_destroy_email(&mut self, id: impl Into<String>) -> &mut Self {
+        self.on_success_destroy_email
+            .get_or_insert_with(Vec::new)
+            .push(format!("#{}", id.into()));
+        self
+    }
+
+    pub fn on_success_destroy_email_id(&mut self, id: impl Into<String>) -> &mut Self {
+        self.on_success_destroy_email
+            .get_or_insert_with(Vec::new)
+            .push(id.into());
+        self
     }
 }

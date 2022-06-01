@@ -17,7 +17,7 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct SetArguments {
     #[serde(rename = "onSuccessUpdateEmail")]
-    on_success_update_email: Option<HashMap<String, Email>>,
+    on_success_update_email: Option<HashMap<String, Email<Set>>>,
     #[serde(rename = "onSuccessDestroyEmail")]
     on_success_destroy_email: Option<Vec<String>>,
 }
