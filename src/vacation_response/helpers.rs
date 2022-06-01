@@ -11,7 +11,7 @@ use crate::{
 use super::VacationResponse;
 
 impl Request<'_> {
-    pub fn get_vacation_response(&mut self) -> &mut GetRequest<super::Property, ()> {
+    pub fn get_vacation_response(&mut self) -> &mut GetRequest<VacationResponse<Set>> {
         self.add_capability(URI::VacationResponse);
         self.add_method_call(
             Method::GetVacationResponse,
@@ -24,7 +24,7 @@ impl Request<'_> {
         self.send_single().await
     }
 
-    pub fn set_vacation_response(&mut self) -> &mut SetRequest<VacationResponse<Set>, ()> {
+    pub fn set_vacation_response(&mut self) -> &mut SetRequest<VacationResponse<Set>> {
         self.add_capability(URI::VacationResponse);
         self.add_method_call(
             Method::SetVacationResponse,

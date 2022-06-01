@@ -1,7 +1,15 @@
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
-use crate::core::{query, set::from_timestamp};
+use crate::{
+    core::{
+        query::{self, QueryObject},
+        set::from_timestamp,
+    },
+    Set,
+};
+
+use super::{Email, QueryArguments};
 
 #[derive(Serialize, Clone, Debug)]
 #[serde(untagged)]
@@ -278,4 +286,12 @@ impl Comparator {
             keyword: keyword.into(),
         })
     }
+}
+
+impl QueryObject for Email<Set> {
+    type QueryArguments = QueryArguments;
+
+    type Filter = Filter;
+
+    type Sort = Comparator;
 }

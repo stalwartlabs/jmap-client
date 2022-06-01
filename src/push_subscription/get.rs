@@ -1,4 +1,4 @@
-use crate::{Get, TypeState};
+use crate::{core::get::GetObject, Get, TypeState, Set};
 
 use super::{Keys, PushSubscription};
 
@@ -44,4 +44,12 @@ impl Keys {
     pub fn auth(&self) -> Option<Vec<u8>> {
         base64::decode_config(&self.auth, base64::URL_SAFE).ok()
     }
+}
+
+impl GetObject for PushSubscription<Set> {
+    type GetArguments = ();
+}
+
+impl GetObject for PushSubscription<Get> {
+    type GetArguments = ();
 }

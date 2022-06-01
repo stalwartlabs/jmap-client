@@ -4,8 +4,9 @@ pub mod set;
 
 use std::fmt::Display;
 
+use crate::core::changes::ChangesObject;
 use crate::core::set::list_not_set;
-use crate::core::Type;
+use crate::core::Object;
 use crate::Set;
 use crate::{email::EmailAddress, Get};
 use serde::{Deserialize, Serialize};
@@ -86,14 +87,26 @@ impl Display for Property {
     }
 }
 
-impl Type for Identity<Set> {
+impl Object for Identity<Set> {
+    type Property = Property;
+
     fn requires_account_id() -> bool {
         true
     }
 }
 
-impl Type for Property {
+impl Object for Identity<Get> {
+    type Property = Property;
+
     fn requires_account_id() -> bool {
         true
     }
+}
+
+impl ChangesObject for Identity<Set> {
+    type ChangesResponse = ();
+}
+
+impl ChangesObject for Identity<Get> {
+    type ChangesResponse = ();
 }

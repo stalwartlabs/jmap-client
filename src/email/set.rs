@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use crate::{
     core::{
         request::ResultReference,
-        set::{from_timestamp, Create},
+        set::{from_timestamp, SetObject},
     },
-    Set,
+    Get, Set,
 };
 
 use super::{
@@ -177,7 +177,9 @@ impl Email<Set> {
     }
 }
 
-impl Create for Email<Set> {
+impl SetObject for Email<Set> {
+    type SetArguments = ();
+
     fn new(_create_id: Option<usize>) -> Email<Set> {
         Email {
             _create_id,
@@ -215,6 +217,18 @@ impl Create for Email<Set> {
 
     fn create_id(&self) -> Option<String> {
         self._create_id.map(|id| format!("c{}", id))
+    }
+}
+
+impl SetObject for Email<Get> {
+    type SetArguments = ();
+
+    fn new(_create_id: Option<usize>) -> Email<Get> {
+        unimplemented!()
+    }
+
+    fn create_id(&self) -> Option<String> {
+        None
     }
 }
 

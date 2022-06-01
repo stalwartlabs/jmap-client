@@ -5,7 +5,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::core::Type;
+use crate::core::{Object, changes::ChangesObject};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Thread {
@@ -22,7 +22,9 @@ pub enum Property {
     EmailIds,
 }
 
-impl Type for Property {
+impl Object for Thread {
+    type Property = Property;
+
     fn requires_account_id() -> bool {
         true
     }
@@ -36,3 +38,8 @@ impl Display for Property {
         }
     }
 }
+
+impl ChangesObject for Thread {
+    type ChangesResponse = ();
+}
+

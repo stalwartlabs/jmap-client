@@ -4,13 +4,13 @@ use serde::{de::Visitor, Deserialize};
 
 use crate::{
     blob::copy::CopyBlobResponse,
-    email::{self, import::EmailImportResponse, parse::EmailParseResponse, Email},
-    email_submission::{self, EmailSubmission},
-    identity::{self, Identity},
-    mailbox::{self, Mailbox},
-    push_subscription::{self, PushSubscription},
+    email::{import::EmailImportResponse, parse::EmailParseResponse, Email},
+    email_submission::EmailSubmission,
+    identity::Identity,
+    mailbox::Mailbox,
+    push_subscription::PushSubscription,
     thread::Thread,
-    vacation_response::{self, VacationResponse},
+    vacation_response::VacationResponse,
     Get, Method,
 };
 
@@ -93,28 +93,26 @@ pub enum Error {
     Error,
 }
 
-pub type PushSubscriptionSetResponse =
-    SetResponse<PushSubscription<Get>, push_subscription::Property>;
+pub type PushSubscriptionSetResponse = SetResponse<PushSubscription<Get>>;
 pub type PushSubscriptionGetResponse = GetResponse<PushSubscription<Get>>;
-pub type MaiboxChangesResponse = ChangesResponse<mailbox::ChangesResponse>;
-pub type MailboxSetResponse = SetResponse<Mailbox<Get>, mailbox::Property>;
+pub type MaiboxChangesResponse = ChangesResponse<Mailbox<Get>>;
+pub type MailboxSetResponse = SetResponse<Mailbox<Get>>;
 pub type MailboxGetResponse = GetResponse<Mailbox<Get>>;
 pub type ThreadGetResponse = GetResponse<Thread>;
-pub type ThreadChangesResponse = ChangesResponse<()>;
+pub type ThreadChangesResponse = ChangesResponse<Thread>;
 pub type EmailGetResponse = GetResponse<Email<Get>>;
-pub type EmailSetResponse = SetResponse<Email<Get>, email::Property>;
-pub type EmailCopyResponse = CopyResponse<Email<Get>, email::Property>;
-pub type EmailChangesResponse = ChangesResponse<()>;
+pub type EmailSetResponse = SetResponse<Email<Get>>;
+pub type EmailCopyResponse = CopyResponse<Email<Get>>;
+pub type EmailChangesResponse = ChangesResponse<Email<Get>>;
 pub type SearchSnippetGetResponse = GetResponse<String>;
-pub type IdentitySetResponse = SetResponse<Identity<Get>, identity::Property>;
+pub type IdentitySetResponse = SetResponse<Identity<Get>>;
 pub type IdentityGetResponse = GetResponse<Identity<Get>>;
-pub type IdentityChangesResponse = ChangesResponse<()>;
-pub type EmailSubmissionSetResponse = SetResponse<EmailSubmission<Get>, email_submission::Property>;
+pub type IdentityChangesResponse = ChangesResponse<Identity<Get>>;
+pub type EmailSubmissionSetResponse = SetResponse<EmailSubmission<Get>>;
 pub type EmailSubmissionGetResponse = GetResponse<EmailSubmission<Get>>;
-pub type EmailSubmissionChangesResponse = ChangesResponse<()>;
+pub type EmailSubmissionChangesResponse = ChangesResponse<EmailSubmission<Get>>;
 pub type VacationResponseGetResponse = GetResponse<VacationResponse<Get>>;
-pub type VacationResponseSetResponse =
-    SetResponse<VacationResponse<Get>, vacation_response::Property>;
+pub type VacationResponseSetResponse = SetResponse<VacationResponse<Get>>;
 
 #[derive(Debug)]
 pub struct TaggedMethodResponse {

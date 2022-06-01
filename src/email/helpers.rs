@@ -10,7 +10,7 @@ use crate::{
         response::{EmailCopyResponse, EmailGetResponse, EmailSetResponse},
         set::SetRequest,
     },
-    Method, Set,
+    Get, Method, Set,
 };
 
 use super::{
@@ -118,7 +118,7 @@ impl Client {
         &mut self,
         id: &str,
         properties: Option<impl IntoIterator<Item = Property>>,
-    ) -> crate::Result<Option<Email>> {
+    ) -> crate::Result<Option<Email<Get>>> {
         let mut request = self.build();
         let get_request = request.get_email().ids([id]);
         if let Some(properties) = properties {
@@ -134,7 +134,7 @@ impl Client {
         &mut self,
         since_state: impl Into<String>,
         max_changes: usize,
-    ) -> crate::Result<ChangesResponse<()>> {
+    ) -> crate::Result<ChangesResponse<Email<Get>>> {
         let mut request = self.build();
         request.changes_email(since_state).max_changes(max_changes);
         request.send_single().await
@@ -187,7 +187,7 @@ impl Client {
 }
 
 impl Request<'_> {
-    pub fn get_email(&mut self) -> &mut GetRequest<super::Property, super::GetArguments> {
+    pub fn get_email(&mut self) -> &mut GetRequest<Email<Set>> {
         self.add_method_call(
             Method::GetEmail,
             Arguments::email_get(self.params(Method::GetEmail)),
@@ -207,14 +207,11 @@ impl Request<'_> {
         .changes_mut()
     }
 
-    pub async fn send_changes_email(self) -> crate::Result<ChangesResponse<()>> {
+    pub async fn send_changes_email(self) -> crate::Result<ChangesResponse<Email<Get>>> {
         self.send_single().await
     }
 
-    pub fn query_email(
-        &mut self,
-    ) -> &mut QueryRequest<super::query::Filter, super::query::Comparator, super::QueryArguments>
-    {
+    pub fn query_email(&mut self) -> &mut QueryRequest<Email<Set>> {
         self.add_method_call(
             Method::QueryEmail,
             Arguments::email_query(self.params(Method::QueryEmail)),
@@ -229,11 +226,7 @@ impl Request<'_> {
     pub fn query_email_changes(
         &mut self,
         since_query_state: impl Into<String>,
-    ) -> &mut QueryChangesRequest<
-        super::query::Filter,
-        super::query::Comparator,
-        super::QueryArguments,
-    > {
+    ) -> &mut QueryChangesRequest<Email<Set>> {
         self.add_method_call(
             Method::QueryChangesEmail,
             Arguments::email_query_changes(
@@ -248,7 +241,7 @@ impl Request<'_> {
         self.send_single().await
     }
 
-    pub fn set_email(&mut self) -> &mut SetRequest<Email<Set>, ()> {
+    pub fn set_email(&mut self) -> &mut SetRequest<Email<Set>> {
         self.add_method_call(
             Method::SetEmail,
             Arguments::email_set(self.params(Method::SetEmail)),

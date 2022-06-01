@@ -1,13 +1,15 @@
-use std::fmt::Display;
-
 use serde::{Deserialize, Serialize};
 
 use crate::Method;
 
-use super::{request::ResultReference, RequestParams, Type};
+use super::{request::ResultReference, Object, RequestParams};
+
+pub trait GetObject: Object {
+    type GetArguments: Default;
+}
 
 #[derive(Debug, Clone, Serialize)]
-pub struct GetRequest<T: Display + Type, A: Default> {
+pub struct GetRequest<O: GetObject> {
     #[serde(skip)]
     method: (Method, usize),
 
@@ -24,10 +26,10 @@ pub struct GetRequest<T: Display + Type, A: Default> {
     ids_ref: Option<ResultReference>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    properties: Option<Vec<T>>,
+    properties: Option<Vec<O::Property>>,
 
     #[serde(flatten)]
-    arguments: A,
+    arguments: O::GetArguments,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -43,10 +45,10 @@ pub struct GetResponse<T> {
     not_found: Vec<String>,
 }
 
-impl<T: Display + Type, A: Default> GetRequest<T, A> {
+impl<O: GetObject> GetRequest<O> {
     pub fn new(params: RequestParams) -> Self {
         GetRequest {
-            account_id: if T::requires_account_id() {
+            account_id: if O::requires_account_id() {
                 params.account_id.into()
             } else {
                 None
@@ -55,12 +57,12 @@ impl<T: Display + Type, A: Default> GetRequest<T, A> {
             ids: None,
             ids_ref: None,
             properties: None,
-            arguments: A::default(),
+            arguments: O::GetArguments::default(),
         }
     }
 
     pub fn account_id(&mut self, account_id: impl Into<String>) -> &mut Self {
-        if T::requires_account_id() {
+        if O::requires_account_id() {
             self.account_id = Some(account_id.into());
         }
         self
@@ -82,16 +84,16 @@ impl<T: Display + Type, A: Default> GetRequest<T, A> {
         self
     }
 
-    pub fn properties(&mut self, properties: impl IntoIterator<Item = T>) -> &mut Self {
+    pub fn properties(&mut self, properties: impl IntoIterator<Item = O::Property>) -> &mut Self {
         self.properties = Some(properties.into_iter().collect());
         self
     }
 
-    pub fn arguments(&mut self) -> &mut A {
+    pub fn arguments(&mut self) -> &mut O::GetArguments {
         &mut self.arguments
     }
 
-    pub fn result_reference(&self, property: T) -> ResultReference {
+    pub fn result_reference(&self, property: O::Property) -> ResultReference {
         ResultReference::new(
             self.method.0,
             self.method.1,
@@ -100,7 +102,7 @@ impl<T: Display + Type, A: Default> GetRequest<T, A> {
     }
 }
 
-impl<T> GetResponse<T> {
+impl<O> GetResponse<O> {
     pub fn account_id(&self) -> &str {
         self.account_id.as_ref().unwrap()
     }
@@ -109,7 +111,7 @@ impl<T> GetResponse<T> {
         &self.state
     }
 
-    pub fn list(&self) -> &[T] {
+    pub fn list(&self) -> &[O] {
         &self.list
     }
 
@@ -117,10 +119,10 @@ impl<T> GetResponse<T> {
         &self.not_found
     }
 
-    pub fn unwrap_list(&mut self) -> Vec<T> {
+    pub fn unwrap_list(&mut self) -> Vec<O> {
         std::mem::take(&mut self.list)
     }
-    pub fn pop(&mut self) -> Option<T> {
+    pub fn pop(&mut self) -> Option<O> {
         self.list.pop()
     }
 

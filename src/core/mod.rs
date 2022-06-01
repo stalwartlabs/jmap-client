@@ -1,3 +1,7 @@
+use std::fmt::Display;
+
+use serde::{Deserialize, Serialize};
+
 use crate::Method;
 
 pub mod changes;
@@ -27,6 +31,7 @@ impl RequestParams {
     }
 }
 
-pub trait Type {
+pub trait Object: Sized {
+    type Property: Display + Serialize + for<'de> Deserialize<'de>;
     fn requires_account_id() -> bool;
 }

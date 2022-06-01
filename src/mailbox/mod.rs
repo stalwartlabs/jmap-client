@@ -5,7 +5,9 @@ pub mod set;
 
 use std::fmt::Display;
 
-use crate::core::{set::string_not_set, Type};
+use crate::core::changes::ChangesObject;
+use crate::core::set::string_not_set;
+use crate::core::Object;
 use crate::mailbox::set::role_not_set;
 use crate::{Get, Set};
 use serde::{Deserialize, Serialize};
@@ -184,14 +186,26 @@ impl ChangesResponse {
     }
 }
 
-impl Type for Mailbox<Set> {
+impl Object for Mailbox<Set> {
+    type Property = Property;
+
     fn requires_account_id() -> bool {
         true
     }
 }
 
-impl Type for Property {
+impl Object for Mailbox<Get> {
+    type Property = Property;
+
     fn requires_account_id() -> bool {
         true
     }
+}
+
+impl ChangesObject for Mailbox<Set> {
+    type ChangesResponse = ChangesResponse;
+}
+
+impl ChangesObject for Mailbox<Get> {
+    type ChangesResponse = ChangesResponse;
 }

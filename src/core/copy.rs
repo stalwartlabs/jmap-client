@@ -1,14 +1,14 @@
-use std::{collections::HashMap, fmt::Display};
+use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
 use super::{
-    set::{Create, SetError},
+    set::{SetError, SetObject},
     RequestParams,
 };
 
 #[derive(Debug, Clone, Serialize)]
-pub struct CopyRequest<T: Create> {
+pub struct CopyRequest<O: SetObject> {
     #[serde(rename = "fromAccountId")]
     from_account_id: String,
 
@@ -24,7 +24,7 @@ pub struct CopyRequest<T: Create> {
     if_in_state: Option<String>,
 
     #[serde(rename = "create")]
-    create: HashMap<String, T>,
+    create: HashMap<String, O>,
 
     #[serde(rename = "onSuccessDestroyOriginal")]
     on_success_destroy_original: bool,
@@ -35,7 +35,7 @@ pub struct CopyRequest<T: Create> {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct CopyResponse<T, U: Display> {
+pub struct CopyResponse<O: SetObject> {
     #[serde(rename = "fromAccountId")]
     from_account_id: String,
 
@@ -49,13 +49,13 @@ pub struct CopyResponse<T, U: Display> {
     new_state: String,
 
     #[serde(rename = "created")]
-    created: Option<HashMap<String, T>>,
+    created: Option<HashMap<String, O>>,
 
     #[serde(rename = "notCreated")]
-    not_created: Option<HashMap<String, SetError<U>>>,
+    not_created: Option<HashMap<String, SetError<O::Property>>>,
 }
 
-impl<T: Create> CopyRequest<T> {
+impl<T: SetObject> CopyRequest<T> {
     pub fn new(params: RequestParams, from_account_id: String) -> Self {
         CopyRequest {
             from_account_id,
@@ -105,7 +105,7 @@ impl<T: Create> CopyRequest<T> {
     }
 }
 
-impl<T, U: Display> CopyResponse<T, U> {
+impl<O: SetObject> CopyResponse<O> {
     pub fn from_account_id(&self) -> &str {
         &self.from_account_id
     }
@@ -122,11 +122,11 @@ impl<T, U: Display> CopyResponse<T, U> {
         &self.new_state
     }
 
-    pub fn created(&self, id: &str) -> Option<&T> {
+    pub fn created(&self, id: &str) -> Option<&O> {
         self.created.as_ref().and_then(|created| created.get(id))
     }
 
-    pub fn not_created(&self, id: &str) -> Option<&SetError<U>> {
+    pub fn not_created(&self, id: &str) -> Option<&SetError<O::Property>> {
         self.not_created
             .as_ref()
             .and_then(|not_created| not_created.get(id))

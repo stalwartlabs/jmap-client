@@ -7,10 +7,17 @@ use std::{
 
 use crate::Error;
 
-use super::{request::ResultReference, RequestParams, Type};
+use super::{request::ResultReference, Object, RequestParams};
+
+pub trait SetObject: Object {
+    type SetArguments: Default;
+
+    fn new(create_id: Option<usize>) -> Self;
+    fn create_id(&self) -> Option<String>;
+}
 
 #[derive(Debug, Clone, Serialize)]
-pub struct SetRequest<T: Create + Type, A: Default> {
+pub struct SetRequest<O: SetObject> {
     #[serde(rename = "accountId")]
     #[serde(skip_serializing_if = "Option::is_none")]
     account_id: Option<String>,
@@ -20,10 +27,10 @@ pub struct SetRequest<T: Create + Type, A: Default> {
     if_in_state: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    create: Option<HashMap<String, T>>,
+    create: Option<HashMap<String, O>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    update: Option<HashMap<String, T>>,
+    update: Option<HashMap<String, O>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     destroy: Option<Vec<String>>,
@@ -34,11 +41,11 @@ pub struct SetRequest<T: Create + Type, A: Default> {
     destroy_ref: Option<ResultReference>,
 
     #[serde(flatten)]
-    arguments: A,
+    arguments: O::SetArguments,
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct SetResponse<T, U: Display> {
+pub struct SetResponse<O: SetObject> {
     #[serde(rename = "accountId")]
     account_id: Option<String>,
 
@@ -49,22 +56,22 @@ pub struct SetResponse<T, U: Display> {
     new_state: Option<String>,
 
     #[serde(rename = "created")]
-    created: Option<HashMap<String, T>>,
+    created: Option<HashMap<String, O>>,
 
     #[serde(rename = "updated")]
-    updated: Option<HashMap<String, Option<T>>>,
+    updated: Option<HashMap<String, Option<O>>>,
 
     #[serde(rename = "destroyed")]
     destroyed: Option<Vec<String>>,
 
     #[serde(rename = "notCreated")]
-    not_created: Option<HashMap<String, SetError<U>>>,
+    not_created: Option<HashMap<String, SetError<O::Property>>>,
 
     #[serde(rename = "notUpdated")]
-    not_updated: Option<HashMap<String, SetError<U>>>,
+    not_updated: Option<HashMap<String, SetError<O::Property>>>,
 
     #[serde(rename = "notDestroyed")]
-    not_destroyed: Option<HashMap<String, SetError<U>>>,
+    not_destroyed: Option<HashMap<String, SetError<O::Property>>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -126,15 +133,10 @@ pub enum SetErrorType {
     CannotUnsend,
 }
 
-pub trait Create: Sized {
-    fn new(create_id: Option<usize>) -> Self;
-    fn create_id(&self) -> Option<String>;
-}
-
-impl<T: Create + Type, A: Default> SetRequest<T, A> {
+impl<O: SetObject> SetRequest<O> {
     pub fn new(params: RequestParams) -> Self {
         Self {
-            account_id: if T::requires_account_id() {
+            account_id: if O::requires_account_id() {
                 params.account_id.into()
             } else {
                 None
@@ -149,7 +151,7 @@ impl<T: Create + Type, A: Default> SetRequest<T, A> {
     }
 
     pub fn account_id(&mut self, account_id: impl Into<String>) -> &mut Self {
-        if T::requires_account_id() {
+        if O::requires_account_id() {
             self.account_id = Some(account_id.into());
         }
         self
@@ -160,12 +162,12 @@ impl<T: Create + Type, A: Default> SetRequest<T, A> {
         self
     }
 
-    pub fn create(&mut self) -> &mut T {
+    pub fn create(&mut self) -> &mut O {
         let create_id = self.create.as_ref().map_or(0, |c| c.len());
         let create_id_str = format!("c{}", create_id);
         self.create
             .get_or_insert_with(HashMap::new)
-            .insert(create_id_str.clone(), T::new(create_id.into()));
+            .insert(create_id_str.clone(), O::new(create_id.into()));
         self.create
             .as_mut()
             .unwrap()
@@ -173,7 +175,7 @@ impl<T: Create + Type, A: Default> SetRequest<T, A> {
             .unwrap()
     }
 
-    pub fn create_item(&mut self, item: T) -> String {
+    pub fn create_item(&mut self, item: O) -> String {
         let create_id = self.create.as_ref().map_or(0, |c| c.len());
         let create_id_str = format!("c{}", create_id);
         self.create
@@ -182,15 +184,15 @@ impl<T: Create + Type, A: Default> SetRequest<T, A> {
         create_id_str
     }
 
-    pub fn update(&mut self, id: impl Into<String>) -> &mut T {
+    pub fn update(&mut self, id: impl Into<String>) -> &mut O {
         let id: String = id.into();
         self.update
             .get_or_insert_with(HashMap::new)
-            .insert(id.clone(), T::new(None));
+            .insert(id.clone(), O::new(None));
         self.update.as_mut().unwrap().get_mut(&id).unwrap()
     }
 
-    pub fn update_item(&mut self, id: impl Into<String>, item: T) {
+    pub fn update_item(&mut self, id: impl Into<String>, item: O) {
         self.update
             .get_or_insert_with(HashMap::new)
             .insert(id.into(), item);
@@ -214,12 +216,12 @@ impl<T: Create + Type, A: Default> SetRequest<T, A> {
         self
     }
 
-    pub fn arguments(&mut self) -> &mut A {
+    pub fn arguments(&mut self) -> &mut O::SetArguments {
         &mut self.arguments
     }
 }
 
-impl<T, U: Display> SetResponse<T, U> {
+impl<O: SetObject> SetResponse<O> {
     pub fn account_id(&self) -> &str {
         self.account_id.as_ref().unwrap()
     }
@@ -232,7 +234,7 @@ impl<T, U: Display> SetResponse<T, U> {
         self.new_state.as_ref().unwrap()
     }
 
-    pub fn created(&mut self, id: &str) -> crate::Result<T> {
+    pub fn created(&mut self, id: &str) -> crate::Result<O> {
         if let Some(result) = self.created.as_mut().and_then(|r| r.remove(id)) {
             Ok(result)
         } else if let Some(error) = self.not_created.as_mut().and_then(|r| r.remove(id)) {
@@ -242,7 +244,7 @@ impl<T, U: Display> SetResponse<T, U> {
         }
     }
 
-    pub fn updated(&mut self, id: &str) -> crate::Result<Option<T>> {
+    pub fn updated(&mut self, id: &str) -> crate::Result<Option<O>> {
         if let Some(result) = self.updated.as_mut().and_then(|r| r.remove(id)) {
             Ok(result)
         } else if let Some(error) = self.not_updated.as_mut().and_then(|r| r.remove(id)) {
@@ -378,6 +380,6 @@ pub fn date_not_set(date: &Option<DateTime<Utc>>) -> bool {
     matches!(date, Some(date) if date.timestamp() == 0)
 }
 
-pub fn list_not_set<T>(list: &Option<Vec<T>>) -> bool {
+pub fn list_not_set<O>(list: &Option<Vec<O>>) -> bool {
     matches!(list, Some(list) if list.is_empty() )
 }

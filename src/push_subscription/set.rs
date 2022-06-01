@@ -1,6 +1,7 @@
 use crate::{
-    core::set::{from_timestamp, Create},
-    Set, TypeState,
+    core::set::{from_timestamp, SetObject},
+    email_submission::SetArguments,
+    Get, Set, TypeState,
 };
 
 use super::{Keys, PushSubscription};
@@ -37,7 +38,9 @@ impl PushSubscription<Set> {
     }
 }
 
-impl Create for PushSubscription<Set> {
+impl SetObject for PushSubscription<Set> {
+    type SetArguments = SetArguments;
+
     fn new(_create_id: Option<usize>) -> Self {
         PushSubscription {
             _create_id,
@@ -54,6 +57,18 @@ impl Create for PushSubscription<Set> {
 
     fn create_id(&self) -> Option<String> {
         self._create_id.map(|id| format!("c{}", id))
+    }
+}
+
+impl SetObject for PushSubscription<Get> {
+    type SetArguments = SetArguments;
+
+    fn new(_create_id: Option<usize>) -> Self {
+        unimplemented!()
+    }
+
+    fn create_id(&self) -> Option<String> {
+        None
     }
 }
 

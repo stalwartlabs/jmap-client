@@ -1,4 +1,4 @@
-use crate::Get;
+use crate::{Get, core::get::GetObject, Set};
 
 use super::{Address, Delivered, DeliveryStatus, Displayed, EmailSubmission, UndoStatus};
 
@@ -77,4 +77,12 @@ impl DeliveryStatus {
     pub fn displayed(&self) -> &Displayed {
         &self.displayed
     }
+}
+
+impl GetObject for EmailSubmission<Set> {
+    type GetArguments = ();
+}
+
+impl GetObject for EmailSubmission<Get> {
+    type GetArguments = ();
 }

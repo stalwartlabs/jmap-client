@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{core::set::Create, Set};
+use crate::{core::set::SetObject, Get, Set};
 
 use super::{Address, EmailSubmission, Envelope, UndoStatus};
 
@@ -17,12 +17,12 @@ impl EmailSubmission<Set> {
 
     pub fn envelope<T, U>(&mut self, mail_from: U, rcpt_to: T) -> &mut Self
     where
-        T: Iterator<Item = U>,
+        T: IntoIterator<Item = U>,
         U: Into<Address>,
     {
         self.envelope = Some(Envelope {
             mail_from: mail_from.into(),
-            rcpt_to: rcpt_to.map(|s| s.into()).collect(),
+            rcpt_to: rcpt_to.into_iter().map(|s| s.into()).collect(),
         });
         self
     }
@@ -33,7 +33,9 @@ impl EmailSubmission<Set> {
     }
 }
 
-impl Create for EmailSubmission<Set> {
+impl SetObject for EmailSubmission<Set> {
+    type SetArguments = ();
+
     fn new(_create_id: Option<usize>) -> Self {
         EmailSubmission {
             _create_id,
@@ -53,6 +55,18 @@ impl Create for EmailSubmission<Set> {
 
     fn create_id(&self) -> Option<String> {
         self._create_id.map(|id| format!("c{}", id))
+    }
+}
+
+impl SetObject for EmailSubmission<Get> {
+    type SetArguments = ();
+
+    fn new(_create_id: Option<usize>) -> Self {
+        unimplemented!()
+    }
+
+    fn create_id(&self) -> Option<String> {
+        None
     }
 }
 

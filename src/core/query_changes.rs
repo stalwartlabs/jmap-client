@@ -1,22 +1,22 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    query::{Comparator, Filter},
+    query::{Comparator, Filter, QueryObject},
     RequestParams,
 };
 
 #[derive(Debug, Clone, Serialize)]
-pub struct QueryChangesRequest<F, S, A: Default> {
+pub struct QueryChangesRequest<O: QueryObject> {
     #[serde(rename = "accountId")]
     account_id: String,
 
     #[serde(rename = "filter")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    filter: Option<Filter<F>>,
+    filter: Option<Filter<O::Filter>>,
 
     #[serde(rename = "sort")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    sort: Option<Vec<Comparator<S>>>,
+    sort: Option<Vec<Comparator<O::Sort>>>,
 
     #[serde(rename = "sinceQueryState")]
     since_query_state: String,
@@ -33,7 +33,7 @@ pub struct QueryChangesRequest<F, S, A: Default> {
     calculate_total: bool,
 
     #[serde(flatten)]
-    arguments: A,
+    arguments: O::QueryArguments,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -58,7 +58,7 @@ pub struct AddedItem {
     index: usize,
 }
 
-impl<F, S, A: Default> QueryChangesRequest<F, S, A> {
+impl<O: QueryObject> QueryChangesRequest<O> {
     pub fn new(params: RequestParams, since_query_state: String) -> Self {
         QueryChangesRequest {
             account_id: params.account_id,
@@ -68,7 +68,7 @@ impl<F, S, A: Default> QueryChangesRequest<F, S, A> {
             max_changes: None,
             up_to_id: None,
             calculate_total: false,
-            arguments: A::default(),
+            arguments: O::QueryArguments::default(),
         }
     }
 
@@ -77,12 +77,12 @@ impl<F, S, A: Default> QueryChangesRequest<F, S, A> {
         self
     }
 
-    pub fn filter(&mut self, filter: impl Into<Filter<F>>) -> &mut Self {
+    pub fn filter(&mut self, filter: impl Into<Filter<O::Filter>>) -> &mut Self {
         self.filter = Some(filter.into());
         self
     }
 
-    pub fn sort(&mut self, sort: impl IntoIterator<Item = Comparator<S>>) -> &mut Self {
+    pub fn sort(&mut self, sort: impl IntoIterator<Item = Comparator<O::Sort>>) -> &mut Self {
         self.sort = Some(sort.into_iter().collect());
         self
     }
@@ -102,7 +102,7 @@ impl<F, S, A: Default> QueryChangesRequest<F, S, A> {
         self
     }
 
-    pub fn arguments(&mut self) -> &mut A {
+    pub fn arguments(&mut self) -> &mut O::QueryArguments {
         &mut self.arguments
     }
 }

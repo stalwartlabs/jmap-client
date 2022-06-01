@@ -14,9 +14,33 @@ use std::{
 };
 
 use crate::{
-    core::{request::ResultReference, Type},
+    core::{changes::ChangesObject, request::ResultReference, Object},
     Get, Set,
 };
+
+impl Object for Email<Set> {
+    type Property = Property;
+
+    fn requires_account_id() -> bool {
+        true
+    }
+}
+
+impl Object for Email<Get> {
+    type Property = Property;
+
+    fn requires_account_id() -> bool {
+        true
+    }
+}
+
+impl ChangesObject for Email<Set> {
+    type ChangesResponse = ();
+}
+
+impl ChangesObject for Email<Get> {
+    type ChangesResponse = ();
+}
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Email<State = Get> {
@@ -813,18 +837,6 @@ impl SubmissionCapabilities {
 
     pub fn submission_extensions(&self) -> &[String] {
         &self.submission_extensions
-    }
-}
-
-impl Type for Email<Set> {
-    fn requires_account_id() -> bool {
-        true
-    }
-}
-
-impl Type for Property {
-    fn requires_account_id() -> bool {
-        true
     }
 }
 

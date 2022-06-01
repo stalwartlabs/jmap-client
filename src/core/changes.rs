@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-use super::RequestParams;
+use super::{Object, RequestParams};
+
+pub trait ChangesObject: Object {
+    type ChangesResponse;
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ChangesRequest {
@@ -16,7 +20,7 @@ pub struct ChangesRequest {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct ChangesResponse<A> {
+pub struct ChangesResponse<O: ChangesObject> {
     #[serde(rename = "accountId")]
     account_id: String,
 
@@ -36,7 +40,7 @@ pub struct ChangesResponse<A> {
     destroyed: Vec<String>,
 
     #[serde(flatten)]
-    arguments: A,
+    arguments: O::ChangesResponse,
 }
 
 impl ChangesRequest {
@@ -59,7 +63,7 @@ impl ChangesRequest {
     }
 }
 
-impl<A> ChangesResponse<A> {
+impl<O: ChangesObject> ChangesResponse<O> {
     pub fn account_id(&self) -> &str {
         &self.account_id
     }
@@ -88,7 +92,7 @@ impl<A> ChangesResponse<A> {
         &self.destroyed
     }
 
-    pub fn arguments(&self) -> &A {
+    pub fn arguments(&self) -> &O::ChangesResponse {
         &self.arguments
     }
 }

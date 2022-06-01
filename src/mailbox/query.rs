@@ -1,8 +1,11 @@
 use serde::Serialize;
 
-use crate::core::query::{self};
+use crate::{
+    core::query::{self, QueryObject},
+    Set,
+};
 
-use super::{QueryArguments, Role};
+use super::{Mailbox, QueryArguments, Role};
 
 #[derive(Serialize, Clone, Debug)]
 #[serde(untagged)]
@@ -96,4 +99,12 @@ impl QueryArguments {
         self.filter_as_tree = value;
         self
     }
+}
+
+impl QueryObject for Mailbox<Set> {
+    type QueryArguments = QueryArguments;
+
+    type Filter = Filter;
+
+    type Sort = Comparator;
 }

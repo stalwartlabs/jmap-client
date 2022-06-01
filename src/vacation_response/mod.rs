@@ -4,9 +4,10 @@ pub mod set;
 
 use std::fmt::Display;
 
+use crate::core::changes::ChangesObject;
 use crate::core::set::date_not_set;
 use crate::core::set::string_not_set;
-use crate::core::Type;
+use crate::core::Object;
 use crate::Get;
 use crate::Set;
 use chrono::{DateTime, Utc};
@@ -81,14 +82,26 @@ impl Display for Property {
     }
 }
 
-impl Type for VacationResponse<Set> {
+impl Object for VacationResponse<Set> {
+    type Property = Property;
+
     fn requires_account_id() -> bool {
         true
     }
 }
 
-impl Type for Property {
+impl Object for VacationResponse<Get> {
+    type Property = Property;
+
     fn requires_account_id() -> bool {
         true
     }
+}
+
+impl ChangesObject for VacationResponse<Set> {
+    type ChangesResponse = ();
+}
+
+impl ChangesObject for VacationResponse<Get> {
+    type ChangesResponse = ();
 }

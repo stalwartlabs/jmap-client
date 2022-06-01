@@ -1,9 +1,15 @@
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
-use crate::core::{query, set::from_timestamp};
+use crate::{
+    core::{
+        query::{self, QueryObject},
+        set::from_timestamp,
+    },
+    Set,
+};
 
-use super::UndoStatus;
+use super::{EmailSubmission, UndoStatus};
 
 #[derive(Serialize, Clone, Debug)]
 #[serde(untagged)]
@@ -105,4 +111,12 @@ impl Comparator {
     pub fn sent_at() -> query::Comparator<Comparator> {
         query::Comparator::new(Comparator::SentAt)
     }
+}
+
+impl QueryObject for EmailSubmission<Set> {
+    type QueryArguments = ();
+
+    type Filter = Filter;
+
+    type Sort = Comparator;
 }

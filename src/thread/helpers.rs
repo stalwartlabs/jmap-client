@@ -2,7 +2,7 @@ use crate::{
     client::Client,
     core::{
         changes::{ChangesRequest, ChangesResponse},
-        get::GetRequest,
+        get::{GetObject, GetRequest},
         request::{Arguments, Request},
         response::ThreadGetResponse,
     },
@@ -23,7 +23,7 @@ impl Client {
 }
 
 impl Request<'_> {
-    pub fn get_thread(&mut self) -> &mut GetRequest<super::Property, ()> {
+    pub fn get_thread(&mut self) -> &mut GetRequest<Thread> {
         self.add_method_call(
             Method::GetThread,
             Arguments::thread_get(self.params(Method::GetThread)),
@@ -43,7 +43,11 @@ impl Request<'_> {
         .changes_mut()
     }
 
-    pub async fn send_changes_thread(self) -> crate::Result<ChangesResponse<()>> {
+    pub async fn send_changes_thread(self) -> crate::Result<ChangesResponse<Thread>> {
         self.send_single().await
     }
+}
+
+impl GetObject for Thread {
+    type GetArguments = ();
 }

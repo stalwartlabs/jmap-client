@@ -1,8 +1,8 @@
-use crate::Get;
+use crate::{core::get::GetObject, Get, Set};
 
 use super::{
-    Email, EmailAddress, EmailAddressGroup, EmailBodyPart, EmailBodyValue, EmailHeader, Header,
-    HeaderValue,
+    Email, EmailAddress, EmailAddressGroup, EmailBodyPart, EmailBodyValue, EmailHeader,
+    GetArguments, Header, HeaderValue,
 };
 
 impl Email<Get> {
@@ -228,4 +228,12 @@ impl EmailHeader<Get> {
     pub fn value(&self) -> &str {
         self.value.as_str()
     }
+}
+
+impl GetObject for Email<Set> {
+    type GetArguments = GetArguments;
+}
+
+impl GetObject for Email<Get> {
+    type GetArguments = GetArguments;
 }

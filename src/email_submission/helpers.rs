@@ -1,20 +1,137 @@
 use crate::{
+    client::Client,
     core::{
         changes::{ChangesRequest, ChangesResponse},
         get::GetRequest,
-        query::{QueryRequest, QueryResponse},
+        query::{Comparator, Filter, QueryRequest, QueryResponse},
         query_changes::{QueryChangesRequest, QueryChangesResponse},
         request::{Arguments, Request},
         response::{EmailSubmissionGetResponse, EmailSubmissionSetResponse},
-        set::SetRequest,
+        set::{SetObject, SetRequest},
     },
-    Method, Set, URI,
+    Get, Method, Set, URI,
 };
 
-use super::EmailSubmission;
+use super::{Address, EmailSubmission, Property, UndoStatus};
+
+impl Client {
+    pub async fn email_submission_create(
+        &mut self,
+        email_id: impl Into<String>,
+        identity_id: impl Into<String>,
+    ) -> crate::Result<EmailSubmission<Get>> {
+        let mut request = self.build();
+        let id = request
+            .set_email_submission()
+            .create()
+            .email_id(email_id)
+            .identity_id(identity_id)
+            .create_id()
+            .unwrap();
+        request
+            .send_single::<EmailSubmissionSetResponse>()
+            .await?
+            .created(&id)
+    }
+
+    pub async fn email_submission_create_envelope<T, U>(
+        &mut self,
+        email_id: impl Into<String>,
+        identity_id: impl Into<String>,
+        mail_from: U,
+        rcpt_to: T,
+    ) -> crate::Result<EmailSubmission<Get>>
+    where
+        T: IntoIterator<Item = U>,
+        U: Into<Address>,
+    {
+        let mut request = self.build();
+        let id = request
+            .set_email_submission()
+            .create()
+            .email_id(email_id)
+            .identity_id(identity_id)
+            .envelope(mail_from, rcpt_to)
+            .create_id()
+            .unwrap();
+        request
+            .send_single::<EmailSubmissionSetResponse>()
+            .await?
+            .created(&id)
+    }
+
+    pub async fn email_submission_change_status(
+        &mut self,
+        id: &str,
+        undo_status: UndoStatus,
+    ) -> crate::Result<Option<EmailSubmission>> {
+        let mut request = self.build();
+        request
+            .set_email_submission()
+            .update(id)
+            .undo_status(undo_status);
+        request
+            .send_single::<EmailSubmissionSetResponse>()
+            .await?
+            .updated(id)
+    }
+
+    pub async fn email_submission_destroy(&mut self, id: &str) -> crate::Result<()> {
+        let mut request = self.build();
+        request.set_email_submission().destroy([id]);
+        request
+            .send_single::<EmailSubmissionSetResponse>()
+            .await?
+            .destroyed(id)
+    }
+
+    pub async fn email_submission_get(
+        &mut self,
+        id: &str,
+        properties: Option<Vec<Property>>,
+    ) -> crate::Result<Option<EmailSubmission>> {
+        let mut request = self.build();
+        let get_request = request.get_email_submission().ids([id]);
+        if let Some(properties) = properties {
+            get_request.properties(properties.into_iter());
+        }
+        request
+            .send_single::<EmailSubmissionGetResponse>()
+            .await
+            .map(|mut r| r.unwrap_list().pop())
+    }
+
+    pub async fn email_submission_query(
+        &mut self,
+        filter: Option<impl Into<Filter<super::query::Filter>>>,
+        sort: Option<impl IntoIterator<Item = Comparator<super::query::Comparator>>>,
+    ) -> crate::Result<QueryResponse> {
+        let mut request = self.build();
+        let query_request = request.query_email_submission();
+        if let Some(filter) = filter {
+            query_request.filter(filter);
+        }
+        if let Some(sort) = sort {
+            query_request.sort(sort.into_iter());
+        }
+        request.send_single::<QueryResponse>().await
+    }
+
+    pub async fn email_submission_changes(
+        &mut self,
+        since_state: impl Into<String>,
+        max_changes: usize,
+    ) -> crate::Result<ChangesResponse<EmailSubmission<Get>>> {
+        let mut request = self.build();
+        request
+            .changes_email_submission(since_state)
+            .max_changes(max_changes);
+        request.send_single().await
+    }
+}
 
 impl Request<'_> {
-    pub fn get_email_submission(&mut self) -> &mut GetRequest<super::Property, ()> {
+    pub fn get_email_submission(&mut self) -> &mut GetRequest<EmailSubmission<Set>> {
         self.add_capability(URI::Submission);
         self.add_method_call(
             Method::GetEmailSubmission,
@@ -42,13 +159,13 @@ impl Request<'_> {
         .changes_mut()
     }
 
-    pub async fn send_changes_email_submission(self) -> crate::Result<ChangesResponse<()>> {
+    pub async fn send_changes_email_submission(
+        self,
+    ) -> crate::Result<ChangesResponse<EmailSubmission<Get>>> {
         self.send_single().await
     }
 
-    pub fn query_email_submission(
-        &mut self,
-    ) -> &mut QueryRequest<super::query::Filter, super::query::Comparator, ()> {
+    pub fn query_email_submission(&mut self) -> &mut QueryRequest<EmailSubmission<Set>> {
         self.add_capability(URI::Submission);
         self.add_method_call(
             Method::QueryEmailSubmission,
@@ -64,7 +181,7 @@ impl Request<'_> {
     pub fn query_email_submission_changes(
         &mut self,
         since_query_state: impl Into<String>,
-    ) -> &mut QueryChangesRequest<super::query::Filter, super::query::Comparator, ()> {
+    ) -> &mut QueryChangesRequest<EmailSubmission<Set>> {
         self.add_capability(URI::Submission);
         self.add_method_call(
             Method::QueryChangesEmailSubmission,
@@ -80,9 +197,7 @@ impl Request<'_> {
         self.send_single().await
     }
 
-    pub fn set_email_submission(
-        &mut self,
-    ) -> &mut SetRequest<EmailSubmission<Set>, super::SetArguments> {
+    pub fn set_email_submission(&mut self) -> &mut SetRequest<EmailSubmission<Set>> {
         self.add_capability(URI::Submission);
         self.add_method_call(
             Method::SetEmailSubmission,

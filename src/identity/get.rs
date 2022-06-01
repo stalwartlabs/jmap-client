@@ -1,10 +1,14 @@
-use crate::{email::EmailAddress, Get};
+use crate::{core::get::GetObject, email::EmailAddress, Get, Set};
 
 use super::Identity;
 
 impl Identity<Get> {
     pub fn id(&self) -> &str {
         self.id.as_ref().unwrap()
+    }
+
+    pub fn unwrap_id(self) -> String {
+        self.id.unwrap()
     }
 
     pub fn name(&self) -> Option<&str> {
@@ -34,4 +38,12 @@ impl Identity<Get> {
     pub fn may_delete(&self) -> bool {
         self.may_delete.unwrap_or(false)
     }
+}
+
+impl GetObject for Identity<Set> {
+    type GetArguments = ();
+}
+
+impl GetObject for Identity<Get> {
+    type GetArguments = ();
 }

@@ -4,7 +4,7 @@ use crate::{
         get::GetRequest,
         request::{Arguments, Request},
         response::{PushSubscriptionGetResponse, PushSubscriptionSetResponse},
-        set::{Create, SetRequest},
+        set::{SetObject, SetRequest},
     },
     Method, Set, TypeState,
 };
@@ -76,7 +76,7 @@ impl Client {
 }
 
 impl Request<'_> {
-    pub fn get_push_subscription(&mut self) -> &mut GetRequest<super::Property, ()> {
+    pub fn get_push_subscription(&mut self) -> &mut GetRequest<PushSubscription<Set>> {
         self.add_method_call(
             Method::GetPushSubscription,
             Arguments::push_get(self.params(Method::GetPushSubscription)),
@@ -88,7 +88,7 @@ impl Request<'_> {
         self.send_single().await
     }
 
-    pub fn set_push_subscription(&mut self) -> &mut SetRequest<PushSubscription<Set>, ()> {
+    pub fn set_push_subscription(&mut self) -> &mut SetRequest<PushSubscription<Set>> {
         self.add_method_call(
             Method::SetPushSubscription,
             Arguments::push_set(self.params(Method::SetPushSubscription)),

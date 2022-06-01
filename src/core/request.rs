@@ -5,13 +5,13 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::{
     blob::copy::CopyBlobRequest,
     client::Client,
-    email::{self, import::EmailImportRequest, parse::EmailParseRequest, Email},
-    email_submission::{self, EmailSubmission},
-    identity::{self, Identity},
-    mailbox::{self, Mailbox},
-    push_subscription::{self, PushSubscription},
-    thread,
-    vacation_response::{self, VacationResponse},
+    email::{import::EmailImportRequest, parse::EmailParseRequest, Email},
+    email_submission::EmailSubmission,
+    identity::Identity,
+    mailbox::Mailbox,
+    push_subscription::PushSubscription,
+    thread::Thread,
+    vacation_response::VacationResponse,
     Error, Method, Set, URI,
 };
 
@@ -55,47 +55,29 @@ pub struct ResultReference {
 #[serde(untagged)]
 pub enum Arguments {
     Changes(ChangesRequest),
-    PushGet(GetRequest<push_subscription::Property, ()>),
-    PushSet(SetRequest<PushSubscription<Set>, ()>),
+    PushGet(GetRequest<PushSubscription<Set>>),
+    PushSet(SetRequest<PushSubscription<Set>>),
     BlobCopy(CopyBlobRequest),
-    MailboxGet(GetRequest<mailbox::Property, ()>),
-    MailboxQuery(
-        QueryRequest<mailbox::query::Filter, mailbox::query::Comparator, mailbox::QueryArguments>,
-    ),
-    MailboxQueryChanges(
-        QueryChangesRequest<
-            mailbox::query::Filter,
-            mailbox::query::Comparator,
-            mailbox::QueryArguments,
-        >,
-    ),
-    MailboxSet(SetRequest<Mailbox<Set>, mailbox::SetArguments>),
-    ThreadGet(GetRequest<thread::Property, ()>),
-    EmailGet(GetRequest<email::Property, email::GetArguments>),
-    EmailQuery(QueryRequest<email::query::Filter, email::query::Comparator, email::QueryArguments>),
-    EmailQueryChanges(
-        QueryChangesRequest<email::query::Filter, email::query::Comparator, email::QueryArguments>,
-    ),
-    EmailSet(SetRequest<Email<Set>, ()>),
+    MailboxGet(GetRequest<Mailbox<Set>>),
+    MailboxQuery(QueryRequest<Mailbox<Set>>),
+    MailboxQueryChanges(QueryChangesRequest<Mailbox<Set>>),
+    MailboxSet(SetRequest<Mailbox<Set>>),
+    ThreadGet(GetRequest<Thread>),
+    EmailGet(GetRequest<Email<Set>>),
+    EmailQuery(QueryRequest<Email<Set>>),
+    EmailQueryChanges(QueryChangesRequest<Email<Set>>),
+    EmailSet(SetRequest<Email<Set>>),
     EmailCopy(CopyRequest<Email<Set>>),
     EmailImport(EmailImportRequest),
     EmailParse(EmailParseRequest),
-    IdentityGet(GetRequest<identity::Property, ()>),
-    IdentitySet(SetRequest<Identity<Set>, ()>),
-    EmailSubmissionGet(GetRequest<email_submission::Property, ()>),
-    EmailSubmissionQuery(
-        QueryRequest<email_submission::query::Filter, email_submission::query::Comparator, ()>,
-    ),
-    EmailSubmissionQueryChanges(
-        QueryChangesRequest<
-            email_submission::query::Filter,
-            email_submission::query::Comparator,
-            (),
-        >,
-    ),
-    EmailSubmissionSet(SetRequest<EmailSubmission<Set>, email_submission::SetArguments>),
-    VacationResponseGet(GetRequest<vacation_response::Property, ()>),
-    VacationResponseSet(SetRequest<VacationResponse<Set>, ()>),
+    IdentityGet(GetRequest<Identity<Set>>),
+    IdentitySet(SetRequest<Identity<Set>>),
+    EmailSubmissionGet(GetRequest<EmailSubmission<Set>>),
+    EmailSubmissionQuery(QueryRequest<EmailSubmission<Set>>),
+    EmailSubmissionQueryChanges(QueryChangesRequest<EmailSubmission<Set>>),
+    EmailSubmissionSet(SetRequest<EmailSubmission<Set>>),
+    VacationResponseGet(GetRequest<VacationResponse<Set>>),
+    VacationResponseSet(SetRequest<VacationResponse<Set>>),
 }
 
 impl Arguments {
@@ -205,14 +187,14 @@ impl Arguments {
         }
     }
 
-    pub fn push_get_mut(&mut self) -> &mut GetRequest<push_subscription::Property, ()> {
+    pub fn push_get_mut(&mut self) -> &mut GetRequest<PushSubscription<Set>> {
         match self {
             Arguments::PushGet(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn push_set_mut(&mut self) -> &mut SetRequest<PushSubscription<Set>, ()> {
+    pub fn push_set_mut(&mut self) -> &mut SetRequest<PushSubscription<Set>> {
         match self {
             Arguments::PushSet(ref mut r) => r,
             _ => unreachable!(),
@@ -226,84 +208,63 @@ impl Arguments {
         }
     }
 
-    pub fn mailbox_get_mut(&mut self) -> &mut GetRequest<mailbox::Property, ()> {
+    pub fn mailbox_get_mut(&mut self) -> &mut GetRequest<Mailbox<Set>> {
         match self {
             Arguments::MailboxGet(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn mailbox_query_mut(
-        &mut self,
-    ) -> &mut QueryRequest<
-        mailbox::query::Filter,
-        mailbox::query::Comparator,
-        mailbox::QueryArguments,
-    > {
+    pub fn mailbox_query_mut(&mut self) -> &mut QueryRequest<Mailbox<Set>> {
         match self {
             Arguments::MailboxQuery(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn mailbox_query_changes_mut(
-        &mut self,
-    ) -> &mut QueryChangesRequest<
-        mailbox::query::Filter,
-        mailbox::query::Comparator,
-        mailbox::QueryArguments,
-    > {
+    pub fn mailbox_query_changes_mut(&mut self) -> &mut QueryChangesRequest<Mailbox<Set>> {
         match self {
             Arguments::MailboxQueryChanges(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn mailbox_set_mut(&mut self) -> &mut SetRequest<Mailbox<Set>, mailbox::SetArguments> {
+    pub fn mailbox_set_mut(&mut self) -> &mut SetRequest<Mailbox<Set>> {
         match self {
             Arguments::MailboxSet(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn thread_get_mut(&mut self) -> &mut GetRequest<thread::Property, ()> {
+    pub fn thread_get_mut(&mut self) -> &mut GetRequest<Thread> {
         match self {
             Arguments::ThreadGet(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn email_get_mut(&mut self) -> &mut GetRequest<email::Property, email::GetArguments> {
+    pub fn email_get_mut(&mut self) -> &mut GetRequest<Email<Set>> {
         match self {
             Arguments::EmailGet(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn email_query_mut(
-        &mut self,
-    ) -> &mut QueryRequest<email::query::Filter, email::query::Comparator, email::QueryArguments>
-    {
+    pub fn email_query_mut(&mut self) -> &mut QueryRequest<Email<Set>> {
         match self {
             Arguments::EmailQuery(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn email_query_changes_mut(
-        &mut self,
-    ) -> &mut QueryChangesRequest<
-        email::query::Filter,
-        email::query::Comparator,
-        email::QueryArguments,
-    > {
+    pub fn email_query_changes_mut(&mut self) -> &mut QueryChangesRequest<Email<Set>> {
         match self {
             Arguments::EmailQueryChanges(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn email_set_mut(&mut self) -> &mut SetRequest<Email<Set>, ()> {
+    pub fn email_set_mut(&mut self) -> &mut SetRequest<Email<Set>> {
         match self {
             Arguments::EmailSet(ref mut r) => r,
             _ => unreachable!(),
@@ -331,31 +292,28 @@ impl Arguments {
         }
     }
 
-    pub fn identity_get_mut(&mut self) -> &mut GetRequest<identity::Property, ()> {
+    pub fn identity_get_mut(&mut self) -> &mut GetRequest<Identity<Set>> {
         match self {
             Arguments::IdentityGet(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn identity_set_mut(&mut self) -> &mut SetRequest<Identity<Set>, ()> {
+    pub fn identity_set_mut(&mut self) -> &mut SetRequest<Identity<Set>> {
         match self {
             Arguments::IdentitySet(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn email_submission_get_mut(&mut self) -> &mut GetRequest<email_submission::Property, ()> {
+    pub fn email_submission_get_mut(&mut self) -> &mut GetRequest<EmailSubmission<Set>> {
         match self {
             Arguments::EmailSubmissionGet(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn email_submission_query_mut(
-        &mut self,
-    ) -> &mut QueryRequest<email_submission::query::Filter, email_submission::query::Comparator, ()>
-    {
+    pub fn email_submission_query_mut(&mut self) -> &mut QueryRequest<EmailSubmission<Set>> {
         match self {
             Arguments::EmailSubmissionQuery(ref mut r) => r,
             _ => unreachable!(),
@@ -364,36 +322,28 @@ impl Arguments {
 
     pub fn email_submission_query_changes_mut(
         &mut self,
-    ) -> &mut QueryChangesRequest<
-        email_submission::query::Filter,
-        email_submission::query::Comparator,
-        (),
-    > {
+    ) -> &mut QueryChangesRequest<EmailSubmission<Set>> {
         match self {
             Arguments::EmailSubmissionQueryChanges(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn email_submission_set_mut(
-        &mut self,
-    ) -> &mut SetRequest<EmailSubmission<Set>, email_submission::SetArguments> {
+    pub fn email_submission_set_mut(&mut self) -> &mut SetRequest<EmailSubmission<Set>> {
         match self {
             Arguments::EmailSubmissionSet(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn vacation_response_get_mut(
-        &mut self,
-    ) -> &mut GetRequest<vacation_response::Property, ()> {
+    pub fn vacation_response_get_mut(&mut self) -> &mut GetRequest<VacationResponse<Set>> {
         match self {
             Arguments::VacationResponseGet(ref mut r) => r,
             _ => unreachable!(),
         }
     }
 
-    pub fn vacation_response_set_mut(&mut self) -> &mut SetRequest<VacationResponse<Set>, ()> {
+    pub fn vacation_response_set_mut(&mut self) -> &mut SetRequest<VacationResponse<Set>> {
         match self {
             Arguments::VacationResponseSet(ref mut r) => r,
             _ => unreachable!(),

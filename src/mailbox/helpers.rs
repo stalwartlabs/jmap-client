@@ -7,9 +7,9 @@ use crate::{
         query_changes::{QueryChangesRequest, QueryChangesResponse},
         request::{Arguments, Request},
         response::{MailboxGetResponse, MailboxSetResponse},
-        set::{Create, SetRequest},
+        set::{SetObject, SetRequest},
     },
-    Method, Set,
+    Get, Method, Set,
 };
 
 use super::{Mailbox, Property, Role};
@@ -137,7 +137,7 @@ impl Client {
         &mut self,
         since_state: impl Into<String>,
         max_changes: usize,
-    ) -> crate::Result<ChangesResponse<super::ChangesResponse>> {
+    ) -> crate::Result<ChangesResponse<Mailbox<Get>>> {
         let mut request = self.build();
         request
             .changes_mailbox(since_state)
@@ -147,7 +147,7 @@ impl Client {
 }
 
 impl Request<'_> {
-    pub fn get_mailbox(&mut self) -> &mut GetRequest<super::Property, ()> {
+    pub fn get_mailbox(&mut self) -> &mut GetRequest<Mailbox<Set>> {
         self.add_method_call(
             Method::GetMailbox,
             Arguments::mailbox_get(self.params(Method::GetMailbox)),
@@ -167,16 +167,11 @@ impl Request<'_> {
         .changes_mut()
     }
 
-    pub async fn send_changes_mailbox(
-        self,
-    ) -> crate::Result<ChangesResponse<super::ChangesResponse>> {
+    pub async fn send_changes_mailbox(self) -> crate::Result<ChangesResponse<Mailbox<Get>>> {
         self.send_single().await
     }
 
-    pub fn query_mailbox(
-        &mut self,
-    ) -> &mut QueryRequest<super::query::Filter, super::query::Comparator, super::QueryArguments>
-    {
+    pub fn query_mailbox(&mut self) -> &mut QueryRequest<Mailbox<Set>> {
         self.add_method_call(
             Method::QueryMailbox,
             Arguments::mailbox_query(self.params(Method::QueryMailbox)),
@@ -191,11 +186,7 @@ impl Request<'_> {
     pub fn query_mailbox_changes(
         &mut self,
         since_query_state: impl Into<String>,
-    ) -> &mut QueryChangesRequest<
-        super::query::Filter,
-        super::query::Comparator,
-        super::QueryArguments,
-    > {
+    ) -> &mut QueryChangesRequest<Mailbox<Set>> {
         self.add_method_call(
             Method::QueryChangesMailbox,
             Arguments::mailbox_query_changes(
@@ -210,7 +201,7 @@ impl Request<'_> {
         self.send_single().await
     }
 
-    pub fn set_mailbox(&mut self) -> &mut SetRequest<Mailbox<Set>, super::SetArguments> {
+    pub fn set_mailbox(&mut self) -> &mut SetRequest<Mailbox<Set>> {
         self.add_method_call(
             Method::SetMailbox,
             Arguments::mailbox_set(self.params(Method::SetMailbox)),

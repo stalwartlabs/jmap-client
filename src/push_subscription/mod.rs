@@ -7,8 +7,9 @@ use std::fmt::Display;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::core::changes::ChangesObject;
 use crate::core::set::list_not_set;
-use crate::core::Type;
+use crate::core::Object;
 use crate::{Get, Set, TypeState};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -86,14 +87,26 @@ pub struct Keys {
     auth: String,
 }
 
-impl Type for PushSubscription<Set> {
+impl Object for PushSubscription<Set> {
+    type Property = Property;
+
     fn requires_account_id() -> bool {
         false
     }
 }
 
-impl Type for Property {
+impl Object for PushSubscription<Get> {
+    type Property = Property;
+
     fn requires_account_id() -> bool {
         false
     }
+}
+
+impl ChangesObject for PushSubscription<Set> {
+    type ChangesResponse = ();
+}
+
+impl ChangesObject for PushSubscription<Get> {
+    type ChangesResponse = ();
 }

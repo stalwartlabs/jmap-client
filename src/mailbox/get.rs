@@ -1,4 +1,4 @@
-use crate::Get;
+use crate::{core::get::GetObject, Get, Set};
 
 use super::{Mailbox, Role};
 
@@ -82,4 +82,12 @@ impl Mailbox<Get> {
     pub fn may_submit(&self) -> bool {
         self.my_rights.as_ref().unwrap().may_submit
     }
+}
+
+impl GetObject for Mailbox<Set> {
+    type GetArguments = ();
+}
+
+impl GetObject for Mailbox<Get> {
+    type GetArguments = ();
 }

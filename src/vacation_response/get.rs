@@ -1,4 +1,4 @@
-use crate::Get;
+use crate::{core::get::GetObject, Get, Set};
 
 use super::VacationResponse;
 
@@ -30,4 +30,12 @@ impl VacationResponse<Get> {
     pub fn html_body(&self) -> Option<&str> {
         self.html_body.as_deref()
     }
+}
+
+impl GetObject for VacationResponse<Set> {
+    type GetArguments = ();
+}
+
+impl GetObject for VacationResponse<Get> {
+    type GetArguments = ();
 }

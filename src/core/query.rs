@@ -2,10 +2,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::Method;
 
-use super::{request::ResultReference, RequestParams};
+use super::{request::ResultReference, Object, RequestParams};
+
+pub trait QueryObject: Object {
+    type QueryArguments: Default + Serialize;
+    type Filter: Serialize;
+    type Sort: Serialize;
+}
 
 #[derive(Debug, Clone, Serialize)]
-pub struct QueryRequest<F, S, A: Default> {
+pub struct QueryRequest<O: QueryObject> {
     #[serde(skip)]
     method: (Method, usize),
 
@@ -14,11 +20,11 @@ pub struct QueryRequest<F, S, A: Default> {
 
     #[serde(rename = "filter")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    filter: Option<Filter<F>>,
+    filter: Option<Filter<O::Filter>>,
 
     #[serde(rename = "sort")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    sort: Option<Vec<Comparator<S>>>,
+    sort: Option<Vec<Comparator<O::Sort>>>,
 
     #[serde(rename = "position")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -41,7 +47,7 @@ pub struct QueryRequest<F, S, A: Default> {
     calculate_total: Option<bool>,
 
     #[serde(flatten)]
-    arguments: A,
+    arguments: O::QueryArguments,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -103,7 +109,7 @@ pub struct QueryResponse {
     limit: Option<usize>,
 }
 
-impl<F, S, A: Default> QueryRequest<F, S, A> {
+impl<O: QueryObject> QueryRequest<O> {
     pub fn new(params: RequestParams) -> Self {
         QueryRequest {
             account_id: params.account_id,
@@ -115,7 +121,7 @@ impl<F, S, A: Default> QueryRequest<F, S, A> {
             anchor_offset: None,
             limit: None,
             calculate_total: None,
-            arguments: A::default(),
+            arguments: O::QueryArguments::default(),
         }
     }
 
@@ -124,12 +130,12 @@ impl<F, S, A: Default> QueryRequest<F, S, A> {
         self
     }
 
-    pub fn filter(&mut self, filter: impl Into<Filter<F>>) -> &mut Self {
+    pub fn filter(&mut self, filter: impl Into<Filter<O::Filter>>) -> &mut Self {
         self.filter = Some(filter.into());
         self
     }
 
-    pub fn sort(&mut self, sort: impl IntoIterator<Item = Comparator<S>>) -> &mut Self {
+    pub fn sort(&mut self, sort: impl IntoIterator<Item = Comparator<O::Sort>>) -> &mut Self {
         self.sort = Some(sort.into_iter().collect());
         self
     }
@@ -159,7 +165,7 @@ impl<F, S, A: Default> QueryRequest<F, S, A> {
         self
     }
 
-    pub fn arguments(&mut self) -> &mut A {
+    pub fn arguments(&mut self) -> &mut O::QueryArguments {
         &mut self.arguments
     }
 
