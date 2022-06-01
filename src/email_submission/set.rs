@@ -15,15 +15,13 @@ impl EmailSubmission<Set> {
         self
     }
 
-    pub fn envelope<T, U>(&mut self, mail_from: U, rcpt_to: T) -> &mut Self
+    pub fn envelope<S, T, U>(&mut self, mail_from: S, rcpt_to: T) -> &mut Self
     where
+        S: Into<Address>,
         T: IntoIterator<Item = U>,
         U: Into<Address>,
     {
-        self.envelope = Some(Envelope {
-            mail_from: mail_from.into(),
-            rcpt_to: rcpt_to.into_iter().map(|s| s.into()).collect(),
-        });
+        self.envelope = Some(Envelope::new(mail_from, rcpt_to));
         self
     }
 
@@ -70,21 +68,37 @@ impl SetObject for EmailSubmission<Get> {
     }
 }
 
-impl Address {
-    pub fn new(email: String) -> Address<Set> {
-        Address {
-            _state: Default::default(),
-            email,
-            parameters: None,
+impl Envelope {
+    pub fn new<S, T, U>(mail_from: S, rcpt_to: T) -> Envelope
+    where
+        S: Into<Address>,
+        T: IntoIterator<Item = U>,
+        U: Into<Address>,
+    {
+        Envelope {
+            mail_from: mail_from.into(),
+            rcpt_to: rcpt_to.into_iter().map(|s| s.into()).collect(),
         }
     }
 }
 
 impl Address<Set> {
-    pub fn parameter(mut self, parameter: String, value: Option<String>) -> Self {
+    pub fn new(email: impl Into<String>) -> Address<Set> {
+        Address {
+            _state: Default::default(),
+            email: email.into(),
+            parameters: None,
+        }
+    }
+
+    pub fn parameter(
+        mut self,
+        parameter: impl Into<String>,
+        value: Option<impl Into<String>>,
+    ) -> Self {
         self.parameters
             .get_or_insert_with(HashMap::new)
-            .insert(parameter, value);
+            .insert(parameter.into(), value.map(|s| s.into()));
         self
     }
 }
@@ -105,6 +119,26 @@ impl From<&str> for Address {
             _state: Default::default(),
             email: email.to_string(),
             parameters: None,
+        }
+    }
+}
+
+impl From<Address<Set>> for Address<Get> {
+    fn from(addr: Address<Set>) -> Self {
+        Address {
+            _state: Default::default(),
+            email: addr.email,
+            parameters: addr.parameters,
+        }
+    }
+}
+
+impl From<Address<Get>> for Address<Set> {
+    fn from(addr: Address<Get>) -> Self {
+        Address {
+            _state: Default::default(),
+            email: addr.email,
+            parameters: addr.parameters,
         }
     }
 }

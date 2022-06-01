@@ -89,7 +89,7 @@ pub struct Address<State = Get> {
     parameters: Option<HashMap<String, Option<String>>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum UndoStatus {
     #[serde(rename = "pending")]
     Pending,
@@ -99,7 +99,7 @@ pub enum UndoStatus {
     Canceled,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DeliveryStatus {
     #[serde(rename = "smtpReply")]
     smtp_reply: String,
@@ -111,7 +111,7 @@ pub struct DeliveryStatus {
     displayed: Displayed,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Delivered {
     #[serde(rename = "queued")]
     Queued,
@@ -123,7 +123,7 @@ pub enum Delivered {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Displayed {
     #[serde(rename = "unknown")]
     Unknown,

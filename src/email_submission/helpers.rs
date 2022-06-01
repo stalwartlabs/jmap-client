@@ -34,14 +34,15 @@ impl Client {
             .created(&id)
     }
 
-    pub async fn email_submission_create_envelope<T, U>(
+    pub async fn email_submission_create_envelope<S, T, U>(
         &mut self,
         email_id: impl Into<String>,
         identity_id: impl Into<String>,
-        mail_from: U,
+        mail_from: S,
         rcpt_to: T,
     ) -> crate::Result<EmailSubmission<Get>>
     where
+        S: Into<Address>,
         T: IntoIterator<Item = U>,
         U: Into<Address>,
     {

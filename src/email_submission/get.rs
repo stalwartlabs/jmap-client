@@ -1,10 +1,16 @@
-use crate::{Get, core::get::GetObject, Set};
+use std::collections::HashMap;
+
+use crate::{core::get::GetObject, Get, Set};
 
 use super::{Address, Delivered, DeliveryStatus, Displayed, EmailSubmission, UndoStatus};
 
 impl EmailSubmission<Get> {
     pub fn id(&self) -> &str {
         self.id.as_ref().unwrap()
+    }
+
+    pub fn unwrap_id(self) -> String {
+        self.id.unwrap()
     }
 
     pub fn identity_id(&self) -> &str {
@@ -35,8 +41,12 @@ impl EmailSubmission<Get> {
         self.undo_status.as_ref().unwrap()
     }
 
-    pub fn delivery_status(&self, email: &str) -> Option<&DeliveryStatus> {
+    pub fn delivery_status_email(&self, email: &str) -> Option<&DeliveryStatus> {
         self.delivery_status.as_ref().and_then(|ds| ds.get(email))
+    }
+
+    pub fn delivery_status(&self) -> Option<&HashMap<String, DeliveryStatus>> {
+        self.delivery_status.as_ref()
     }
 
     pub fn dsn_blob_ids(&self) -> Option<&[String]> {
@@ -66,6 +76,15 @@ impl Address<Get> {
 }
 
 impl DeliveryStatus {
+    #[cfg(feature = "debug")]
+    pub fn new(smtp_reply: impl Into<String>, delivered: Delivered, displayed: Displayed) -> Self {
+        Self {
+            smtp_reply: smtp_reply.into(),
+            delivered,
+            displayed,
+        }
+    }
+
     pub fn smtp_reply(&self) -> &str {
         &self.smtp_reply
     }
