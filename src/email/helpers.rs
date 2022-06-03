@@ -184,6 +184,41 @@ impl Client {
             .await
             .and_then(|mut r| r.parsed(blob_id))
     }
+
+    pub async fn email_copy<T, U, V, W>(
+        &mut self,
+        from_account_id: impl Into<String>,
+        id: impl Into<String>,
+        mailbox_ids: T,
+        keywords: Option<V>,
+        received_at: Option<i64>,
+    ) -> crate::Result<Email>
+    where
+        T: IntoIterator<Item = U>,
+        U: Into<String>,
+        V: IntoIterator<Item = W>,
+        W: Into<String>,
+    {
+        let id = id.into();
+        let mut request = self.build();
+        let email = request
+            .copy_email(from_account_id)
+            .create(id.clone())
+            .mailbox_ids(mailbox_ids);
+
+        if let Some(keywords) = keywords {
+            email.keywords(keywords);
+        }
+
+        if let Some(received_at) = received_at {
+            email.received_at(received_at);
+        }
+
+        request
+            .send_single::<EmailCopyResponse>()
+            .await?
+            .created(&id)
+    }
 }
 
 impl Request<'_> {

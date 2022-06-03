@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::Error;
+
 use super::{
     set::{SetError, SetObject},
     RequestParams,
@@ -83,12 +85,10 @@ impl<T: SetObject> CopyRequest<T> {
         self
     }
 
-    pub fn create(&mut self) -> &mut T {
-        let create_id = self.create.len();
-        let create_id_str = format!("c{}", create_id);
-        self.create
-            .insert(create_id_str.clone(), T::new(create_id.into()));
-        self.create.get_mut(&create_id_str).unwrap()
+    pub fn create(&mut self, id: impl Into<String>) -> &mut T {
+        let id = id.into();
+        self.create.insert(id.clone(), T::new(None));
+        self.create.get_mut(&id).unwrap()
     }
 
     pub fn on_success_destroy_original(&mut self, on_success_destroy_original: bool) -> &mut Self {
@@ -122,13 +122,21 @@ impl<O: SetObject> CopyResponse<O> {
         &self.new_state
     }
 
-    pub fn created(&self, id: &str) -> Option<&O> {
-        self.created.as_ref().and_then(|created| created.get(id))
+    pub fn created(&mut self, id: &str) -> crate::Result<O> {
+        if let Some(result) = self.created.as_mut().and_then(|r| r.remove(id)) {
+            Ok(result)
+        } else if let Some(error) = self.not_created.as_mut().and_then(|r| r.remove(id)) {
+            Err(error.to_string_error().into())
+        } else {
+            Err(Error::Internal(format!("Id {} not found.", id)))
+        }
     }
 
-    pub fn not_created(&self, id: &str) -> Option<&SetError<O::Property>> {
-        self.not_created
-            .as_ref()
-            .and_then(|not_created| not_created.get(id))
+    pub fn created_ids(&self) -> Option<impl Iterator<Item = &String>> {
+        self.created.as_ref().map(|map| map.keys())
+    }
+
+    pub fn not_created_ids(&self) -> Option<impl Iterator<Item = &String>> {
+        self.not_created.as_ref().map(|map| map.keys())
     }
 }

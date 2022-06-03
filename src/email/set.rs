@@ -175,6 +175,11 @@ impl Email<Set> {
         self.headers.insert(header, Some(value.into()));
         self
     }
+
+    pub fn received_at(&mut self, received_at: i64) -> &mut Self {
+        self.received_at = Some(from_timestamp(received_at));
+        self
+    }
 }
 
 impl SetObject for Email<Set> {

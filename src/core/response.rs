@@ -56,7 +56,11 @@ impl<T> Response<T> {
         self.method_responses
     }
 
-    pub fn unwrap_method_response(mut self) -> T {
+    pub fn method_response_by_pos(&mut self, index: usize) -> T {
+        self.method_responses.remove(index)
+    }
+
+    pub fn pop_method_response(&mut self) -> T {
         self.method_responses.pop().unwrap()
     }
 
@@ -74,7 +78,7 @@ impl<T> Response<T> {
 }
 
 impl Response<TaggedMethodResponse> {
-    pub fn method_response(&self, id: &str) -> Option<&TaggedMethodResponse> {
+    pub fn method_response_by_id(&self, id: &str) -> Option<&TaggedMethodResponse> {
         self.method_responses
             .iter()
             .find(|response| response.call_id() == id)
@@ -90,6 +94,7 @@ pub enum SingleMethodResponse<T> {
 
 #[derive(Debug, Deserialize)]
 pub enum Error {
+    #[serde(rename = "error")]
     Error,
 }
 

@@ -50,8 +50,8 @@ impl Email<Get> {
         self.size.unwrap()
     }
 
-    pub fn received_at(&self) -> i64 {
-        self.received_at.as_ref().unwrap().timestamp()
+    pub fn received_at(&self) -> Option<i64> {
+        self.received_at.as_ref().map(|r| r.timestamp())
     }
 
     pub fn message_id(&self) -> Option<&[String]> {
@@ -124,6 +124,10 @@ impl Email<Get> {
 
     pub fn has_header(&self, id: &Header) -> bool {
         self.headers.contains_key(id)
+    }
+
+    pub fn preview(&self) -> Option<&str> {
+        self.preview.as_deref()
     }
 
     #[cfg(feature = "debug")]
