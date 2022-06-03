@@ -1,6 +1,5 @@
 use crate::{
     core::set::{from_timestamp, SetObject},
-    email_submission::SetArguments,
     Get, Set,
 };
 
@@ -39,7 +38,7 @@ impl VacationResponse<Set> {
 }
 
 impl SetObject for VacationResponse<Set> {
-    type SetArguments = SetArguments;
+    type SetArguments = ();
 
     fn new(_create_id: Option<usize>) -> Self {
         VacationResponse {
@@ -61,7 +60,7 @@ impl SetObject for VacationResponse<Set> {
 }
 
 impl SetObject for VacationResponse<Get> {
-    type SetArguments = SetArguments;
+    type SetArguments = ();
 
     fn new(_create_id: Option<usize>) -> Self {
         unimplemented!()

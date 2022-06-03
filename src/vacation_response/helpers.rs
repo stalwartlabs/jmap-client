@@ -1,14 +1,117 @@
 use crate::{
+    client::Client,
     core::{
         get::GetRequest,
         request::{Arguments, Request},
         response::{VacationResponseGetResponse, VacationResponseSetResponse},
-        set::SetRequest,
+        set::{SetObject, SetRequest},
     },
     Method, Set, URI,
 };
 
-use super::VacationResponse;
+use super::{Property, VacationResponse};
+
+impl Client {
+    pub async fn vacation_response_create(
+        &mut self,
+        subject: impl Into<String>,
+        text_body: Option<impl Into<String>>,
+        html_body: Option<impl Into<String>>,
+    ) -> crate::Result<VacationResponse> {
+        let mut request = self.build();
+        let created_id = request
+            .set_vacation_response()
+            .create()
+            .is_enabled(true)
+            .subject(Some(subject))
+            .text_body(text_body)
+            .html_body(html_body)
+            .create_id()
+            .unwrap();
+
+        request
+            .send_single::<VacationResponseSetResponse>()
+            .await?
+            .created(&created_id)
+    }
+
+    pub async fn vacation_response_enable(
+        &mut self,
+        subject: impl Into<String>,
+        text_body: Option<impl Into<String>>,
+        html_body: Option<impl Into<String>>,
+    ) -> crate::Result<Option<VacationResponse>> {
+        let mut request = self.build();
+        request
+            .set_vacation_response()
+            .update("singleton")
+            .is_enabled(true)
+            .subject(Some(subject))
+            .text_body(text_body)
+            .html_body(html_body);
+
+        request
+            .send_single::<VacationResponseSetResponse>()
+            .await?
+            .updated("singleton")
+    }
+
+    pub async fn vacation_response_disable(&mut self) -> crate::Result<Option<VacationResponse>> {
+        let mut request = self.build();
+        request
+            .set_vacation_response()
+            .update("singleton")
+            .is_enabled(false);
+
+        request
+            .send_single::<VacationResponseSetResponse>()
+            .await?
+            .updated("singleton")
+    }
+
+    pub async fn vacation_response_set_dates(
+        &mut self,
+        from_date: Option<i64>,
+        to_date: Option<i64>,
+    ) -> crate::Result<Option<VacationResponse>> {
+        let mut request = self.build();
+        request
+            .set_vacation_response()
+            .update("singleton")
+            .is_enabled(true)
+            .from_date(from_date)
+            .to_date(to_date);
+
+        request
+            .send_single::<VacationResponseSetResponse>()
+            .await?
+            .updated("singleton")
+    }
+
+    pub async fn vacation_response_get(
+        &mut self,
+        properties: Option<Vec<Property>>,
+    ) -> crate::Result<Option<VacationResponse>> {
+        let mut request = self.build();
+        let get_request = request.get_vacation_response().ids(["singleton"]);
+        if let Some(properties) = properties {
+            get_request.properties(properties.into_iter());
+        }
+        request
+            .send_single::<VacationResponseGetResponse>()
+            .await
+            .map(|mut r| r.unwrap_list().pop())
+    }
+
+    pub async fn vacation_response_destroy(&mut self) -> crate::Result<()> {
+        let mut request = self.build();
+        request.set_vacation_response().destroy(["singleton"]);
+        request
+            .send_single::<VacationResponseSetResponse>()
+            .await?
+            .destroyed("singleton")
+    }
+}
 
 impl Request<'_> {
     pub fn get_vacation_response(&mut self) -> &mut GetRequest<VacationResponse<Set>> {
