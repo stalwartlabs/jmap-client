@@ -5,8 +5,8 @@ use crate::{core::set::SetObject, Get, Set};
 use super::{Principal, Type, ACL, DKIM};
 
 impl Principal<Set> {
-    pub fn name(&mut self, name: Option<impl Into<String>>) -> &mut Self {
-        self.name = name.map(|s| s.into());
+    pub fn name(&mut self, name: impl Into<String>) -> &mut Self {
+        self.name = name.into().into();
         self
     }
 
@@ -15,13 +15,13 @@ impl Principal<Set> {
         self
     }
 
-    pub fn email(&mut self, email: Option<impl Into<String>>) -> &mut Self {
-        self.email = email.map(|s| s.into());
+    pub fn email(&mut self, email: impl Into<String>) -> &mut Self {
+        self.email = email.into().into();
         self
     }
 
-    pub fn secret(&mut self, secret: Option<impl Into<String>>) -> &mut Self {
-        self.secret = secret.map(|s| s.into());
+    pub fn secret(&mut self, secret: impl Into<String>) -> &mut Self {
+        self.secret = secret.into().into();
         self
     }
 
