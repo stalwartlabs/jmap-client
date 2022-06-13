@@ -13,6 +13,7 @@ pub mod email_submission;
 pub mod event_source;
 pub mod identity;
 pub mod mailbox;
+pub mod principal;
 pub mod push_subscription;
 pub mod thread;
 pub mod vacation_response;
@@ -36,6 +37,10 @@ pub enum URI {
     Calendars,
     #[serde(rename = "urn:ietf:params:jmap:websocket")]
     WebSocket,
+    #[serde(rename = "urn:ietf:params:jmap:principals")]
+    Principals,
+    #[serde(rename = "urn:ietf:params:jmap:principals:owner")]
+    PrincipalsOwner,
 }
 
 impl AsRef<str> for URI {
@@ -48,6 +53,8 @@ impl AsRef<str> for URI {
             URI::Contacts => "urn:ietf:params:jmap:contacts",
             URI::Calendars => "urn:ietf:params:jmap:calendars",
             URI::WebSocket => "urn:ietf:params:jmap:websocket",
+            URI::Principals => "urn:ietf:params:jmap:principals",
+            URI::PrincipalsOwner => "urn:ietf:params:jmap:principals:owner",
         }
     }
 }
@@ -114,6 +121,16 @@ pub enum Method {
     GetVacationResponse,
     #[serde(rename = "VacationResponse/set")]
     SetVacationResponse,
+    #[serde(rename = "Principal/get")]
+    GetPrincipal,
+    #[serde(rename = "Principal/changes")]
+    ChangesPrincipal,
+    #[serde(rename = "Principal/query")]
+    QueryPrincipal,
+    #[serde(rename = "Principal/queryChanges")]
+    QueryChangesPrincipal,
+    #[serde(rename = "Principal/set")]
+    SetPrincipal,
     #[serde(rename = "error")]
     Error,
 }

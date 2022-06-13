@@ -383,3 +383,7 @@ pub fn date_not_set(date: &Option<DateTime<Utc>>) -> bool {
 pub fn list_not_set<O>(list: &Option<Vec<O>>) -> bool {
     matches!(list, Some(list) if list.is_empty() )
 }
+
+pub fn map_not_set<K, V>(list: &Option<HashMap<K, V>>) -> bool {
+    matches!(list, Some(list) if list.is_empty() )
+}

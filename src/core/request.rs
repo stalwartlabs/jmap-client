@@ -9,6 +9,7 @@ use crate::{
     email_submission::EmailSubmission,
     identity::Identity,
     mailbox::Mailbox,
+    principal::Principal,
     push_subscription::PushSubscription,
     thread::Thread,
     vacation_response::VacationResponse,
@@ -78,6 +79,10 @@ pub enum Arguments {
     EmailSubmissionSet(SetRequest<EmailSubmission<Set>>),
     VacationResponseGet(GetRequest<VacationResponse<Set>>),
     VacationResponseSet(SetRequest<VacationResponse<Set>>),
+    PrincipalGet(GetRequest<Principal<Set>>),
+    PrincipalQuery(QueryRequest<Principal<Set>>),
+    PrincipalQueryChanges(QueryChangesRequest<Principal<Set>>),
+    PrincipalSet(SetRequest<Principal<Set>>),
 }
 
 impl Arguments {
@@ -178,6 +183,22 @@ impl Arguments {
 
     pub fn vacation_response_set(params: RequestParams) -> Self {
         Arguments::VacationResponseSet(SetRequest::new(params))
+    }
+
+    pub fn principal_get(params: RequestParams) -> Self {
+        Arguments::PrincipalGet(GetRequest::new(params))
+    }
+
+    pub fn principal_query(params: RequestParams) -> Self {
+        Arguments::PrincipalQuery(QueryRequest::new(params))
+    }
+
+    pub fn principal_query_changes(params: RequestParams, since_query_state: String) -> Self {
+        Arguments::PrincipalQueryChanges(QueryChangesRequest::new(params, since_query_state))
+    }
+
+    pub fn principal_set(params: RequestParams) -> Self {
+        Arguments::PrincipalSet(SetRequest::new(params))
     }
 
     pub fn changes_mut(&mut self) -> &mut ChangesRequest {
@@ -346,6 +367,34 @@ impl Arguments {
     pub fn vacation_response_set_mut(&mut self) -> &mut SetRequest<VacationResponse<Set>> {
         match self {
             Arguments::VacationResponseSet(ref mut r) => r,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn principal_get_mut(&mut self) -> &mut GetRequest<Principal<Set>> {
+        match self {
+            Arguments::PrincipalGet(ref mut r) => r,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn principal_query_mut(&mut self) -> &mut QueryRequest<Principal<Set>> {
+        match self {
+            Arguments::PrincipalQuery(ref mut r) => r,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn principal_query_changes_mut(&mut self) -> &mut QueryChangesRequest<Principal<Set>> {
+        match self {
+            Arguments::PrincipalQueryChanges(ref mut r) => r,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn principal_set_mut(&mut self) -> &mut SetRequest<Principal<Set>> {
+        match self {
+            Arguments::PrincipalSet(ref mut r) => r,
             _ => unreachable!(),
         }
     }

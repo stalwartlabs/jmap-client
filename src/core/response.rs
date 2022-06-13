@@ -8,6 +8,7 @@ use crate::{
     email_submission::EmailSubmission,
     identity::Identity,
     mailbox::Mailbox,
+    principal::Principal,
     push_subscription::PushSubscription,
     thread::Thread,
     vacation_response::VacationResponse,
@@ -100,7 +101,7 @@ pub enum Error {
 
 pub type PushSubscriptionSetResponse = SetResponse<PushSubscription<Get>>;
 pub type PushSubscriptionGetResponse = GetResponse<PushSubscription<Get>>;
-pub type MaiboxChangesResponse = ChangesResponse<Mailbox<Get>>;
+pub type MailboxChangesResponse = ChangesResponse<Mailbox<Get>>;
 pub type MailboxSetResponse = SetResponse<Mailbox<Get>>;
 pub type MailboxGetResponse = GetResponse<Mailbox<Get>>;
 pub type ThreadGetResponse = GetResponse<Thread>;
@@ -118,6 +119,9 @@ pub type EmailSubmissionGetResponse = GetResponse<EmailSubmission<Get>>;
 pub type EmailSubmissionChangesResponse = ChangesResponse<EmailSubmission<Get>>;
 pub type VacationResponseGetResponse = GetResponse<VacationResponse<Get>>;
 pub type VacationResponseSetResponse = SetResponse<VacationResponse<Get>>;
+pub type PrincipalChangesResponse = ChangesResponse<Principal<Get>>;
+pub type PrincipalSetResponse = SetResponse<Principal<Get>>;
+pub type PrincipalGetResponse = GetResponse<Principal<Get>>;
 
 #[derive(Debug)]
 pub struct TaggedMethodResponse {
@@ -131,7 +135,7 @@ pub enum MethodResponse {
     GetPushSubscription(PushSubscriptionGetResponse),
     SetPushSubscription(PushSubscriptionSetResponse),
     GetMailbox(MailboxGetResponse),
-    ChangesMailbox(MaiboxChangesResponse),
+    ChangesMailbox(MailboxChangesResponse),
     QueryMailbox(QueryResponse),
     QueryChangesMailbox(QueryChangesResponse),
     SetMailbox(MailboxSetResponse),
@@ -156,6 +160,13 @@ pub enum MethodResponse {
     SetEmailSubmission(EmailSubmissionSetResponse),
     GetVacationResponse(VacationResponseGetResponse),
     SetVacationResponse(VacationResponseSetResponse),
+
+    GetPrincipal(PrincipalGetResponse),
+    ChangesPrincipal(PrincipalChangesResponse),
+    QueryPrincipal(QueryResponse),
+    QueryChangesPrincipal(QueryChangesResponse),
+    SetPrincipal(PrincipalSetResponse),
+
     Echo(serde_json::Value),
     Error(MethodError),
 }
@@ -233,6 +244,17 @@ impl TaggedMethodResponse {
                     MethodResponse::SetVacationResponse(_),
                     Method::SetVacationResponse
                 )
+                | (MethodResponse::GetPrincipal(_), Method::GetPrincipal)
+                | (
+                    MethodResponse::ChangesPrincipal(_),
+                    Method::ChangesPrincipal
+                )
+                | (MethodResponse::QueryPrincipal(_), Method::QueryPrincipal)
+                | (
+                    MethodResponse::QueryChangesPrincipal(_),
+                    Method::QueryChangesPrincipal
+                )
+                | (MethodResponse::SetPrincipal(_), Method::SetPrincipal)
                 | (MethodResponse::Echo(_), Method::Echo)
                 | (MethodResponse::Error(_), Method::Error)
         )
@@ -270,7 +292,7 @@ impl TaggedMethodResponse {
         }
     }
 
-    pub fn unwrap_changes_mailbox(self) -> crate::Result<MaiboxChangesResponse> {
+    pub fn unwrap_changes_mailbox(self) -> crate::Result<MailboxChangesResponse> {
         match self.response {
             MethodResponse::ChangesMailbox(response) => Ok(response),
             MethodResponse::Error(err) => Err(err.into()),
@@ -470,6 +492,46 @@ impl TaggedMethodResponse {
         }
     }
 
+    pub fn unwrap_get_principal(self) -> crate::Result<PrincipalGetResponse> {
+        match self.response {
+            MethodResponse::GetPrincipal(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
+        }
+    }
+
+    pub fn unwrap_changes_principal(self) -> crate::Result<PrincipalChangesResponse> {
+        match self.response {
+            MethodResponse::ChangesPrincipal(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
+        }
+    }
+
+    pub fn unwrap_query_principal(self) -> crate::Result<QueryResponse> {
+        match self.response {
+            MethodResponse::QueryPrincipal(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
+        }
+    }
+
+    pub fn unwrap_query_changes_principal(self) -> crate::Result<QueryChangesResponse> {
+        match self.response {
+            MethodResponse::QueryChangesPrincipal(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
+        }
+    }
+
+    pub fn unwrap_set_principal(self) -> crate::Result<PrincipalSetResponse> {
+        match self.response {
+            MethodResponse::SetPrincipal(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
+        }
+    }
+
     pub fn unwrap_echo(self) -> crate::Result<serde_json::Value> {
         match self.response {
             MethodResponse::Echo(response) => Ok(response),
@@ -626,6 +688,26 @@ impl<'de> Visitor<'de> for TaggedMethodResponseVisitor {
                     .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
             ),
             Method::SetVacationResponse => MethodResponse::SetVacationResponse(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::GetPrincipal => MethodResponse::GetPrincipal(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::ChangesPrincipal => MethodResponse::ChangesPrincipal(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::QueryPrincipal => MethodResponse::QueryPrincipal(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::QueryChangesPrincipal => MethodResponse::QueryChangesPrincipal(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::SetPrincipal => MethodResponse::SetPrincipal(
                 seq.next_element()?
                     .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
             ),
