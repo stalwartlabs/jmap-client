@@ -163,7 +163,7 @@ impl Client {
         let mut request = capabilities.url().into_client_request()?;
         request
             .headers_mut()
-            .insert("Authorization", "Bearer 123".parse().unwrap()); //TODO implement
+            .insert("Authorization", self.authorization.parse().unwrap());
 
         let (stream, _) = tokio_tungstenite::connect_async(request).await?;
         let (tx, mut rx) = stream.split();

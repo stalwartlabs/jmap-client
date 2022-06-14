@@ -19,9 +19,16 @@ use crate::{
 const DEFAULT_TIMEOUT_MS: u64 = 10 * 1000;
 static USER_AGENT: &str = concat!("stalwart-jmap/", env!("CARGO_PKG_VERSION"));
 
+pub enum Credentials {
+    Basic(String),
+    Bearer(String),
+}
+
 pub struct Client {
     session: Session,
     session_url: String,
+    #[cfg(feature = "websockets")]
+    pub(crate) authorization: String,
     upload_url: Vec<URLPart<blob::URLParameter>>,
     download_url: Vec<URLPart<blob::URLParameter>>,
     event_source_url: Vec<URLPart<event_source::URLParameter>>,
@@ -33,7 +40,11 @@ pub struct Client {
 }
 
 impl Client {
-    pub async fn connect(url: &str) -> crate::Result<Self> {
+    pub async fn connect(url: &str, credentials: impl Into<Credentials>) -> crate::Result<Self> {
+        let authorization = match credentials.into() {
+            Credentials::Basic(s) => format!("Basic {}", s),
+            Credentials::Bearer(s) => format!("Bearer {}", s),
+        };
         let mut headers = header::HeaderMap::new();
         headers.insert(
             header::USER_AGENT,
@@ -41,7 +52,7 @@ impl Client {
         );
         headers.insert(
             header::AUTHORIZATION,
-            header::HeaderValue::from_static("Basic test"),
+            header::HeaderValue::from_str(&authorization).unwrap(),
         );
 
         let session: Session = serde_json::from_slice(
@@ -76,6 +87,8 @@ impl Client {
             event_source_url: URLPart::parse(session.event_source_url())?,
             session,
             session_url: url.to_string(),
+            #[cfg(feature = "websockets")]
+            authorization,
             timeout: DEFAULT_TIMEOUT_MS,
             headers,
             default_account_id,
@@ -197,6 +210,40 @@ impl Client {
     #[cfg(feature = "websockets")]
     pub fn ws_stream(&mut self) -> Option<&mut crate::client_ws::WsStream> {
         self.ws.as_mut()
+    }
+}
+
+impl Credentials {
+    pub fn basic(username: &str, password: &str) -> Self {
+        Credentials::Basic(base64::encode(format!("{}:{}", username, password)))
+    }
+
+    pub fn bearer(token: impl Into<String>) -> Self {
+        Credentials::Bearer(token.into())
+    }
+}
+
+impl From<&str> for Credentials {
+    fn from(s: &str) -> Self {
+        Credentials::bearer(s.to_string())
+    }
+}
+
+impl From<String> for Credentials {
+    fn from(s: String) -> Self {
+        Credentials::bearer(s)
+    }
+}
+
+impl From<(&str, &str)> for Credentials {
+    fn from((username, password): (&str, &str)) -> Self {
+        Credentials::basic(username, password)
+    }
+}
+
+impl From<(String, String)> for Credentials {
+    fn from((username, password): (String, String)) -> Self {
+        Credentials::basic(&username, &password)
     }
 }
 
