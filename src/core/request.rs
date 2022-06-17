@@ -30,7 +30,7 @@ use super::{
 #[derive(Serialize)]
 pub struct Request<'x> {
     #[serde(skip)]
-    client: Option<&'x mut Client>,
+    client: &'x Client,
     #[serde(skip)]
     default_account_id: String,
 
@@ -401,31 +401,30 @@ impl Arguments {
 }
 
 impl<'x> Request<'x> {
-    pub fn new(client: &'x mut Client) -> Self {
+    pub fn new(client: &'x Client) -> Self {
         Request {
             using: vec![URI::Core, URI::Mail],
             method_calls: vec![],
             created_ids: None,
             default_account_id: client.default_account_id().to_string(),
-            client: client.into(),
+            client,
         }
     }
 
-    pub async fn send(mut self) -> crate::Result<Response<TaggedMethodResponse>> {
-        Option::take(&mut self.client).unwrap().send(&self).await
+    pub async fn send(self) -> crate::Result<Response<TaggedMethodResponse>> {
+        self.client.send(&self).await
     }
 
     #[cfg(feature = "websockets")]
-    pub async fn send_ws(mut self) -> crate::Result<String> {
-        Option::take(&mut self.client).unwrap().send_ws(self).await
+    pub async fn send_ws(self) -> crate::Result<String> {
+        self.client.send_ws(self).await
     }
 
-    pub async fn send_single<T>(mut self) -> crate::Result<T>
+    pub async fn send_single<T>(self) -> crate::Result<T>
     where
         T: DeserializeOwned,
     {
-        let response: Response<SingleMethodResponse<T>> =
-            Option::take(&mut self.client).unwrap().send(&self).await?;
+        let response: Response<SingleMethodResponse<T>> = self.client.send(&self).await?;
         match response
             .unwrap_method_responses()
             .pop()

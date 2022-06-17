@@ -123,7 +123,7 @@ pub struct WebSocketProblem {
     status: Option<u32>,
     title: Option<String>,
     detail: Option<String>,
-    limit: Option<usize>,
+    limit: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -152,7 +152,7 @@ pub struct WsStream {
 
 impl Client {
     pub async fn connect_ws(
-        &mut self,
+        &self,
     ) -> crate::Result<Pin<Box<impl Stream<Item = crate::Result<WebSocketMessage>>>>> {
         let capabilities = self.session().websocket_capabilities().ok_or_else(|| {
             crate::Error::Internal(
@@ -168,7 +168,7 @@ impl Client {
         let (stream, _) = tokio_tungstenite::connect_async(request).await?;
         let (tx, mut rx) = stream.split();
 
-        self.set_ws_stream(WsStream { tx, req_id: 0 });
+        *self.ws.lock().await = WsStream { tx, req_id: 0 }.into();
 
         Ok(Box::pin(async_stream::stream! {
             while let Some(message) = rx.next().await {
@@ -202,9 +202,10 @@ impl Client {
         }))
     }
 
-    pub async fn send_ws(&mut self, request: Request<'_>) -> crate::Result<String> {
-        let ws = self
-            .ws_stream()
+    pub async fn send_ws(&self, request: Request<'_>) -> crate::Result<String> {
+        let mut _ws = self.ws.lock().await;
+        let ws = _ws
+            .as_mut()
             .ok_or_else(|| crate::Error::Internal("Websocket stream not set.".to_string()))?;
 
         // Assing request id
@@ -228,11 +229,14 @@ impl Client {
     }
 
     pub async fn enable_push_ws(
-        &mut self,
+        &self,
         data_types: Option<impl IntoIterator<Item = StateChangeType>>,
         push_state: Option<impl Into<String>>,
     ) -> crate::Result<()> {
-        self.ws_stream()
+        self.ws
+            .lock()
+            .await
+            .as_mut()
             .ok_or_else(|| crate::Error::Internal("Websocket stream not set.".to_string()))?
             .tx
             .send(Message::text(
@@ -247,8 +251,11 @@ impl Client {
             .map_err(|err| err.into())
     }
 
-    pub async fn disable_push_ws(&mut self) -> crate::Result<()> {
-        self.ws_stream()
+    pub async fn disable_push_ws(&self) -> crate::Result<()> {
+        self.ws
+            .lock()
+            .await
+            .as_mut()
             .ok_or_else(|| crate::Error::Internal("Websocket stream not set.".to_string()))?
             .tx
             .send(Message::text(
@@ -261,8 +268,11 @@ impl Client {
             .map_err(|err| err.into())
     }
 
-    pub async fn ws_ping(&mut self) -> crate::Result<()> {
-        self.ws_stream()
+    pub async fn ws_ping(&self) -> crate::Result<()> {
+        self.ws
+            .lock()
+            .await
+            .as_mut()
             .ok_or_else(|| crate::Error::Internal("Websocket stream not set.".to_string()))?
             .tx
             .send(Message::Ping(vec![]))

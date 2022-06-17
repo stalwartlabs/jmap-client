@@ -12,7 +12,7 @@ use crate::{
 use super::Thread;
 
 impl Client {
-    pub async fn thread_get(&mut self, id: &str) -> crate::Result<Option<Thread>> {
+    pub async fn thread_get(&self, id: &str) -> crate::Result<Option<Thread>> {
         let mut request = self.build();
         request.get_thread().ids([id]);
         request

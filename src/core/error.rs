@@ -6,15 +6,15 @@ use serde::Deserialize;
 pub struct ProblemDetails {
     #[serde(rename = "type")]
     p_type: ProblemType,
-    status: Option<u32>,
+    pub status: Option<u32>,
     title: Option<String>,
     detail: Option<String>,
-    limit: Option<usize>,
+    limit: Option<String>,
     request_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
-pub enum ProblemType {
+pub enum JMAPError {
     #[serde(rename = "urn:ietf:params:jmap:error:unknownCapability")]
     UnknownCapability,
     #[serde(rename = "urn:ietf:params:jmap:error:notJSON")]
@@ -26,12 +26,19 @@ pub enum ProblemType {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct MethodError {
-    #[serde(rename = "type")]
-    p_type: MethodErrorType,
+#[serde(untagged)]
+pub enum ProblemType {
+    JMAP(JMAPError),
+    Other(String),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+pub struct MethodError {
+    #[serde(rename = "type")]
+    pub p_type: MethodErrorType,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub enum MethodErrorType {
     #[serde(rename = "serverUnavailable")]
     ServerUnavailable,
@@ -81,7 +88,7 @@ impl ProblemDetails {
         status: Option<u32>,
         title: Option<String>,
         detail: Option<String>,
-        limit: Option<usize>,
+        limit: Option<String>,
         request_id: Option<String>,
     ) -> Self {
         ProblemDetails {
@@ -110,8 +117,8 @@ impl ProblemDetails {
         self.detail.as_deref()
     }
 
-    pub fn limit(&self) -> Option<usize> {
-        self.limit
+    pub fn limit(&self) -> Option<&str> {
+        self.limit.as_deref()
     }
 
     pub fn request_id(&self) -> Option<&str> {
@@ -158,11 +165,14 @@ impl Display for MethodError {
 
 impl Display for ProblemDetails {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.p_type {
-            ProblemType::UnknownCapability => write!(f, "Unknown capability")?,
-            ProblemType::NotJSON => write!(f, "Not JSON")?,
-            ProblemType::NotRequest => write!(f, "Not request")?,
-            ProblemType::Limit => write!(f, "Limit")?,
+        match &self.p_type {
+            ProblemType::JMAP(err) => match err {
+                JMAPError::UnknownCapability => write!(f, "Unknown capability")?,
+                JMAPError::NotJSON => write!(f, "Not JSON")?,
+                JMAPError::NotRequest => write!(f, "Not request")?,
+                JMAPError::Limit => write!(f, "Limit")?,
+            },
+            ProblemType::Other(err) => f.write_str(err.as_str())?,
         }
 
         if let Some(status) = self.status {

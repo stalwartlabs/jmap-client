@@ -16,7 +16,7 @@ use super::{Principal, Property, Type};
 
 impl Client {
     pub async fn individual_create(
-        &mut self,
+        &self,
         email: impl Into<String>,
         secret: impl Into<String>,
         name: impl Into<String>,
@@ -37,7 +37,7 @@ impl Client {
             .created(&id)
     }
 
-    pub async fn domain_create(&mut self, name: impl Into<String>) -> crate::Result<Principal> {
+    pub async fn domain_create(&self, name: impl Into<String>) -> crate::Result<Principal> {
         let mut request = self.build();
         let id = request
             .set_principal()
@@ -53,7 +53,7 @@ impl Client {
     }
 
     pub async fn list_create(
-        &mut self,
+        &self,
         email: impl Into<String>,
         name: impl Into<String>,
         members: impl IntoIterator<Item = impl Into<String>>,
@@ -75,7 +75,7 @@ impl Client {
     }
 
     pub async fn group_create(
-        &mut self,
+        &self,
         email: impl Into<String>,
         name: impl Into<String>,
         members: impl IntoIterator<Item = impl Into<String>>,
@@ -97,7 +97,7 @@ impl Client {
     }
 
     pub async fn principal_set_name(
-        &mut self,
+        &self,
         id: &str,
         name: impl Into<String>,
     ) -> crate::Result<Option<Principal>> {
@@ -110,7 +110,7 @@ impl Client {
     }
 
     pub async fn principal_set_secret(
-        &mut self,
+        &self,
         id: &str,
         secret: impl Into<String>,
     ) -> crate::Result<Option<Principal>> {
@@ -123,7 +123,7 @@ impl Client {
     }
 
     pub async fn principal_set_email(
-        &mut self,
+        &self,
         id: &str,
         email: impl Into<String>,
     ) -> crate::Result<Option<Principal>> {
@@ -136,7 +136,7 @@ impl Client {
     }
 
     pub async fn principal_set_timezone(
-        &mut self,
+        &self,
         id: &str,
         timezone: Option<impl Into<String>>,
     ) -> crate::Result<Option<Principal>> {
@@ -149,7 +149,7 @@ impl Client {
     }
 
     pub async fn principal_set_members(
-        &mut self,
+        &self,
         id: &str,
         members: Option<impl IntoIterator<Item = impl Into<String>>>,
     ) -> crate::Result<Option<Principal>> {
@@ -162,7 +162,7 @@ impl Client {
     }
 
     pub async fn principal_set_aliases(
-        &mut self,
+        &self,
         id: &str,
         aliases: Option<impl IntoIterator<Item = impl Into<String>>>,
     ) -> crate::Result<Option<Principal>> {
@@ -175,7 +175,7 @@ impl Client {
     }
 
     pub async fn principal_set_capabilities(
-        &mut self,
+        &self,
         id: &str,
         capabilities: Option<impl IntoIterator<Item = impl Into<String>>>,
     ) -> crate::Result<Option<Principal>> {
@@ -190,7 +190,7 @@ impl Client {
             .updated(id)
     }
 
-    pub async fn principal_destroy(&mut self, id: &str) -> crate::Result<()> {
+    pub async fn principal_destroy(&self, id: &str) -> crate::Result<()> {
         let mut request = self.build();
         request.set_principal().destroy([id]).arguments();
         request
@@ -200,7 +200,7 @@ impl Client {
     }
 
     pub async fn principal_get(
-        &mut self,
+        &self,
         id: &str,
         properties: Option<Vec<Property>>,
     ) -> crate::Result<Option<Principal>> {
@@ -216,7 +216,7 @@ impl Client {
     }
 
     pub async fn principal_query(
-        &mut self,
+        &self,
         filter: Option<impl Into<Filter<super::query::Filter>>>,
         sort: Option<impl IntoIterator<Item = Comparator<super::query::Comparator>>>,
     ) -> crate::Result<QueryResponse> {
@@ -232,7 +232,7 @@ impl Client {
     }
 
     pub async fn principal_changes(
-        &mut self,
+        &self,
         since_state: impl Into<String>,
         max_changes: usize,
     ) -> crate::Result<ChangesResponse<Principal<Get>>> {

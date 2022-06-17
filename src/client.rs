@@ -1,4 +1,7 @@
-use std::time::Duration;
+use std::{
+    sync::atomic::{AtomicBool, Ordering},
+    time::Duration,
+};
 
 use reqwest::{
     header::{self},
@@ -27,6 +30,7 @@ pub enum Credentials {
 pub struct Client {
     session: Session,
     session_url: String,
+    session_outdated: AtomicBool,
     #[cfg(feature = "websockets")]
     pub(crate) authorization: String,
     upload_url: Vec<URLPart<blob::URLParameter>>,
@@ -36,7 +40,7 @@ pub struct Client {
     headers: header::HeaderMap,
     default_account_id: String,
     #[cfg(feature = "websockets")]
-    ws: Option<crate::client_ws::WsStream>,
+    pub(crate) ws: tokio::sync::Mutex<Option<crate::client_ws::WsStream>>,
 }
 
 impl Client {
@@ -87,13 +91,14 @@ impl Client {
             event_source_url: URLPart::parse(session.event_source_url())?,
             session,
             session_url: url.to_string(),
+            session_outdated: false.into(),
             #[cfg(feature = "websockets")]
             authorization,
             timeout: DEFAULT_TIMEOUT_MS,
             headers,
             default_account_id,
             #[cfg(feature = "websockets")]
-            ws: None,
+            ws: None.into(),
         })
     }
 
@@ -110,12 +115,16 @@ impl Client {
         &self.session
     }
 
+    pub fn session_url(&self) -> &str {
+        &self.session_url
+    }
+
     pub fn headers(&self) -> &header::HeaderMap {
         &self.headers
     }
 
     pub async fn send<R>(
-        &mut self,
+        &self,
         request: &request::Request<'_>,
     ) -> crate::Result<response::Response<R>>
     where
@@ -138,27 +147,37 @@ impl Client {
         )?;
 
         if response.session_state() != self.session.state() {
-            let session: Session = serde_json::from_slice(
-                &Client::handle_error(
-                    reqwest::Client::builder()
-                        .timeout(Duration::from_millis(DEFAULT_TIMEOUT_MS))
-                        .default_headers(self.headers.clone())
-                        .build()?
-                        .get(&self.session_url)
-                        .send()
-                        .await?,
-                )
-                .await?
-                .bytes()
-                .await?,
-            )?;
-            self.download_url = URLPart::parse(session.download_url())?;
-            self.upload_url = URLPart::parse(session.upload_url())?;
-            self.event_source_url = URLPart::parse(session.event_source_url())?;
-            self.session = session;
+            self.session_outdated.store(true, Ordering::Relaxed);
         }
 
         Ok(response)
+    }
+
+    pub async fn refresh_session(&mut self) -> crate::Result<()> {
+        let session: Session = serde_json::from_slice(
+            &Client::handle_error(
+                reqwest::Client::builder()
+                    .timeout(Duration::from_millis(DEFAULT_TIMEOUT_MS))
+                    .default_headers(self.headers.clone())
+                    .build()?
+                    .get(&self.session_url)
+                    .send()
+                    .await?,
+            )
+            .await?
+            .bytes()
+            .await?,
+        )?;
+        self.download_url = URLPart::parse(session.download_url())?;
+        self.upload_url = URLPart::parse(session.upload_url())?;
+        self.event_source_url = URLPart::parse(session.event_source_url())?;
+        self.session = session;
+        self.session_outdated.store(false, Ordering::Relaxed);
+        Ok(())
+    }
+
+    pub fn is_session_updated(&self) -> bool {
+        !self.session_outdated.load(Ordering::Relaxed)
     }
 
     pub fn set_default_account_id(&mut self, defaul_account_id: impl Into<String>) -> &mut Self {
@@ -170,7 +189,7 @@ impl Client {
         &self.default_account_id
     }
 
-    pub fn build(&mut self) -> Request<'_> {
+    pub fn build(&self) -> Request<'_> {
         Request::new(self)
     }
 
@@ -200,16 +219,6 @@ impl Client {
         } else {
             Err(Error::Server(format!("{}", response.status())))
         }
-    }
-
-    #[cfg(feature = "websockets")]
-    pub fn set_ws_stream(&mut self, ws: crate::client_ws::WsStream) {
-        self.ws = Some(ws);
-    }
-
-    #[cfg(feature = "websockets")]
-    pub fn ws_stream(&mut self) -> Option<&mut crate::client_ws::WsStream> {
-        self.ws.as_mut()
     }
 }
 

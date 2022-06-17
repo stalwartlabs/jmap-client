@@ -16,7 +16,7 @@ use super::{Mailbox, Property, Role};
 
 impl Client {
     pub async fn mailbox_create(
-        &mut self,
+        &self,
         name: impl Into<String>,
         parent_id: Option<impl Into<String>>,
         role: Role,
@@ -37,7 +37,7 @@ impl Client {
     }
 
     pub async fn mailbox_rename(
-        &mut self,
+        &self,
         id: &str,
         name: impl Into<String>,
     ) -> crate::Result<Option<Mailbox>> {
@@ -50,7 +50,7 @@ impl Client {
     }
 
     pub async fn mailbox_move(
-        &mut self,
+        &self,
         id: &str,
         parent_id: Option<impl Into<String>>,
     ) -> crate::Result<Option<Mailbox>> {
@@ -63,7 +63,7 @@ impl Client {
     }
 
     pub async fn mailbox_update_role(
-        &mut self,
+        &self,
         id: &str,
         role: Role,
     ) -> crate::Result<Option<Mailbox>> {
@@ -76,7 +76,7 @@ impl Client {
     }
 
     pub async fn mailbox_update_sort_order(
-        &mut self,
+        &self,
         id: &str,
         sort_order: u32,
     ) -> crate::Result<Option<Mailbox>> {
@@ -88,7 +88,7 @@ impl Client {
             .updated(id)
     }
 
-    pub async fn mailbox_destroy(&mut self, id: &str, delete_emails: bool) -> crate::Result<()> {
+    pub async fn mailbox_destroy(&self, id: &str, delete_emails: bool) -> crate::Result<()> {
         let mut request = self.build();
         request
             .set_mailbox()
@@ -102,7 +102,7 @@ impl Client {
     }
 
     pub async fn mailbox_get(
-        &mut self,
+        &self,
         id: &str,
         properties: Option<Vec<Property>>,
     ) -> crate::Result<Option<Mailbox>> {
@@ -118,7 +118,7 @@ impl Client {
     }
 
     pub async fn mailbox_query(
-        &mut self,
+        &self,
         filter: Option<impl Into<Filter<super::query::Filter>>>,
         sort: Option<impl IntoIterator<Item = Comparator<super::query::Comparator>>>,
     ) -> crate::Result<QueryResponse> {
@@ -134,7 +134,7 @@ impl Client {
     }
 
     pub async fn mailbox_changes(
-        &mut self,
+        &self,
         since_state: impl Into<String>,
         max_changes: usize,
     ) -> crate::Result<ChangesResponse<Mailbox<Get>>> {

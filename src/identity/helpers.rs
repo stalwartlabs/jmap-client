@@ -14,7 +14,7 @@ use super::{Identity, Property};
 
 impl Client {
     pub async fn identity_create(
-        &mut self,
+        &self,
         name: impl Into<String>,
         email: impl Into<String>,
     ) -> crate::Result<Identity> {
@@ -32,7 +32,7 @@ impl Client {
             .created(&id)
     }
 
-    pub async fn identity_destroy(&mut self, id: &str) -> crate::Result<()> {
+    pub async fn identity_destroy(&self, id: &str) -> crate::Result<()> {
         let mut request = self.build();
         request.set_identity().destroy([id]);
         request
@@ -42,7 +42,7 @@ impl Client {
     }
 
     pub async fn identity_get(
-        &mut self,
+        &self,
         id: &str,
         properties: Option<Vec<Property>>,
     ) -> crate::Result<Option<Identity>> {
@@ -58,7 +58,7 @@ impl Client {
     }
 
     pub async fn identity_changes(
-        &mut self,
+        &self,
         since_state: impl Into<String>,
         max_changes: usize,
     ) -> crate::Result<ChangesResponse<Identity<Get>>> {

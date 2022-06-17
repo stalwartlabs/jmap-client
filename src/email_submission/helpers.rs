@@ -16,7 +16,7 @@ use super::{Address, EmailSubmission, Property, UndoStatus};
 
 impl Client {
     pub async fn email_submission_create(
-        &mut self,
+        &self,
         email_id: impl Into<String>,
         identity_id: impl Into<String>,
     ) -> crate::Result<EmailSubmission<Get>> {
@@ -35,7 +35,7 @@ impl Client {
     }
 
     pub async fn email_submission_create_envelope<S, T, U>(
-        &mut self,
+        &self,
         email_id: impl Into<String>,
         identity_id: impl Into<String>,
         mail_from: S,
@@ -62,7 +62,7 @@ impl Client {
     }
 
     pub async fn email_submission_change_status(
-        &mut self,
+        &self,
         id: &str,
         undo_status: UndoStatus,
     ) -> crate::Result<Option<EmailSubmission>> {
@@ -77,7 +77,7 @@ impl Client {
             .updated(id)
     }
 
-    pub async fn email_submission_destroy(&mut self, id: &str) -> crate::Result<()> {
+    pub async fn email_submission_destroy(&self, id: &str) -> crate::Result<()> {
         let mut request = self.build();
         request.set_email_submission().destroy([id]);
         request
@@ -87,7 +87,7 @@ impl Client {
     }
 
     pub async fn email_submission_get(
-        &mut self,
+        &self,
         id: &str,
         properties: Option<Vec<Property>>,
     ) -> crate::Result<Option<EmailSubmission>> {
@@ -103,7 +103,7 @@ impl Client {
     }
 
     pub async fn email_submission_query(
-        &mut self,
+        &self,
         filter: Option<impl Into<Filter<super::query::Filter>>>,
         sort: Option<impl IntoIterator<Item = Comparator<super::query::Comparator>>>,
     ) -> crate::Result<QueryResponse> {
@@ -119,7 +119,7 @@ impl Client {
     }
 
     pub async fn email_submission_changes(
-        &mut self,
+        &self,
         since_state: impl Into<String>,
         max_changes: usize,
     ) -> crate::Result<ChangesResponse<EmailSubmission<Get>>> {

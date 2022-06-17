@@ -21,7 +21,7 @@ use super::{
 
 impl Client {
     pub async fn email_import<T, U, V, W>(
-        &mut self,
+        &self,
         raw_message: Vec<u8>,
         mailbox_ids: T,
         keywords: Option<V>,
@@ -56,7 +56,7 @@ impl Client {
     }
 
     pub async fn email_set_mailbox(
-        &mut self,
+        &self,
         id: &str,
         mailbox_id: &str,
         set: bool,
@@ -67,7 +67,7 @@ impl Client {
     }
 
     pub async fn email_set_mailboxes<T, U>(
-        &mut self,
+        &self,
         id: &str,
         mailbox_ids: T,
     ) -> crate::Result<Option<Email>>
@@ -81,7 +81,7 @@ impl Client {
     }
 
     pub async fn email_set_keyword(
-        &mut self,
+        &self,
         id: &str,
         keyword: &str,
         set: bool,
@@ -92,7 +92,7 @@ impl Client {
     }
 
     pub async fn email_set_keywords<T, U>(
-        &mut self,
+        &self,
         id: &str,
         keywords: T,
     ) -> crate::Result<Option<Email>>
@@ -105,7 +105,7 @@ impl Client {
         request.send_single::<EmailSetResponse>().await?.updated(id)
     }
 
-    pub async fn email_destroy(&mut self, id: &str) -> crate::Result<()> {
+    pub async fn email_destroy(&self, id: &str) -> crate::Result<()> {
         let mut request = self.build();
         request.set_email().destroy([id]);
         request
@@ -115,7 +115,7 @@ impl Client {
     }
 
     pub async fn email_get(
-        &mut self,
+        &self,
         id: &str,
         properties: Option<impl IntoIterator<Item = Property>>,
     ) -> crate::Result<Option<Email<Get>>> {
@@ -131,7 +131,7 @@ impl Client {
     }
 
     pub async fn email_changes(
-        &mut self,
+        &self,
         since_state: impl Into<String>,
         max_changes: usize,
     ) -> crate::Result<ChangesResponse<Email<Get>>> {
@@ -141,7 +141,7 @@ impl Client {
     }
 
     pub async fn email_query(
-        &mut self,
+        &self,
         filter: Option<impl Into<Filter<super::query::Filter>>>,
         sort: Option<Vec<Comparator<super::query::Comparator>>>,
     ) -> crate::Result<QueryResponse> {
@@ -157,7 +157,7 @@ impl Client {
     }
 
     pub async fn email_parse(
-        &mut self,
+        &self,
         blob_id: &str,
         properties: Option<impl IntoIterator<Item = Property>>,
         body_properties: Option<impl IntoIterator<Item = BodyProperty>>,
@@ -186,7 +186,7 @@ impl Client {
     }
 
     pub async fn email_copy<T, U, V, W>(
-        &mut self,
+        &self,
         from_account_id: impl Into<String>,
         id: impl Into<String>,
         mailbox_ids: T,

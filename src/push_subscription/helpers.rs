@@ -13,7 +13,7 @@ use super::{Keys, PushSubscription};
 
 impl Client {
     pub async fn push_subscription_create(
-        &mut self,
+        &self,
         device_client_id: impl Into<String>,
         url: impl Into<String>,
         keys: Option<Keys>,
@@ -37,7 +37,7 @@ impl Client {
     }
 
     pub async fn push_subscription_verify(
-        &mut self,
+        &self,
         id: &str,
         verification_code: impl Into<String>,
     ) -> crate::Result<Option<PushSubscription>> {
@@ -53,7 +53,7 @@ impl Client {
     }
 
     pub async fn push_subscription_update_types(
-        &mut self,
+        &self,
         id: &str,
         types: Option<impl IntoIterator<Item = TypeState>>,
     ) -> crate::Result<Option<PushSubscription>> {
@@ -65,7 +65,7 @@ impl Client {
             .updated(id)
     }
 
-    pub async fn push_subscription_destroy(&mut self, id: &str) -> crate::Result<()> {
+    pub async fn push_subscription_destroy(&self, id: &str) -> crate::Result<()> {
         let mut request = self.build();
         request.set_push_subscription().destroy([id]);
         request

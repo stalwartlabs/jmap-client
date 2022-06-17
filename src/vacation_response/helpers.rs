@@ -13,7 +13,7 @@ use super::{Property, VacationResponse};
 
 impl Client {
     pub async fn vacation_response_create(
-        &mut self,
+        &self,
         subject: impl Into<String>,
         text_body: Option<impl Into<String>>,
         html_body: Option<impl Into<String>>,
@@ -36,7 +36,7 @@ impl Client {
     }
 
     pub async fn vacation_response_enable(
-        &mut self,
+        &self,
         subject: impl Into<String>,
         text_body: Option<impl Into<String>>,
         html_body: Option<impl Into<String>>,
@@ -56,7 +56,7 @@ impl Client {
             .updated("singleton")
     }
 
-    pub async fn vacation_response_disable(&mut self) -> crate::Result<Option<VacationResponse>> {
+    pub async fn vacation_response_disable(&self) -> crate::Result<Option<VacationResponse>> {
         let mut request = self.build();
         request
             .set_vacation_response()
@@ -70,7 +70,7 @@ impl Client {
     }
 
     pub async fn vacation_response_set_dates(
-        &mut self,
+        &self,
         from_date: Option<i64>,
         to_date: Option<i64>,
     ) -> crate::Result<Option<VacationResponse>> {
@@ -89,7 +89,7 @@ impl Client {
     }
 
     pub async fn vacation_response_get(
-        &mut self,
+        &self,
         properties: Option<Vec<Property>>,
     ) -> crate::Result<Option<VacationResponse>> {
         let mut request = self.build();
@@ -103,7 +103,7 @@ impl Client {
             .map(|mut r| r.unwrap_list().pop())
     }
 
-    pub async fn vacation_response_destroy(&mut self) -> crate::Result<()> {
+    pub async fn vacation_response_destroy(&self) -> crate::Result<()> {
         let mut request = self.build();
         request.set_vacation_response().destroy(["singleton"]);
         request
