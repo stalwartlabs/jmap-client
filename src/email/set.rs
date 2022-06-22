@@ -32,7 +32,9 @@ impl Email<Set> {
 
     pub fn mailbox_id(&mut self, mailbox_id: &str, set: bool) -> &mut Self {
         self.mailbox_ids = None;
-        self.patch.insert(format!("mailboxIds/{}", mailbox_id), set);
+        self.patch
+            .get_or_insert_with(HashMap::new)
+            .insert(format!("mailboxIds/{}", mailbox_id), set);
         self
     }
 
@@ -47,7 +49,9 @@ impl Email<Set> {
 
     pub fn keyword(&mut self, keyword: &str, set: bool) -> &mut Self {
         self.keywords = None;
-        self.patch.insert(format!("keywords/{}", keyword), set);
+        self.patch
+            .get_or_insert_with(HashMap::new)
+            .insert(format!("keywords/{}", keyword), set);
         self
     }
 

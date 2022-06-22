@@ -1,4 +1,6 @@
-use crate::{core::set::SetObject, Get, Set};
+use std::collections::HashMap;
+
+use crate::{core::set::SetObject, principal::ACL, Get, Set};
 
 use super::{Mailbox, Role, SetArguments};
 
@@ -31,6 +33,27 @@ impl Mailbox<Set> {
         self.sort_order = sort_order.into();
         self
     }
+
+    pub fn acls<T, U, V>(&mut self, acls: T) -> &mut Self
+    where
+        T: IntoIterator<Item = (U, V)>,
+        U: Into<String>,
+        V: IntoIterator<Item = ACL>,
+    {
+        self.acl = Some(
+            acls.into_iter()
+                .map(|(id, acls)| (id.into(), acls.into_iter().collect()))
+                .collect(),
+        );
+        self
+    }
+
+    pub fn acl(&mut self, id: &str, acl: impl IntoIterator<Item = ACL>) -> &mut Self {
+        self.acl_patch
+            .get_or_insert_with(HashMap::new)
+            .insert(format!("acl/{}", id), acl.into_iter().collect());
+        self
+    }
 }
 
 pub fn role_not_set(role: &Option<Role>) -> bool {
@@ -55,6 +78,8 @@ impl SetObject for Mailbox<Set> {
             unread_threads: None,
             my_rights: None,
             is_subscribed: None,
+            acl: HashMap::with_capacity(0).into(),
+            acl_patch: None,
         }
     }
 

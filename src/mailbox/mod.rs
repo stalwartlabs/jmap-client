@@ -3,12 +3,14 @@ pub mod helpers;
 pub mod query;
 pub mod set;
 
+use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::core::changes::ChangesObject;
-use crate::core::set::string_not_set;
+use crate::core::set::{map_not_set, string_not_set};
 use crate::core::Object;
 use crate::mailbox::set::role_not_set;
+use crate::principal::ACL;
 use crate::{Get, Set};
 use serde::{Deserialize, Serialize};
 
@@ -84,6 +86,14 @@ pub struct Mailbox<State = Get> {
     #[serde(rename = "isSubscribed")]
     #[serde(skip_serializing_if = "Option::is_none")]
     is_subscribed: Option<bool>,
+
+    #[serde(skip_serializing_if = "map_not_set")]
+    acl: Option<HashMap<String, Vec<ACL>>>,
+
+    #[serde(flatten)]
+    #[serde(skip_deserializing)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    acl_patch: Option<HashMap<String, Vec<ACL>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -93,7 +103,7 @@ pub enum Role {
     Archive,
     #[serde(rename = "drafts", alias = "DRAFTS")]
     Drafts,
-    #[serde(rename = "importante", alias = "IMPORTANT")]
+    #[serde(rename = "important", alias = "IMPORTANT")]
     Important,
     #[serde(rename = "inbox", alias = "INBOX")]
     Inbox,
@@ -160,6 +170,8 @@ pub enum Property {
     MyRights,
     #[serde(rename = "isSubscribed")]
     IsSubscribed,
+    #[serde(rename = "acl")]
+    ACL,
 }
 
 impl Display for Property {
@@ -176,6 +188,7 @@ impl Display for Property {
             Property::UnreadThreads => write!(f, "unreadThreads"),
             Property::MyRights => write!(f, "myRights"),
             Property::IsSubscribed => write!(f, "isSubscribed"),
+            Property::ACL => write!(f, "acl"),
         }
     }
 }

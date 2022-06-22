@@ -1,6 +1,8 @@
-use crate::{core::get::GetObject, Get, Set};
+use std::collections::HashMap;
 
-use super::{Mailbox, Role};
+use crate::{core::get::GetObject, principal::ACL, Get, Set};
+
+use super::{Mailbox, MailboxRights, Role};
 
 impl Mailbox<Get> {
     pub fn id(&self) -> &str {
@@ -47,40 +49,70 @@ impl Mailbox<Get> {
         *self.is_subscribed.as_ref().unwrap_or(&false)
     }
 
+    pub fn my_rights(&self) -> Option<&MailboxRights> {
+        self.my_rights.as_ref()
+    }
+
+    pub fn acl(&self) -> Option<&HashMap<String, Vec<ACL>>> {
+        self.acl.as_ref()
+    }
+}
+
+impl MailboxRights {
     pub fn may_read_items(&self) -> bool {
-        self.my_rights.as_ref().unwrap().may_read_items
+        self.may_read_items
     }
 
     pub fn may_add_items(&self) -> bool {
-        self.my_rights.as_ref().unwrap().may_add_items
+        self.may_add_items
     }
 
     pub fn may_remove_items(&self) -> bool {
-        self.my_rights.as_ref().unwrap().may_remove_items
+        self.may_remove_items
     }
 
     pub fn may_set_seen(&self) -> bool {
-        self.my_rights.as_ref().unwrap().may_set_seen
+        self.may_set_seen
     }
 
     pub fn may_set_keywords(&self) -> bool {
-        self.my_rights.as_ref().unwrap().may_set_keywords
+        self.may_set_keywords
     }
 
     pub fn may_create_child(&self) -> bool {
-        self.my_rights.as_ref().unwrap().may_create_child
+        self.may_create_child
     }
 
     pub fn may_rename(&self) -> bool {
-        self.my_rights.as_ref().unwrap().may_rename
+        self.may_rename
     }
 
     pub fn may_delete(&self) -> bool {
-        self.my_rights.as_ref().unwrap().may_delete
+        self.may_delete
     }
 
     pub fn may_submit(&self) -> bool {
-        self.my_rights.as_ref().unwrap().may_submit
+        self.may_submit
+    }
+
+    pub fn acl_list(&self) -> Vec<ACL> {
+        let mut acl_list = Vec::new();
+        for (is_set, acl) in [
+            (self.may_read_items, ACL::ReadItems),
+            (self.may_add_items, ACL::AddItems),
+            (self.may_remove_items, ACL::RemoveItems),
+            (self.may_set_seen, ACL::SetSeen),
+            (self.may_set_keywords, ACL::SetKeywords),
+            (self.may_create_child, ACL::CreateChild),
+            (self.may_rename, ACL::Modify),
+            (self.may_delete, ACL::Delete),
+            (self.may_submit, ACL::Submit),
+        ] {
+            if is_set {
+                acl_list.push(acl);
+            }
+        }
+        acl_list
     }
 }
 

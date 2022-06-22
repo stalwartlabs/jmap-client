@@ -181,8 +181,8 @@ pub struct Email<State = Get> {
 
     #[serde(flatten)]
     #[serde(skip_deserializing)]
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
-    patch: HashMap<String, bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    patch: Option<HashMap<String, bool>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -30,7 +30,7 @@ pub enum Credentials {
 pub struct Client {
     session: Session,
     session_url: String,
-    session_outdated: AtomicBool,
+    session_updated: AtomicBool,
     #[cfg(feature = "websockets")]
     pub(crate) authorization: String,
     upload_url: Vec<URLPart<blob::URLParameter>>,
@@ -91,7 +91,7 @@ impl Client {
             event_source_url: URLPart::parse(session.event_source_url())?,
             session,
             session_url: url.to_string(),
-            session_outdated: false.into(),
+            session_updated: true.into(),
             #[cfg(feature = "websockets")]
             authorization,
             timeout: DEFAULT_TIMEOUT_MS,
@@ -147,7 +147,7 @@ impl Client {
         )?;
 
         if response.session_state() != self.session.state() {
-            self.session_outdated.store(true, Ordering::Relaxed);
+            self.session_updated.store(false, Ordering::Relaxed);
         }
 
         Ok(response)
@@ -172,12 +172,12 @@ impl Client {
         self.upload_url = URLPart::parse(session.upload_url())?;
         self.event_source_url = URLPart::parse(session.event_source_url())?;
         self.session = session;
-        self.session_outdated.store(false, Ordering::Relaxed);
+        self.session_updated.store(true, Ordering::Relaxed);
         Ok(())
     }
 
     pub fn is_session_updated(&self) -> bool {
-        !self.session_outdated.load(Ordering::Relaxed)
+        self.session_updated.load(Ordering::Relaxed)
     }
 
     pub fn set_default_account_id(&mut self, defaul_account_id: impl Into<String>) -> &mut Self {

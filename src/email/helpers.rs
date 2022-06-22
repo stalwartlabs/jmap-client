@@ -143,7 +143,7 @@ impl Client {
     pub async fn email_query(
         &self,
         filter: Option<impl Into<Filter<super::query::Filter>>>,
-        sort: Option<Vec<Comparator<super::query::Comparator>>>,
+        sort: Option<impl IntoIterator<Item = Comparator<super::query::Comparator>>>,
     ) -> crate::Result<QueryResponse> {
         let mut request = self.build();
         let query_request = request.query_email();

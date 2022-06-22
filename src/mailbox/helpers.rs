@@ -9,6 +9,7 @@ use crate::{
         response::{MailboxGetResponse, MailboxSetResponse},
         set::{SetObject, SetRequest},
     },
+    principal::ACL,
     Get, Method, Set,
 };
 
@@ -75,6 +76,20 @@ impl Client {
             .updated(id)
     }
 
+    pub async fn mailbox_update_acl(
+        &self,
+        id: &str,
+        account_id: &str,
+        acl: impl IntoIterator<Item = ACL>,
+    ) -> crate::Result<Option<Mailbox>> {
+        let mut request = self.build();
+        request.set_mailbox().update(id).acl(account_id, acl);
+        request
+            .send_single::<MailboxSetResponse>()
+            .await?
+            .updated(id)
+    }
+
     pub async fn mailbox_update_sort_order(
         &self,
         id: &str,
@@ -104,7 +119,7 @@ impl Client {
     pub async fn mailbox_get(
         &self,
         id: &str,
-        properties: Option<Vec<Property>>,
+        properties: Option<impl IntoIterator<Item = Property>>,
     ) -> crate::Result<Option<Mailbox>> {
         let mut request = self.build();
         let get_request = request.get_mailbox().ids([id]);
