@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::core::{set::SetError, RequestParams};
+use crate::{
+    core::{set::SetError, RequestParams},
+    Error,
+};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct CopyBlobRequest {
@@ -27,16 +30,16 @@ pub struct CopyBlobResponse {
 }
 
 impl CopyBlobRequest {
-    pub fn new(params: RequestParams, from_account_id: String) -> Self {
+    pub fn new(params: RequestParams, from_account_id: impl Into<String>) -> Self {
         CopyBlobRequest {
-            from_account_id,
+            from_account_id: from_account_id.into(),
             account_id: params.account_id,
             blob_ids: vec![],
         }
     }
 
-    pub fn blob_id(&mut self, blob_id: String) -> &mut Self {
-        self.blob_ids.push(blob_id);
+    pub fn blob_id(&mut self, blob_id: impl Into<String>) -> &mut Self {
+        self.blob_ids.push(blob_id.into());
         self
     }
 }
@@ -50,17 +53,21 @@ impl CopyBlobResponse {
         &self.account_id
     }
 
-    pub fn copied(&self) -> Option<impl Iterator<Item = &String>> {
+    pub fn copied(&mut self, id: &str) -> crate::Result<String> {
+        if let Some(result) = self.copied.as_mut().and_then(|r| r.remove(id)) {
+            Ok(result)
+        } else if let Some(error) = self.not_copied.as_mut().and_then(|r| r.remove(id)) {
+            Err(error.to_string_error().into())
+        } else {
+            Err(Error::Internal(format!("Id {} not found.", id)))
+        }
+    }
+
+    pub fn copied_ids(&self) -> Option<impl Iterator<Item = &String>> {
         self.copied.as_ref().map(|map| map.keys())
     }
 
-    pub fn copied_details(&self, id: &str) -> Option<&str> {
-        self.copied
-            .as_ref()
-            .and_then(|map| map.get(id).map(|s| s.as_str()))
-    }
-
-    pub fn not_copied(&self) -> Option<impl Iterator<Item = &String>> {
+    pub fn not_copied_ids(&self) -> Option<impl Iterator<Item = &String>> {
         self.not_copied.as_ref().map(|map| map.keys())
     }
 

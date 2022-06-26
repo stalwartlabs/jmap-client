@@ -4,7 +4,10 @@ use serde::{de::Visitor, Deserialize};
 
 use crate::{
     blob::copy::CopyBlobResponse,
-    email::{import::EmailImportResponse, parse::EmailParseResponse, Email},
+    email::{
+        import::EmailImportResponse, parse::EmailParseResponse,
+        search_snippet::SearchSnippetGetResponse, Email,
+    },
     email_submission::EmailSubmission,
     identity::Identity,
     mailbox::Mailbox,
@@ -110,7 +113,6 @@ pub type EmailGetResponse = GetResponse<Email<Get>>;
 pub type EmailSetResponse = SetResponse<Email<Get>>;
 pub type EmailCopyResponse = CopyResponse<Email<Get>>;
 pub type EmailChangesResponse = ChangesResponse<Email<Get>>;
-pub type SearchSnippetGetResponse = GetResponse<String>;
 pub type IdentitySetResponse = SetResponse<Identity<Get>>;
 pub type IdentityGetResponse = GetResponse<Identity<Get>>;
 pub type IdentityChangesResponse = ChangesResponse<Identity<Get>>;

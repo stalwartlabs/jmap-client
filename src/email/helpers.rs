@@ -16,6 +16,7 @@ use crate::{
 use super::{
     import::{EmailImportRequest, EmailImportResponse},
     parse::{EmailParseRequest, EmailParseResponse},
+    search_snippet::{SearchSnippetGetRequest, SearchSnippetGetResponse},
     BodyProperty, Email, Property,
 };
 
@@ -219,6 +220,20 @@ impl Client {
             .await?
             .created(&id)
     }
+
+    pub async fn search_snippet_get(
+        &self,
+        filter: Option<impl Into<Filter<super::query::Filter>>>,
+        email_ids: impl IntoIterator<Item = impl Into<String>>,
+    ) -> crate::Result<SearchSnippetGetResponse> {
+        let mut request = self.build();
+        let snippet_request = request.get_search_snippet();
+        if let Some(filter) = filter {
+            snippet_request.filter(filter);
+        }
+        snippet_request.email_ids(email_ids);
+        request.send_single::<SearchSnippetGetResponse>().await
+    }
 }
 
 impl Request<'_> {
@@ -324,6 +339,18 @@ impl Request<'_> {
     }
 
     pub async fn send_parse_email(self) -> crate::Result<EmailParseResponse> {
+        self.send_single().await
+    }
+
+    pub fn get_search_snippet(&mut self) -> &mut SearchSnippetGetRequest {
+        self.add_method_call(
+            Method::GetSearchSnippet,
+            Arguments::search_snippet_get(self.params(Method::GetSearchSnippet)),
+        )
+        .search_snippet_get_mut()
+    }
+
+    pub async fn send_get_search_snippet(self) -> crate::Result<SearchSnippetGetResponse> {
         self.send_single().await
     }
 }

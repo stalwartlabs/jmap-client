@@ -5,7 +5,10 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::{
     blob::copy::CopyBlobRequest,
     client::Client,
-    email::{import::EmailImportRequest, parse::EmailParseRequest, Email},
+    email::{
+        import::EmailImportRequest, parse::EmailParseRequest,
+        search_snippet::SearchSnippetGetRequest, Email,
+    },
     email_submission::EmailSubmission,
     identity::Identity,
     mailbox::Mailbox,
@@ -71,6 +74,7 @@ pub enum Arguments {
     EmailCopy(CopyRequest<Email<Set>>),
     EmailImport(EmailImportRequest),
     EmailParse(EmailParseRequest),
+    SearchSnippetGet(SearchSnippetGetRequest),
     IdentityGet(GetRequest<Identity<Set>>),
     IdentitySet(SetRequest<Identity<Set>>),
     EmailSubmissionGet(GetRequest<EmailSubmission<Set>>),
@@ -148,6 +152,10 @@ impl Arguments {
 
     pub fn email_parse(params: RequestParams) -> Self {
         Arguments::EmailParse(EmailParseRequest::new(params))
+    }
+
+    pub fn search_snippet_get(params: RequestParams) -> Self {
+        Arguments::SearchSnippetGet(SearchSnippetGetRequest::new(params))
     }
 
     pub fn identity_get(params: RequestParams) -> Self {
@@ -309,6 +317,13 @@ impl Arguments {
     pub fn email_parse_mut(&mut self) -> &mut EmailParseRequest {
         match self {
             Arguments::EmailParse(ref mut r) => r,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn search_snippet_get_mut(&mut self) -> &mut SearchSnippetGetRequest {
+        match self {
+            Arguments::SearchSnippetGet(ref mut r) => r,
             _ => unreachable!(),
         }
     }
