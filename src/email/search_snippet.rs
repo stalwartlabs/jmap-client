@@ -98,7 +98,7 @@ impl SearchSnippetGetResponse {
         &self.account_id
     }
 
-    pub fn id(&self, id: &str) -> Option<&SearchSnippet> {
+    pub fn snippet(&self, id: &str) -> Option<&SearchSnippet> {
         self.list.iter().find(|snippet| snippet.email_id == id)
     }
 
