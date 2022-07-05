@@ -96,7 +96,7 @@ pub struct Mailbox<State = Get> {
     acl_patch: Option<HashMap<String, Vec<ACL>>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Role {
     #[serde(rename = "archive", alias = "ARCHIVE")]

@@ -13,8 +13,8 @@ impl Mailbox<Get> {
         self.id.unwrap()
     }
 
-    pub fn name(&self) -> &str {
-        self.name.as_ref().unwrap()
+    pub fn name(&self) -> Option<&str> {
+        self.name.as_deref()
     }
 
     pub fn parent_id(&self) -> Option<&str> {

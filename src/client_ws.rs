@@ -154,7 +154,8 @@ impl Client {
     pub async fn connect_ws(
         &self,
     ) -> crate::Result<Pin<Box<impl Stream<Item = crate::Result<WebSocketMessage>>>>> {
-        let capabilities = self.session().websocket_capabilities().ok_or_else(|| {
+        let session = self.session();
+        let capabilities = session.websocket_capabilities().ok_or_else(|| {
             crate::Error::Internal(
                 "JMAP server does not advertise any websocket capabilities.".to_string(),
             )

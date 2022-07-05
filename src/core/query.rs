@@ -63,7 +63,7 @@ pub struct FilterOperator<T> {
     conditions: Vec<Filter<T>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub enum Operator {
     #[serde(rename = "AND")]
     And,

@@ -8,7 +8,7 @@ use super::Changes;
 
 impl Client {
     pub async fn event_source(
-        &mut self,
+        &self,
         mut types: Option<impl IntoIterator<Item = TypeState>>,
         close_after_state: bool,
         ping: Option<u32>,

@@ -1,5 +1,8 @@
 use std::{
-    sync::atomic::{AtomicBool, Ordering},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
     time::Duration,
 };
 
@@ -20,7 +23,7 @@ use crate::{
 };
 
 const DEFAULT_TIMEOUT_MS: u64 = 10 * 1000;
-static USER_AGENT: &str = concat!("stalwart-jmap/", env!("CARGO_PKG_VERSION"));
+static USER_AGENT: &str = concat!("jmap-client/", env!("CARGO_PKG_VERSION"));
 
 pub enum Credentials {
     Basic(String),
@@ -28,17 +31,21 @@ pub enum Credentials {
 }
 
 pub struct Client {
-    session: Session,
+    session: parking_lot::Mutex<Arc<Session>>,
     session_url: String,
+    api_url: String,
     session_updated: AtomicBool,
-    #[cfg(feature = "websockets")]
-    pub(crate) authorization: String,
+
     upload_url: Vec<URLPart<blob::URLParameter>>,
     download_url: Vec<URLPart<blob::URLParameter>>,
     event_source_url: Vec<URLPart<event_source::URLParameter>>,
-    timeout: u64,
+
     headers: header::HeaderMap,
     default_account_id: String,
+    timeout: u64,
+
+    #[cfg(feature = "websockets")]
+    pub(crate) authorization: String,
     #[cfg(feature = "websockets")]
     pub(crate) ws: tokio::sync::Mutex<Option<crate::client_ws::WsStream>>,
 }
@@ -89,7 +96,8 @@ impl Client {
             download_url: URLPart::parse(session.download_url())?,
             upload_url: URLPart::parse(session.upload_url())?,
             event_source_url: URLPart::parse(session.event_source_url())?,
-            session,
+            api_url: session.api_url().to_string(),
+            session: parking_lot::Mutex::new(Arc::new(session)),
             session_url: url.to_string(),
             session_updated: true.into(),
             #[cfg(feature = "websockets")]
@@ -111,8 +119,8 @@ impl Client {
         self.timeout
     }
 
-    pub fn session(&self) -> &Session {
-        &self.session
+    pub fn session(&self) -> Arc<Session> {
+        self.session.lock().clone()
     }
 
     pub fn session_url(&self) -> &str {
@@ -136,7 +144,7 @@ impl Client {
                     .timeout(Duration::from_millis(self.timeout))
                     .default_headers(self.headers.clone())
                     .build()?
-                    .post(self.session.api_url())
+                    .post(&self.api_url)
                     .body(serde_json::to_string(&request)?)
                     .send()
                     .await?,
@@ -146,14 +154,14 @@ impl Client {
             .await?,
         )?;
 
-        if response.session_state() != self.session.state() {
+        if response.session_state() != self.session.lock().state() {
             self.session_updated.store(false, Ordering::Relaxed);
         }
 
         Ok(response)
     }
 
-    pub async fn refresh_session(&mut self) -> crate::Result<()> {
+    pub async fn refresh_session(&self) -> crate::Result<()> {
         let session: Session = serde_json::from_slice(
             &Client::handle_error(
                 reqwest::Client::builder()
@@ -168,10 +176,7 @@ impl Client {
             .bytes()
             .await?,
         )?;
-        self.download_url = URLPart::parse(session.download_url())?;
-        self.upload_url = URLPart::parse(session.upload_url())?;
-        self.event_source_url = URLPart::parse(session.event_source_url())?;
-        self.session = session;
+        *self.session.lock() = Arc::new(session);
         self.session_updated.store(true, Ordering::Relaxed);
         Ok(())
     }

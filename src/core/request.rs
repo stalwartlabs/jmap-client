@@ -35,7 +35,7 @@ pub struct Request<'x> {
     #[serde(skip)]
     client: &'x Client,
     #[serde(skip)]
-    default_account_id: String,
+    account_id: String,
 
     pub using: Vec<URI>,
 
@@ -421,9 +421,14 @@ impl<'x> Request<'x> {
             using: vec![URI::Core, URI::Mail],
             method_calls: vec![],
             created_ids: None,
-            default_account_id: client.default_account_id().to_string(),
+            account_id: client.default_account_id().to_string(),
             client,
         }
+    }
+
+    pub fn account_id(mut self, account_id: impl Into<String>) -> Self {
+        self.account_id = account_id.into();
+        self
     }
 
     pub async fn send(self) -> crate::Result<Response<TaggedMethodResponse>> {
@@ -452,7 +457,7 @@ impl<'x> Request<'x> {
 
     pub fn params(&self, method: Method) -> RequestParams {
         RequestParams {
-            account_id: self.default_account_id.clone(),
+            account_id: self.account_id.clone(),
             method,
             call_id: self.method_calls.len(),
         }
