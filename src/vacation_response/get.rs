@@ -3,8 +3,8 @@ use crate::{core::get::GetObject, Get, Set};
 use super::VacationResponse;
 
 impl VacationResponse<Get> {
-    pub fn id(&self) -> &str {
-        self.id.as_ref().unwrap()
+    pub fn id(&self) -> Option<&str> {
+        self.id.as_deref()
     }
 
     pub fn is_enabled(&self) -> bool {

@@ -5,8 +5,8 @@ use crate::{core::get::GetObject, principal::ACL, Get, Set};
 use super::{Mailbox, MailboxRights, Role};
 
 impl Mailbox<Get> {
-    pub fn id(&self) -> &str {
-        self.id.as_ref().unwrap()
+    pub fn id(&self) -> Option<&str> {
+        self.id.as_deref()
     }
 
     pub fn unwrap_id(self) -> String {

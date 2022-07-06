@@ -222,16 +222,16 @@ impl<O: SetObject> SetRequest<O> {
 }
 
 impl<O: SetObject> SetResponse<O> {
-    pub fn account_id(&self) -> &str {
-        self.account_id.as_ref().unwrap()
+    pub fn account_id(&self) -> Option<&str> {
+        self.account_id.as_deref()
     }
 
     pub fn old_state(&self) -> Option<&str> {
         self.old_state.as_deref()
     }
 
-    pub fn new_state(&self) -> &str {
-        self.new_state.as_ref().unwrap()
+    pub fn new_state(&self) -> Option<&str> {
+        self.new_state.as_deref()
     }
 
     pub fn created(&mut self, id: &str) -> crate::Result<O> {

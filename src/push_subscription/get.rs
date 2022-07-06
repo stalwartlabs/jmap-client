@@ -1,22 +1,22 @@
-use crate::{core::get::GetObject, Get, TypeState, Set};
+use crate::{core::get::GetObject, Get, Set, TypeState};
 
 use super::{Keys, PushSubscription};
 
 impl PushSubscription<Get> {
-    pub fn id(&self) -> &str {
-        self.id.as_ref().unwrap()
+    pub fn id(&self) -> Option<&str> {
+        self.id.as_deref()
     }
 
     pub fn unwrap_id(self) -> String {
         self.id.unwrap()
     }
 
-    pub fn device_client_id(&self) -> &str {
-        self.device_client_id.as_ref().unwrap()
+    pub fn device_client_id(&self) -> Option<&str> {
+        self.device_client_id.as_deref()
     }
 
-    pub fn url(&self) -> &str {
-        self.url.as_ref().unwrap()
+    pub fn url(&self) -> Option<&str> {
+        self.url.as_deref()
     }
 
     pub fn keys(&self) -> Option<&Keys> {

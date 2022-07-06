@@ -116,6 +116,12 @@ pub enum Role {
     None,
 }
 
+impl Default for Role {
+    fn default() -> Self {
+        Role::None
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MailboxRights {
     #[serde(rename = "mayReadItems")]
@@ -172,6 +178,18 @@ pub enum Property {
     IsSubscribed,
     #[serde(rename = "acl")]
     ACL,
+}
+
+impl Property {
+    pub fn is_count(&self) -> bool {
+        matches!(
+            self,
+            Property::TotalEmails
+                | Property::UnreadEmails
+                | Property::TotalThreads
+                | Property::UnreadThreads
+        )
+    }
 }
 
 impl Display for Property {

@@ -226,12 +226,12 @@ impl Display for Error {
             Error::Transport(e) => write!(f, "Transport error: {}", e),
             Error::Parse(e) => write!(f, "Parse error: {}", e),
             Error::Internal(e) => write!(f, "Internal error: {}", e),
-            Error::Problem(e) => write!(f, "Problem details: {}", e),
-            Error::Server(e) => write!(f, "Server error: {}", e),
-            Error::Method(e) => write!(f, "Method error: {}", e),
-            Error::Set(e) => write!(f, "Set error: {}", e),
+            Error::Problem(e) => write!(f, "Request failed: {}", e),
+            Error::Server(e) => write!(f, "Server failed: {}", e),
+            Error::Method(e) => write!(f, "Request failed: {}", e),
+            Error::Set(e) => write!(f, "Set failed: {}", e),
             #[cfg(feature = "websockets")]
-            Error::WebSocket(e) => write!(f, "WebSocket error: {}", e),
+            Error::WebSocket(e) => write!(f, "WebSockets error: {}", e),
         }
     }
 }

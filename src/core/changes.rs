@@ -68,12 +68,20 @@ impl<O: ChangesObject> ChangesResponse<O> {
         &self.account_id
     }
 
+    pub fn unwrap_account_id(self) -> String {
+        self.account_id
+    }
+
     pub fn old_state(&self) -> &str {
         &self.old_state
     }
 
     pub fn new_state(&self) -> &str {
         &self.new_state
+    }
+
+    pub fn unwrap_new_state(self) -> String {
+        self.new_state
     }
 
     pub fn has_more_changes(&self) -> bool {
@@ -94,5 +102,9 @@ impl<O: ChangesObject> ChangesResponse<O> {
 
     pub fn arguments(&self) -> &O::ChangesResponse {
         &self.arguments
+    }
+
+    pub fn total_changes(&self) -> usize {
+        self.created.len() + self.updated.len() + self.destroyed.len()
     }
 }

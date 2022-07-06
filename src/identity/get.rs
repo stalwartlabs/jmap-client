@@ -3,8 +3,8 @@ use crate::{core::get::GetObject, email::EmailAddress, Get, Set};
 use super::Identity;
 
 impl Identity<Get> {
-    pub fn id(&self) -> &str {
-        self.id.as_ref().unwrap()
+    pub fn id(&self) -> Option<&str> {
+        self.id.as_deref()
     }
 
     pub fn unwrap_id(self) -> String {
@@ -15,8 +15,8 @@ impl Identity<Get> {
         self.name.as_deref()
     }
 
-    pub fn email(&self) -> &str {
-        self.email.as_ref().unwrap()
+    pub fn email(&self) -> Option<&str> {
+        self.email.as_deref()
     }
 
     pub fn reply_to(&self) -> Option<&[EmailAddress]> {

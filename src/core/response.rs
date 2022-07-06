@@ -64,8 +64,8 @@ impl<T> Response<T> {
         self.method_responses.remove(index)
     }
 
-    pub fn pop_method_response(&mut self) -> T {
-        self.method_responses.pop().unwrap()
+    pub fn pop_method_response(&mut self) -> Option<T> {
+        self.method_responses.pop()
     }
 
     pub fn created_ids(&self) -> Option<impl Iterator<Item = (&String, &String)>> {

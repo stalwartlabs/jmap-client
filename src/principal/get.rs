@@ -5,8 +5,8 @@ use crate::{core::get::GetObject, Get, Set};
 use super::{Principal, Type, ACL, DKIM};
 
 impl Principal<Get> {
-    pub fn id(&self) -> &str {
-        self.id.as_ref().unwrap()
+    pub fn id(&self) -> Option<&str> {
+        self.id.as_deref()
     }
 
     pub fn unwrap_id(self) -> String {

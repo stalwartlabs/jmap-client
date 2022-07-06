@@ -6,48 +6,52 @@ use super::{
 };
 
 impl Email<Get> {
-    pub fn id(&self) -> &str {
-        self.id.as_ref().unwrap()
+    pub fn id(&self) -> Option<&str> {
+        self.id.as_deref()
     }
 
     pub fn unwrap_id(self) -> String {
         self.id.unwrap()
     }
 
-    pub fn blob_id(&self) -> &str {
-        self.blob_id.as_ref().unwrap()
+    pub fn blob_id(&self) -> Option<&str> {
+        self.blob_id.as_deref()
     }
 
     pub fn unwrap_blob_id(self) -> String {
         self.blob_id.unwrap()
     }
 
-    pub fn thread_id(&self) -> &str {
-        self.thread_id.as_ref().unwrap()
+    pub fn thread_id(&self) -> Option<&str> {
+        self.thread_id.as_deref()
     }
 
     pub fn mailbox_ids(&self) -> Vec<&str> {
         self.mailbox_ids
             .as_ref()
-            .unwrap()
-            .iter()
-            .filter(|(_, v)| **v)
-            .map(|(k, _)| k.as_str())
-            .collect()
+            .map(|m| {
+                m.iter()
+                    .filter(|(_, v)| **v)
+                    .map(|(k, _)| k.as_str())
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     pub fn keywords(&self) -> Vec<&str> {
         self.keywords
             .as_ref()
-            .unwrap()
-            .iter()
-            .filter(|(_, v)| **v)
-            .map(|(k, _)| k.as_str())
-            .collect()
+            .map(|k| {
+                k.iter()
+                    .filter(|(_, v)| **v)
+                    .map(|(k, _)| k.as_str())
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     pub fn size(&self) -> usize {
-        self.size.unwrap()
+        self.size.unwrap_or(0)
     }
 
     pub fn received_at(&self) -> Option<i64> {

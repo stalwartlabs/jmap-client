@@ -5,24 +5,24 @@ use crate::{core::get::GetObject, Get, Set};
 use super::{Address, Delivered, DeliveryStatus, Displayed, EmailSubmission, UndoStatus};
 
 impl EmailSubmission<Get> {
-    pub fn id(&self) -> &str {
-        self.id.as_ref().unwrap()
+    pub fn id(&self) -> Option<&str> {
+        self.id.as_deref()
     }
 
     pub fn unwrap_id(self) -> String {
         self.id.unwrap()
     }
 
-    pub fn identity_id(&self) -> &str {
-        self.identity_id.as_ref().unwrap()
+    pub fn identity_id(&self) -> Option<&str> {
+        self.identity_id.as_deref()
     }
 
-    pub fn email_id(&self) -> &str {
-        self.email_id.as_ref().unwrap()
+    pub fn email_id(&self) -> Option<&str> {
+        self.email_id.as_deref()
     }
 
-    pub fn thread_id(&self) -> &str {
-        self.thread_id.as_ref().unwrap()
+    pub fn thread_id(&self) -> Option<&str> {
+        self.thread_id.as_deref()
     }
 
     pub fn mail_from(&self) -> Option<&Address> {
@@ -33,12 +33,12 @@ impl EmailSubmission<Get> {
         self.envelope.as_ref().map(|e| e.rcpt_to.as_ref())
     }
 
-    pub fn send_at(&self) -> i64 {
-        self.send_at.as_ref().unwrap().timestamp()
+    pub fn send_at(&self) -> Option<i64> {
+        self.send_at.as_ref().map(|t| t.timestamp())
     }
 
-    pub fn undo_status(&self) -> &UndoStatus {
-        self.undo_status.as_ref().unwrap()
+    pub fn undo_status(&self) -> Option<&UndoStatus> {
+        self.undo_status.as_ref()
     }
 
     pub fn delivery_status_email(&self, email: &str) -> Option<&DeliveryStatus> {

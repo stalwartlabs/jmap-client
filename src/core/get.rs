@@ -103,12 +103,16 @@ impl<O: GetObject> GetRequest<O> {
 }
 
 impl<O> GetResponse<O> {
-    pub fn account_id(&self) -> &str {
-        self.account_id.as_ref().unwrap()
+    pub fn account_id(&self) -> Option<&str> {
+        self.account_id.as_deref()
     }
 
     pub fn state(&self) -> &str {
         &self.state
+    }
+
+    pub fn unwrap_state(&mut self) -> String {
+        std::mem::take(&mut self.state)
     }
 
     pub fn list(&self) -> &[O] {
