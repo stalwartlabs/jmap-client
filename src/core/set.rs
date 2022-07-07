@@ -234,6 +234,10 @@ impl<O: SetObject> SetResponse<O> {
         self.new_state.as_deref()
     }
 
+    pub fn unwrap_new_state(&mut self) -> Option<String> {
+        self.new_state.take()
+    }
+
     pub fn created(&mut self, id: &str) -> crate::Result<O> {
         if let Some(result) = self.created.as_mut().and_then(|r| r.remove(id)) {
             Ok(result)
@@ -290,6 +294,18 @@ impl<O: SetObject> SetResponse<O> {
 
     pub fn not_destroyed_ids(&self) -> Option<impl Iterator<Item = &String>> {
         self.not_destroyed.as_ref().map(|map| map.keys())
+    }
+
+    pub fn has_updated(&self) -> bool {
+        self.updated.as_ref().map_or(false, |m| !m.is_empty())
+    }
+
+    pub fn has_created(&self) -> bool {
+        self.created.as_ref().map_or(false, |m| !m.is_empty())
+    }
+
+    pub fn has_destroyed(&self) -> bool {
+        self.destroyed.as_ref().map_or(false, |m| !m.is_empty())
     }
 }
 

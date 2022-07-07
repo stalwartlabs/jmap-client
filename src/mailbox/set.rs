@@ -34,6 +34,11 @@ impl Mailbox<Set> {
         self
     }
 
+    pub fn is_subscribed(&mut self, is_subscribed: bool) -> &mut Self {
+        self.is_subscribed = is_subscribed.into();
+        self
+    }
+
     pub fn acls<T, U, V>(&mut self, acls: T) -> &mut Self
     where
         T: IntoIterator<Item = (U, V)>,

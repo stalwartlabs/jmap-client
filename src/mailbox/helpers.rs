@@ -103,6 +103,22 @@ impl Client {
             .updated(id)
     }
 
+    pub async fn mailbox_subscribe(
+        &self,
+        id: &str,
+        is_subscribed: bool,
+    ) -> crate::Result<Option<Mailbox>> {
+        let mut request = self.build();
+        request
+            .set_mailbox()
+            .update(id)
+            .is_subscribed(is_subscribed);
+        request
+            .send_single::<MailboxSetResponse>()
+            .await?
+            .updated(id)
+    }
+
     pub async fn mailbox_destroy(&self, id: &str, delete_emails: bool) -> crate::Result<()> {
         let mut request = self.build();
         request

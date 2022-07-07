@@ -10,7 +10,7 @@ impl EmailSubmission<Get> {
     }
 
     pub fn unwrap_id(self) -> String {
-        self.id.unwrap()
+        self.id.unwrap_or_default()
     }
 
     pub fn identity_id(&self) -> Option<&str> {

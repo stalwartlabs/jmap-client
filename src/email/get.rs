@@ -11,7 +11,7 @@ impl Email<Get> {
     }
 
     pub fn unwrap_id(self) -> String {
-        self.id.unwrap()
+        self.id.unwrap_or_default()
     }
 
     pub fn blob_id(&self) -> Option<&str> {
