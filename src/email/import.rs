@@ -78,6 +78,11 @@ impl EmailImportRequest {
         }
     }
 
+    pub fn account_id(&mut self, account_id: impl Into<String>) -> &mut Self {
+        self.account_id = account_id.into();
+        self
+    }
+
     pub fn if_in_state(&mut self, if_in_state: impl Into<String>) -> &mut Self {
         self.if_in_state = Some(if_in_state.into());
         self

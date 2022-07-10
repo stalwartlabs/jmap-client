@@ -34,10 +34,38 @@ impl Client {
         V: IntoIterator<Item = W>,
         W: Into<String>,
     {
-        let blob_id = self.upload(raw_message, None).await?.unwrap_blob_id();
+        self.email_import_account(
+            self.default_account_id(),
+            raw_message,
+            mailbox_ids,
+            keywords,
+            received_at,
+        )
+        .await
+    }
+
+    pub async fn email_import_account<T, U, V, W>(
+        &self,
+        account_id: &str,
+        raw_message: Vec<u8>,
+        mailbox_ids: T,
+        keywords: Option<V>,
+        received_at: Option<i64>,
+    ) -> crate::Result<Email>
+    where
+        T: IntoIterator<Item = U>,
+        U: Into<String>,
+        V: IntoIterator<Item = W>,
+        W: Into<String>,
+    {
+        let blob_id = self
+            .upload(account_id, raw_message, None)
+            .await?
+            .unwrap_blob_id();
         let mut request = self.build();
         let import_request = request
             .import_email()
+            .account_id(account_id)
             .email(blob_id)
             .mailbox_ids(mailbox_ids);
 

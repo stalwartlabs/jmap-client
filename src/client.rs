@@ -25,6 +25,7 @@ use crate::{
 const DEFAULT_TIMEOUT_MS: u64 = 10 * 1000;
 static USER_AGENT: &str = concat!("jmap-client/", env!("CARGO_PKG_VERSION"));
 
+#[derive(Debug)]
 pub enum Credentials {
     Basic(String),
     Bearer(String),

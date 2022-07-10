@@ -284,6 +284,10 @@ impl<O: SetObject> SetResponse<O> {
         self.destroyed.as_ref().map(|list| list.iter())
     }
 
+    pub fn unwrap_destroyed_ids(&mut self) -> Option<Vec<String>> {
+        self.destroyed.take()
+    }
+
     pub fn not_created_ids(&self) -> Option<impl Iterator<Item = &String>> {
         self.not_created.as_ref().map(|map| map.keys())
     }

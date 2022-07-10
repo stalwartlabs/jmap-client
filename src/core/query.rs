@@ -203,6 +203,10 @@ impl QueryResponse {
         self.position
     }
 
+    pub fn unwrap_query_state(&mut self) -> String {
+        std::mem::take(&mut self.query_state)
+    }
+
     pub fn query_state(&self) -> &str {
         &self.query_state
     }
