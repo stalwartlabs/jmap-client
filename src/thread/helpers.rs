@@ -18,7 +18,7 @@ impl Client {
         request
             .send_single::<ThreadGetResponse>()
             .await
-            .map(|mut r| r.unwrap_list().pop())
+            .map(|mut r| r.take_list().pop())
     }
 }
 

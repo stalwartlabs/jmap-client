@@ -10,20 +10,24 @@ impl Email<Get> {
         self.id.as_deref()
     }
 
-    pub fn unwrap_id(self) -> String {
-        self.id.unwrap_or_default()
+    pub fn take_id(&mut self) -> String {
+        self.id.take().unwrap_or_default()
     }
 
     pub fn blob_id(&self) -> Option<&str> {
         self.blob_id.as_deref()
     }
 
-    pub fn unwrap_blob_id(self) -> String {
-        self.blob_id.unwrap()
+    pub fn take_blob_id(&mut self) -> String {
+        self.blob_id.take().unwrap_or_default()
     }
 
     pub fn thread_id(&self) -> Option<&str> {
         self.thread_id.as_deref()
+    }
+
+    pub fn take_thread_id(&mut self) -> Option<String> {
+        self.thread_id.take()
     }
 
     pub fn mailbox_ids(&self) -> Vec<&str> {
@@ -74,24 +78,56 @@ impl Email<Get> {
         self.sender.as_deref()
     }
 
+    pub fn take_sender(&mut self) -> Option<Vec<EmailAddress>> {
+        self.sender.take()
+    }
+
     pub fn from(&self) -> Option<&[EmailAddress]> {
         self.from.as_deref()
+    }
+
+    pub fn take_from(&mut self) -> Option<Vec<EmailAddress>> {
+        self.from.take()
+    }
+
+    pub fn reply_to(&self) -> Option<&[EmailAddress]> {
+        self.reply_to.as_deref()
+    }
+
+    pub fn take_reply_to(&mut self) -> Option<Vec<EmailAddress>> {
+        self.reply_to.take()
     }
 
     pub fn to(&self) -> Option<&[EmailAddress]> {
         self.to.as_deref()
     }
 
+    pub fn take_to(&mut self) -> Option<Vec<EmailAddress>> {
+        self.to.take()
+    }
+
     pub fn cc(&self) -> Option<&[EmailAddress]> {
         self.cc.as_deref()
+    }
+
+    pub fn take_cc(&mut self) -> Option<Vec<EmailAddress>> {
+        self.cc.take()
     }
 
     pub fn bcc(&self) -> Option<&[EmailAddress]> {
         self.bcc.as_deref()
     }
 
+    pub fn take_bcc(&mut self) -> Option<Vec<EmailAddress>> {
+        self.bcc.take()
+    }
+
     pub fn subject(&self) -> Option<&str> {
         self.subject.as_deref()
+    }
+
+    pub fn take_subject(&mut self) -> Option<String> {
+        self.subject.take()
     }
 
     pub fn sent_at(&self) -> Option<i64> {
@@ -132,6 +168,10 @@ impl Email<Get> {
 
     pub fn preview(&self) -> Option<&str> {
         self.preview.as_deref()
+    }
+
+    pub fn take_preview(&mut self) -> Option<String> {
+        self.preview.take()
     }
 
     #[cfg(feature = "debug")]
@@ -215,6 +255,10 @@ impl EmailAddress<Get> {
 
     pub fn email(&self) -> &str {
         self.email.as_str()
+    }
+
+    pub fn unwrap(self) -> (String, Option<String>) {
+        (self.email, self.name)
     }
 }
 

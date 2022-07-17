@@ -187,8 +187,8 @@ impl QueryResponse {
         self.ids[pos].as_str()
     }
 
-    pub fn unwrap_ids(self) -> Vec<String> {
-        self.ids
+    pub fn take_ids(&mut self) -> Vec<String> {
+        std::mem::take(&mut self.ids)
     }
 
     pub fn total(&self) -> Option<usize> {
@@ -203,7 +203,7 @@ impl QueryResponse {
         self.position
     }
 
-    pub fn unwrap_query_state(&mut self) -> String {
+    pub fn take_query_state(&mut self) -> String {
         std::mem::take(&mut self.query_state)
     }
 
@@ -235,6 +235,11 @@ impl<A> Comparator<A> {
         self
     }
 
+    pub fn is_ascending(mut self, is_ascending: bool) -> Self {
+        self.is_ascending = is_ascending;
+        self
+    }
+
     pub fn collation(mut self, collation: String) -> Self {
         self.collation = Some(collation);
         self
@@ -254,6 +259,13 @@ impl<T> From<T> for Filter<T> {
 }
 
 impl<T> Filter<T> {
+    pub fn operator(operator: Operator, conditions: Vec<Filter<T>>) -> Self {
+        Filter::FilterOperator(FilterOperator {
+            operator,
+            conditions,
+        })
+    }
+
     pub fn and<U, V>(conditions: U) -> Self
     where
         U: IntoIterator<Item = V>,

@@ -23,10 +23,11 @@ pub struct UploadResponse {
 impl Client {
     pub async fn upload(
         &self,
-        account_id: &str,
+        account_id: Option<&str>,
         blob: Vec<u8>,
         content_type: Option<&str>,
     ) -> crate::Result<UploadResponse> {
+        let account_id = account_id.unwrap_or(self.default_account_id());
         let mut upload_url =
             String::with_capacity(self.session().upload_url().len() + account_id.len());
 
@@ -83,7 +84,7 @@ impl UploadResponse {
         self.size
     }
 
-    pub fn unwrap_blob_id(self) -> String {
-        self.blob_id
+    pub fn take_blob_id(&mut self) -> String {
+        std::mem::take(&mut self.blob_id)
     }
 }

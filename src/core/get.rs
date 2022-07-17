@@ -111,7 +111,7 @@ impl<O> GetResponse<O> {
         &self.state
     }
 
-    pub fn unwrap_state(&mut self) -> String {
+    pub fn take_state(&mut self) -> String {
         std::mem::take(&mut self.state)
     }
 
@@ -123,14 +123,14 @@ impl<O> GetResponse<O> {
         &self.not_found
     }
 
-    pub fn unwrap_list(&mut self) -> Vec<O> {
+    pub fn take_list(&mut self) -> Vec<O> {
         std::mem::take(&mut self.list)
     }
     pub fn pop(&mut self) -> Option<O> {
         self.list.pop()
     }
 
-    pub fn unwrap_not_found(&mut self) -> Vec<String> {
+    pub fn take_not_found(&mut self) -> Vec<String> {
         std::mem::take(&mut self.not_found)
     }
 }

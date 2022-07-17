@@ -613,7 +613,7 @@ impl Display for HeaderForm {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum BodyProperty {
     PartId,
     BlobId,

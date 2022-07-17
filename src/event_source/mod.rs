@@ -51,7 +51,17 @@ impl Changes {
         self.changes.get(account_id).map(|changes| changes.iter())
     }
 
+    pub fn has_type(&self, type_: TypeState) -> bool {
+        self.changes
+            .values()
+            .any(|changes| changes.contains_key(&type_))
+    }
+
     pub fn into_inner(self) -> HashMap<String, HashMap<TypeState, String>> {
         self.changes
+    }
+
+    pub fn is_empty(&self) -> bool {
+        !self.changes.values().any(|changes| !changes.is_empty())
     }
 }

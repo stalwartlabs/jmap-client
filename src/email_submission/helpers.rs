@@ -99,7 +99,7 @@ impl Client {
         request
             .send_single::<EmailSubmissionGetResponse>()
             .await
-            .map(|mut r| r.unwrap_list().pop())
+            .map(|mut r| r.take_list().pop())
     }
 
     pub async fn email_submission_query(

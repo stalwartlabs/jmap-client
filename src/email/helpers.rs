@@ -59,9 +59,9 @@ impl Client {
         W: Into<String>,
     {
         let blob_id = self
-            .upload(account_id, raw_message, None)
+            .upload(account_id.into(), raw_message, None)
             .await?
-            .unwrap_blob_id();
+            .take_blob_id();
         let mut request = self.build();
         let import_request = request
             .import_email()
@@ -156,7 +156,7 @@ impl Client {
         request
             .send_single::<EmailGetResponse>()
             .await
-            .map(|mut r| r.unwrap_list().pop())
+            .map(|mut r| r.take_list().pop())
     }
 
     pub async fn email_changes(

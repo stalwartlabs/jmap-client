@@ -262,6 +262,10 @@ impl TaggedMethodResponse {
         )
     }
 
+    pub fn unwrap_method_response(self) -> MethodResponse {
+        self.response
+    }
+
     pub fn unwrap_copy_blob(self) -> crate::Result<CopyBlobResponse> {
         match self.response {
             MethodResponse::CopyBlob(response) => Ok(response),

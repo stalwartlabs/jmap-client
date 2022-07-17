@@ -234,7 +234,7 @@ impl<O: SetObject> SetResponse<O> {
         self.new_state.as_deref()
     }
 
-    pub fn unwrap_new_state(&mut self) -> Option<String> {
+    pub fn take_new_state(&mut self) -> Option<String> {
         self.new_state.take()
     }
 
@@ -280,11 +280,17 @@ impl<O: SetObject> SetResponse<O> {
         self.updated.as_ref().map(|map| map.keys())
     }
 
+    pub fn take_updated_ids(&mut self) -> Option<Vec<String>> {
+        self.updated
+            .take()
+            .map(|map| map.into_iter().map(|(k, _)| k).collect())
+    }
+
     pub fn destroyed_ids(&self) -> Option<impl Iterator<Item = &String>> {
         self.destroyed.as_ref().map(|list| list.iter())
     }
 
-    pub fn unwrap_destroyed_ids(&mut self) -> Option<Vec<String>> {
+    pub fn take_destroyed_ids(&mut self) -> Option<Vec<String>> {
         self.destroyed.take()
     }
 

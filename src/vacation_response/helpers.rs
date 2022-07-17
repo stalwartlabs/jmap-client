@@ -100,7 +100,7 @@ impl Client {
         request
             .send_single::<VacationResponseGetResponse>()
             .await
-            .map(|mut r| r.unwrap_list().pop())
+            .map(|mut r| r.take_list().pop())
     }
 
     pub async fn vacation_response_destroy(&self) -> crate::Result<()> {

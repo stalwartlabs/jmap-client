@@ -94,6 +94,20 @@ pub enum Filter {
         #[serde(rename = "header")]
         value: Vec<String>,
     },
+
+    // Stalwart specific
+    Id {
+        #[serde(rename = "id")]
+        value: Vec<String>,
+    },
+    SentBefore {
+        #[serde(rename = "sentBefore")]
+        value: DateTime<Utc>,
+    },
+    SentAfter {
+        #[serde(rename = "sentAfter")]
+        value: DateTime<Utc>,
+    },
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -107,6 +121,8 @@ pub enum Comparator {
     From,
     #[serde(rename = "to")]
     To,
+    #[serde(rename = "cc")]
+    Cc,
     #[serde(rename = "subject")]
     Subject,
     #[serde(rename = "sentAt")]
@@ -240,6 +256,29 @@ impl Filter {
         }
         Filter::Header { value }
     }
+
+    // Stalwart JMAP specific
+    pub fn id<U, V>(value: U) -> Self
+    where
+        U: IntoIterator<Item = V>,
+        V: Into<String>,
+    {
+        Filter::Id {
+            value: value.into_iter().map(|v| v.into()).collect(),
+        }
+    }
+
+    pub fn sent_before(value: i64) -> Self {
+        Filter::SentBefore {
+            value: from_timestamp(value),
+        }
+    }
+
+    pub fn sent_after(value: i64) -> Self {
+        Filter::SentAfter {
+            value: from_timestamp(value),
+        }
+    }
 }
 
 impl Comparator {
@@ -257,6 +296,10 @@ impl Comparator {
 
     pub fn to() -> query::Comparator<Comparator> {
         query::Comparator::new(Comparator::To)
+    }
+
+    pub fn cc() -> query::Comparator<Comparator> {
+        query::Comparator::new(Comparator::Cc)
     }
 
     pub fn subject() -> query::Comparator<Comparator> {

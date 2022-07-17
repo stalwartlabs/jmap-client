@@ -7,8 +7,8 @@ impl Identity<Get> {
         self.id.as_deref()
     }
 
-    pub fn unwrap_id(self) -> String {
-        self.id.unwrap_or_default()
+    pub fn take_id(&mut self) -> String {
+        self.id.take().unwrap_or_default()
     }
 
     pub fn name(&self) -> Option<&str> {

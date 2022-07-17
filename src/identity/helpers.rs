@@ -54,7 +54,7 @@ impl Client {
         request
             .send_single::<IdentityGetResponse>()
             .await
-            .map(|mut r| r.unwrap_list().pop())
+            .map(|mut r| r.take_list().pop())
     }
 
     pub async fn identity_changes(
