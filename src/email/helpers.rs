@@ -162,10 +162,13 @@ impl Client {
     pub async fn email_changes(
         &self,
         since_state: impl Into<String>,
-        max_changes: usize,
+        max_changes: Option<usize>,
     ) -> crate::Result<ChangesResponse<Email<Get>>> {
         let mut request = self.build();
-        request.changes_email(since_state).max_changes(max_changes);
+        let changes_request = request.changes_email(since_state);
+        if let Some(max_changes) = max_changes {
+            changes_request.max_changes(max_changes);
+        }
         request.send_single().await
     }
 

@@ -27,7 +27,7 @@ impl Client {
         blob: Vec<u8>,
         content_type: Option<&str>,
     ) -> crate::Result<UploadResponse> {
-        let account_id = account_id.unwrap_or(self.default_account_id());
+        let account_id = account_id.unwrap_or_else(|| self.default_account_id());
         let mut upload_url =
             String::with_capacity(self.session().upload_url().len() + account_id.len());
 

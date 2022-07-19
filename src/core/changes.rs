@@ -92,12 +92,24 @@ impl<O: ChangesObject> ChangesResponse<O> {
         &self.created
     }
 
+    pub fn take_created(&mut self) -> Vec<String> {
+        std::mem::take(&mut self.created)
+    }
+
     pub fn updated(&self) -> &[String] {
         &self.updated
     }
 
+    pub fn take_updated(&mut self) -> Vec<String> {
+        std::mem::take(&mut self.updated)
+    }
+
     pub fn destroyed(&self) -> &[String] {
         &self.destroyed
+    }
+
+    pub fn take_destroyed(&mut self) -> Vec<String> {
+        std::mem::take(&mut self.destroyed)
     }
 
     pub fn arguments(&self) -> &O::ChangesResponse {

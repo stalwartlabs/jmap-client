@@ -1,4 +1,4 @@
-use std::{pin::Pin, time::Duration};
+use std::time::Duration;
 
 use crate::{client::Client, core::session::URLPart, event_source::parser::EventParser, TypeState};
 use futures_util::{Stream, StreamExt};
@@ -13,7 +13,7 @@ impl Client {
         close_after_state: bool,
         ping: Option<u32>,
         last_event_id: Option<&str>,
-    ) -> crate::Result<Pin<Box<impl Stream<Item = crate::Result<Changes>>>>> {
+    ) -> crate::Result<impl Stream<Item = crate::Result<Changes>> + Unpin> {
         let mut event_source_url = String::with_capacity(self.session().event_source_url().len());
 
         for part in self.event_source_url() {

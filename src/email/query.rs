@@ -95,7 +95,7 @@ pub enum Filter {
         value: Vec<String>,
     },
 
-    // Stalwart specific
+    // Non-standard
     Id {
         #[serde(rename = "id")]
         value: Vec<String>,
@@ -121,8 +121,6 @@ pub enum Comparator {
     From,
     #[serde(rename = "to")]
     To,
-    #[serde(rename = "cc")]
-    Cc,
     #[serde(rename = "subject")]
     Subject,
     #[serde(rename = "sentAt")]
@@ -133,6 +131,10 @@ pub enum Comparator {
     AllInThreadHaveKeyword { keyword: String },
     #[serde(rename = "someInThreadHaveKeyword")]
     SomeInThreadHaveKeyword { keyword: String },
+
+    // Non-standard
+    #[serde(rename = "cc")]
+    Cc,
 }
 
 impl Filter {
