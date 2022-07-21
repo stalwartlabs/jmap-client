@@ -159,6 +159,25 @@ impl Display for Property {
     }
 }
 
+impl Display for ACL {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ACL::Read => write!(f, "read"),
+            ACL::Modify => write!(f, "modify"),
+            ACL::Delete => write!(f, "delete"),
+            ACL::ReadItems => write!(f, "readItems"),
+            ACL::AddItems => write!(f, "addItems"),
+            ACL::ModifyItems => write!(f, "modifyItems"),
+            ACL::RemoveItems => write!(f, "removeItems"),
+            ACL::CreateChild => write!(f, "createChild"),
+            ACL::Administer => write!(f, "administer"),
+            ACL::SetSeen => write!(f, "setSeen"),
+            ACL::SetKeywords => write!(f, "setKeywords"),
+            ACL::Submit => write!(f, "submit"),
+        }
+    }
+}
+
 impl Object for Principal<Set> {
     type Property = Property;
 

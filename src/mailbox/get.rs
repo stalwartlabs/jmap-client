@@ -56,6 +56,10 @@ impl Mailbox<Get> {
     pub fn acl(&self) -> Option<&HashMap<String, Vec<ACL>>> {
         self.acl.as_ref()
     }
+
+    pub fn take_acl(&mut self) -> Option<HashMap<String, Vec<ACL>>> {
+        self.acl.take()
+    }
 }
 
 impl MailboxRights {

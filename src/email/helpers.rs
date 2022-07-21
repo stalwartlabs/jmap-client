@@ -188,6 +188,19 @@ impl Client {
         request.send_single::<QueryResponse>().await
     }
 
+    pub async fn email_query_changes(
+        &self,
+        since_query_state: impl Into<String>,
+        filter: Option<impl Into<Filter<super::query::Filter>>>,
+    ) -> crate::Result<QueryChangesResponse> {
+        let mut request = self.build();
+        let query_request = request.query_email_changes(since_query_state);
+        if let Some(filter) = filter {
+            query_request.filter(filter);
+        }
+        request.send_single::<QueryChangesResponse>().await
+    }
+
     pub async fn email_parse(
         &self,
         blob_id: &str,

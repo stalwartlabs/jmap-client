@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{core::set::SetObject, principal::ACL, Get, Set};
 
-use super::{Mailbox, Role, SetArguments};
+use super::{ACLPatch, Mailbox, Role, SetArguments};
 
 impl Mailbox<Set> {
     pub fn name(&mut self, name: impl Into<String>) -> &mut Self {
@@ -54,9 +54,18 @@ impl Mailbox<Set> {
     }
 
     pub fn acl(&mut self, id: &str, acl: impl IntoIterator<Item = ACL>) -> &mut Self {
-        self.acl_patch
-            .get_or_insert_with(HashMap::new)
-            .insert(format!("acl/{}", id), acl.into_iter().collect());
+        self.acl_patch.get_or_insert_with(HashMap::new).insert(
+            format!("acl/{}", id),
+            ACLPatch::Replace(acl.into_iter().collect()),
+        );
+        self
+    }
+
+    pub fn acl_set(&mut self, id: &str, acl: ACL, set: bool) -> &mut Self {
+        self.acl_patch.get_or_insert_with(HashMap::new).insert(
+            format!("acl/{}/{}", id, acl.to_string()),
+            ACLPatch::Set(set),
+        );
         self
     }
 }

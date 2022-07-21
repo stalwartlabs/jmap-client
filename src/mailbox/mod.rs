@@ -93,7 +93,14 @@ pub struct Mailbox<State = Get> {
     #[serde(flatten)]
     #[serde(skip_deserializing)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    acl_patch: Option<HashMap<String, Vec<ACL>>>,
+    acl_patch: Option<HashMap<String, ACLPatch>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub(crate) enum ACLPatch {
+    Replace(Vec<ACL>),
+    Set(bool),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
