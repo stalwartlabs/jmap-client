@@ -108,6 +108,10 @@ pub enum Filter {
         #[serde(rename = "sentAfter")]
         value: DateTime<Utc>,
     },
+    InThread {
+        #[serde(rename = "inThread")]
+        value: String,
+    },
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -279,6 +283,12 @@ impl Filter {
     pub fn sent_after(value: i64) -> Self {
         Filter::SentAfter {
             value: from_timestamp(value),
+        }
+    }
+
+    pub fn in_thread(value: impl Into<String>) -> Self {
+        Filter::InThread {
+            value: value.into(),
         }
     }
 }

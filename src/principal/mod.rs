@@ -104,12 +104,8 @@ pub enum ACL {
     CreateChild = 7,
     #[serde(rename = "administer")]
     Administer = 8,
-    #[serde(rename = "setSeen")]
-    SetSeen = 9,
-    #[serde(rename = "setKeywords")]
-    SetKeywords = 10,
     #[serde(rename = "submit")]
-    Submit = 11,
+    Submit = 10,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -171,8 +167,6 @@ impl Display for ACL {
             ACL::RemoveItems => write!(f, "removeItems"),
             ACL::CreateChild => write!(f, "createChild"),
             ACL::Administer => write!(f, "administer"),
-            ACL::SetSeen => write!(f, "setSeen"),
-            ACL::SetKeywords => write!(f, "setKeywords"),
             ACL::Submit => write!(f, "submit"),
         }
     }

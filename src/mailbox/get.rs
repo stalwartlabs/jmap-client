@@ -105,14 +105,14 @@ impl MailboxRights {
             (self.may_read_items, ACL::ReadItems),
             (self.may_add_items, ACL::AddItems),
             (self.may_remove_items, ACL::RemoveItems),
-            (self.may_set_seen, ACL::SetSeen),
-            (self.may_set_keywords, ACL::SetKeywords),
+            (self.may_set_seen, ACL::ModifyItems),
+            (self.may_set_keywords, ACL::ModifyItems),
             (self.may_create_child, ACL::CreateChild),
             (self.may_rename, ACL::Modify),
             (self.may_delete, ACL::Delete),
             (self.may_submit, ACL::Submit),
         ] {
-            if is_set {
+            if is_set && !acl_list.contains(&acl) {
                 acl_list.push(acl);
             }
         }

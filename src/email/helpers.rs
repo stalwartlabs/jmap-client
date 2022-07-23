@@ -58,10 +58,7 @@ impl Client {
         V: IntoIterator<Item = W>,
         W: Into<String>,
     {
-        let blob_id = self
-            .upload(account_id.into(), raw_message, None)
-            .await?
-            .take_blob_id();
+        let blob_id = self.upload(None, raw_message, None).await?.take_blob_id();
         let mut request = self.build();
         let import_request = request
             .import_email()

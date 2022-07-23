@@ -62,10 +62,9 @@ impl Mailbox<Set> {
     }
 
     pub fn acl_set(&mut self, id: &str, acl: ACL, set: bool) -> &mut Self {
-        self.acl_patch.get_or_insert_with(HashMap::new).insert(
-            format!("acl/{}/{}", id, acl.to_string()),
-            ACLPatch::Set(set),
-        );
+        self.acl_patch
+            .get_or_insert_with(HashMap::new)
+            .insert(format!("acl/{}/{}", id, acl), ACLPatch::Set(set));
         self
     }
 }

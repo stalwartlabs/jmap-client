@@ -62,7 +62,7 @@ impl Client {
 
         let mut stream = Client::handle_error(
             reqwest::Client::builder()
-                .timeout(Duration::from_millis(self.timeout()))
+                .connect_timeout(Duration::from_millis(self.timeout()))
                 .default_headers(headers)
                 .build()?
                 .get(event_source_url)
