@@ -53,7 +53,7 @@ pub struct SetResponse<O: SetObject> {
     old_state: Option<String>,
 
     #[serde(rename = "newState")]
-    new_state: Option<String>,
+    new_state: String,
 
     #[serde(rename = "created")]
     created: Option<HashMap<String, O>>,
@@ -230,12 +230,12 @@ impl<O: SetObject> SetResponse<O> {
         self.old_state.as_deref()
     }
 
-    pub fn new_state(&self) -> Option<&str> {
-        self.new_state.as_deref()
+    pub fn new_state(&self) -> &str {
+        self.new_state.as_ref()
     }
 
-    pub fn take_new_state(&mut self) -> Option<String> {
-        self.new_state.take()
+    pub fn take_new_state(&mut self) -> String {
+        std::mem::take(&mut self.new_state)
     }
 
     pub fn created(&mut self, id: &str) -> crate::Result<O> {

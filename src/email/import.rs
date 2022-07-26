@@ -159,6 +159,10 @@ impl EmailImportResponse {
         &self.new_state
     }
 
+    pub fn take_new_state(&mut self) -> String {
+        std::mem::take(&mut self.new_state)
+    }
+
     pub fn created(&mut self, id: &str) -> crate::Result<Email> {
         if let Some(result) = self.created.as_mut().and_then(|r| r.remove(id)) {
             Ok(result)
