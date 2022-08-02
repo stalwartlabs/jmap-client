@@ -4,9 +4,9 @@ pub mod query;
 pub mod set;
 
 use crate::core::set::{list_not_set, map_not_set, string_not_set};
-use std::{collections::HashMap, fmt::Display};
-
+use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 use crate::{
     core::{changes::ChangesObject, Object},
@@ -49,7 +49,7 @@ pub struct Principal<State = Get> {
     #[serde(skip_serializing_if = "list_not_set")]
     members: Option<Vec<String>>,
     #[serde(skip_serializing_if = "map_not_set")]
-    acl: Option<HashMap<String, Vec<ACL>>>,
+    acl: Option<AHashMap<String, Vec<ACL>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Copy)]

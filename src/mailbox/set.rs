@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
-use crate::{core::set::SetObject, principal::ACL, Get, Set};
-
 use super::{ACLPatch, Mailbox, Role, SetArguments};
+use crate::{core::set::SetObject, principal::ACL, Get, Set};
+use ahash::AHashMap;
 
 impl Mailbox<Set> {
     pub fn name(&mut self, name: impl Into<String>) -> &mut Self {
@@ -54,7 +52,7 @@ impl Mailbox<Set> {
     }
 
     pub fn acl(&mut self, id: &str, acl: impl IntoIterator<Item = ACL>) -> &mut Self {
-        self.acl_patch.get_or_insert_with(HashMap::new).insert(
+        self.acl_patch.get_or_insert_with(AHashMap::new).insert(
             format!("acl/{}", id),
             ACLPatch::Replace(acl.into_iter().collect()),
         );
@@ -63,7 +61,7 @@ impl Mailbox<Set> {
 
     pub fn acl_set(&mut self, id: &str, acl: ACL, set: bool) -> &mut Self {
         self.acl_patch
-            .get_or_insert_with(HashMap::new)
+            .get_or_insert_with(AHashMap::new)
             .insert(format!("acl/{}/{}", id, acl), ACLPatch::Set(set));
         self
     }
@@ -91,7 +89,7 @@ impl SetObject for Mailbox<Set> {
             unread_threads: None,
             my_rights: None,
             is_subscribed: None,
-            acl: HashMap::with_capacity(0).into(),
+            acl: AHashMap::with_capacity(0).into(),
             acl_patch: None,
         }
     }

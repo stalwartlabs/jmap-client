@@ -93,9 +93,9 @@ impl EventParser {
                         } else {
                             None
                         },
-                        changes: std::collections::HashMap::from_iter([(
+                        changes: ahash::AHashMap::from_iter([(
                             "ping".to_string(),
-                            std::collections::HashMap::new(),
+                            ahash::AHashMap::new(),
                         )]),
                     }));
                 }

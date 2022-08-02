@@ -1,7 +1,3 @@
-use std::collections::HashMap;
-
-use serde::{de::DeserializeOwned, Serialize};
-
 use crate::{
     blob::copy::CopyBlobRequest,
     client::Client,
@@ -18,6 +14,8 @@ use crate::{
     vacation_response::VacationResponse,
     Error, Method, Set, URI,
 };
+use ahash::AHashMap;
+use serde::{de::DeserializeOwned, Serialize};
 
 use super::{
     changes::ChangesRequest,
@@ -44,7 +42,7 @@ pub struct Request<'x> {
 
     #[serde(rename = "createdIds")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub created_ids: Option<HashMap<String, String>>,
+    pub created_ids: Option<AHashMap<String, String>>,
 }
 
 #[derive(Debug, Clone, Serialize)]

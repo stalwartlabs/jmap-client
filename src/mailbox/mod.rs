@@ -3,16 +3,15 @@ pub mod helpers;
 pub mod query;
 pub mod set;
 
-use std::collections::HashMap;
-use std::fmt::Display;
-
 use crate::core::changes::ChangesObject;
 use crate::core::set::{map_not_set, string_not_set};
 use crate::core::Object;
 use crate::mailbox::set::role_not_set;
 use crate::principal::ACL;
 use crate::{Get, Set};
+use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct SetArguments {
@@ -88,12 +87,12 @@ pub struct Mailbox<State = Get> {
     is_subscribed: Option<bool>,
 
     #[serde(skip_serializing_if = "map_not_set")]
-    acl: Option<HashMap<String, Vec<ACL>>>,
+    acl: Option<AHashMap<String, Vec<ACL>>>,
 
     #[serde(flatten)]
     #[serde(skip_deserializing)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    acl_patch: Option<HashMap<String, ACLPatch>>,
+    acl_patch: Option<AHashMap<String, ACLPatch>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,22 +1,20 @@
-use std::collections::HashMap;
-
-use serde::{Deserialize, Serialize};
-
 use crate::{
     email::{MailCapabilities, SubmissionCapabilities},
     URI,
 };
+use ahash::AHashMap;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Session {
     #[serde(rename = "capabilities")]
-    capabilities: HashMap<String, Capabilities>,
+    capabilities: AHashMap<String, Capabilities>,
 
     #[serde(rename = "accounts")]
-    accounts: HashMap<String, Account>,
+    accounts: AHashMap<String, Account>,
 
     #[serde(rename = "primaryAccounts")]
-    primary_accounts: HashMap<String, String>,
+    primary_accounts: AHashMap<String, String>,
 
     #[serde(rename = "username")]
     username: String,
@@ -49,7 +47,7 @@ pub struct Account {
     is_read_only: bool,
 
     #[serde(rename = "accountCapabilities")]
-    account_capabilities: HashMap<String, Capabilities>,
+    account_capabilities: AHashMap<String, Capabilities>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

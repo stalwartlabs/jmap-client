@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::Error;
@@ -26,7 +25,7 @@ pub struct CopyRequest<O: SetObject> {
     if_in_state: Option<String>,
 
     #[serde(rename = "create")]
-    create: HashMap<String, O>,
+    create: AHashMap<String, O>,
 
     #[serde(rename = "onSuccessDestroyOriginal")]
     on_success_destroy_original: bool,
@@ -51,10 +50,10 @@ pub struct CopyResponse<O: SetObject> {
     new_state: String,
 
     #[serde(rename = "created")]
-    created: Option<HashMap<String, O>>,
+    created: Option<AHashMap<String, O>>,
 
     #[serde(rename = "notCreated")]
-    not_created: Option<HashMap<String, SetError<O::Property>>>,
+    not_created: Option<AHashMap<String, SetError<O::Property>>>,
 }
 
 impl<T: SetObject> CopyRequest<T> {
@@ -64,7 +63,7 @@ impl<T: SetObject> CopyRequest<T> {
             if_from_in_state: None,
             account_id: params.account_id,
             if_in_state: None,
-            create: HashMap::new(),
+            create: AHashMap::new(),
             on_success_destroy_original: false,
             destroy_from_if_in_state: None,
         }

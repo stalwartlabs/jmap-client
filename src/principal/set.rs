@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
-use crate::{core::set::SetObject, Get, Set};
-
 use super::{Principal, Type, ACL, DKIM};
+use crate::{core::set::SetObject, Get, Set};
+use ahash::AHashMap;
 
 impl Principal<Set> {
     pub fn name(&mut self, name: impl Into<String>) -> &mut Self {
@@ -50,7 +48,7 @@ impl Principal<Set> {
         self
     }
 
-    pub fn acl(&mut self, acl: Option<HashMap<String, Vec<ACL>>>) -> &mut Self {
+    pub fn acl(&mut self, acl: Option<AHashMap<String, Vec<ACL>>>) -> &mut Self {
         self.acl = acl;
         self
     }
@@ -103,7 +101,7 @@ impl SetObject for Principal<Set> {
             quota: None,
             picture: "".to_string().into(),
             members: Vec::with_capacity(0).into(),
-            acl: HashMap::with_capacity(0).into(),
+            acl: AHashMap::with_capacity(0).into(),
         }
     }
 

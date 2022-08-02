@@ -1,11 +1,8 @@
+use crate::Error;
+use ahash::AHashMap;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashMap,
-    fmt::{self, Display, Formatter},
-};
-
-use crate::Error;
+use std::fmt::{self, Display, Formatter};
 
 use super::{request::ResultReference, Object, RequestParams};
 
@@ -27,10 +24,10 @@ pub struct SetRequest<O: SetObject> {
     if_in_state: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    create: Option<HashMap<String, O>>,
+    create: Option<AHashMap<String, O>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    update: Option<HashMap<String, O>>,
+    update: Option<AHashMap<String, O>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     destroy: Option<Vec<String>>,
@@ -53,25 +50,25 @@ pub struct SetResponse<O: SetObject> {
     old_state: Option<String>,
 
     #[serde(rename = "newState")]
-    new_state: String,
+    new_state: Option<String>,
 
     #[serde(rename = "created")]
-    created: Option<HashMap<String, O>>,
+    created: Option<AHashMap<String, O>>,
 
     #[serde(rename = "updated")]
-    updated: Option<HashMap<String, Option<O>>>,
+    updated: Option<AHashMap<String, Option<O>>>,
 
     #[serde(rename = "destroyed")]
     destroyed: Option<Vec<String>>,
 
     #[serde(rename = "notCreated")]
-    not_created: Option<HashMap<String, SetError<O::Property>>>,
+    not_created: Option<AHashMap<String, SetError<O::Property>>>,
 
     #[serde(rename = "notUpdated")]
-    not_updated: Option<HashMap<String, SetError<O::Property>>>,
+    not_updated: Option<AHashMap<String, SetError<O::Property>>>,
 
     #[serde(rename = "notDestroyed")]
-    not_destroyed: Option<HashMap<String, SetError<O::Property>>>,
+    not_destroyed: Option<AHashMap<String, SetError<O::Property>>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -166,7 +163,7 @@ impl<O: SetObject> SetRequest<O> {
         let create_id = self.create.as_ref().map_or(0, |c| c.len());
         let create_id_str = format!("c{}", create_id);
         self.create
-            .get_or_insert_with(HashMap::new)
+            .get_or_insert_with(AHashMap::new)
             .insert(create_id_str.clone(), O::new(create_id.into()));
         self.create
             .as_mut()
@@ -179,7 +176,7 @@ impl<O: SetObject> SetRequest<O> {
         let create_id = self.create.as_ref().map_or(0, |c| c.len());
         let create_id_str = format!("c{}", create_id);
         self.create
-            .get_or_insert_with(HashMap::new)
+            .get_or_insert_with(AHashMap::new)
             .insert(create_id_str.clone(), item);
         create_id_str
     }
@@ -187,14 +184,14 @@ impl<O: SetObject> SetRequest<O> {
     pub fn update(&mut self, id: impl Into<String>) -> &mut O {
         let id: String = id.into();
         self.update
-            .get_or_insert_with(HashMap::new)
+            .get_or_insert_with(AHashMap::new)
             .insert(id.clone(), O::new(None));
         self.update.as_mut().unwrap().get_mut(&id).unwrap()
     }
 
     pub fn update_item(&mut self, id: impl Into<String>, item: O) {
         self.update
-            .get_or_insert_with(HashMap::new)
+            .get_or_insert_with(AHashMap::new)
             .insert(id.into(), item);
     }
 
@@ -231,11 +228,11 @@ impl<O: SetObject> SetResponse<O> {
     }
 
     pub fn new_state(&self) -> &str {
-        self.new_state.as_ref()
+        self.new_state.as_deref().unwrap_or("")
     }
 
     pub fn take_new_state(&mut self) -> String {
-        std::mem::take(&mut self.new_state)
+        self.new_state.take().unwrap_or_default()
     }
 
     pub fn created(&mut self, id: &str) -> crate::Result<O> {
@@ -410,6 +407,6 @@ pub fn list_not_set<O>(list: &Option<Vec<O>>) -> bool {
     matches!(list, Some(list) if list.is_empty() )
 }
 
-pub fn map_not_set<K, V>(list: &Option<HashMap<K, V>>) -> bool {
+pub fn map_not_set<K, V>(list: &Option<AHashMap<K, V>>) -> bool {
     matches!(list, Some(list) if list.is_empty() )
 }

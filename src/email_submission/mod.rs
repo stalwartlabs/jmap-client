@@ -3,10 +3,10 @@ pub mod helpers;
 pub mod query;
 pub mod set;
 
-use std::{collections::HashMap, fmt::Display};
-
+use ahash::AHashMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 use crate::{
     core::{changes::ChangesObject, Object},
@@ -18,7 +18,7 @@ use crate::{
 pub struct SetArguments {
     #[serde(rename = "onSuccessUpdateEmail")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    on_success_update_email: Option<HashMap<String, Email<Set>>>,
+    on_success_update_email: Option<AHashMap<String, Email<Set>>>,
     #[serde(rename = "onSuccessDestroyEmail")]
     #[serde(skip_serializing_if = "Option::is_none")]
     on_success_destroy_email: Option<Vec<String>>,
@@ -62,7 +62,7 @@ pub struct EmailSubmission<State = Get> {
 
     #[serde(rename = "deliveryStatus")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    delivery_status: Option<HashMap<String, DeliveryStatus>>,
+    delivery_status: Option<AHashMap<String, DeliveryStatus>>,
 
     #[serde(rename = "dsnBlobIds")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -88,7 +88,7 @@ pub struct Address<State = Get> {
     _state: std::marker::PhantomData<State>,
 
     email: String,
-    parameters: Option<HashMap<String, Option<String>>>,
+    parameters: Option<AHashMap<String, Option<String>>>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]

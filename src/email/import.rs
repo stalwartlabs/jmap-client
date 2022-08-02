@@ -1,8 +1,3 @@
-use std::collections::HashMap;
-
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-
 use crate::{
     core::{
         request::ResultReference,
@@ -11,6 +6,9 @@ use crate::{
     },
     Error,
 };
+use ahash::AHashMap;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 use super::{Email, Property};
 
@@ -23,7 +21,7 @@ pub struct EmailImportRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     if_in_state: Option<String>,
 
-    emails: HashMap<String, EmailImport>,
+    emails: AHashMap<String, EmailImport>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -36,7 +34,7 @@ pub struct EmailImport {
 
     #[serde(rename = "mailboxIds")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    mailbox_ids: Option<HashMap<String, bool>>,
+    mailbox_ids: Option<AHashMap<String, bool>>,
 
     #[serde(rename = "#mailboxIds")]
     #[serde(skip_deserializing)]
@@ -44,7 +42,7 @@ pub struct EmailImport {
     mailbox_ids_ref: Option<ResultReference>,
 
     #[serde(rename = "keywords")]
-    keywords: HashMap<String, bool>,
+    keywords: AHashMap<String, bool>,
 
     #[serde(rename = "receivedAt")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -63,10 +61,10 @@ pub struct EmailImportResponse {
     new_state: String,
 
     #[serde(rename = "created")]
-    created: Option<HashMap<String, Email>>,
+    created: Option<AHashMap<String, Email>>,
 
     #[serde(rename = "notCreated")]
-    not_created: Option<HashMap<String, SetError<Property>>>,
+    not_created: Option<AHashMap<String, SetError<Property>>>,
 }
 
 impl EmailImportRequest {
@@ -74,7 +72,7 @@ impl EmailImportRequest {
         EmailImportRequest {
             account_id: params.account_id,
             if_in_state: None,
-            emails: HashMap::new(),
+            emails: AHashMap::new(),
         }
     }
 
@@ -106,7 +104,7 @@ impl EmailImport {
             blob_id,
             mailbox_ids: None,
             mailbox_ids_ref: None,
-            keywords: HashMap::new(),
+            keywords: AHashMap::new(),
             received_at: None,
         }
     }

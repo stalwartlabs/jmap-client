@@ -5,13 +5,10 @@ pub mod parse;
 pub mod query;
 pub mod search_snippet;
 pub mod set;
-
+use ahash::AHashMap;
 use chrono::{DateTime, Utc};
 use serde::{de::Visitor, Deserialize, Serialize};
-use std::{
-    collections::HashMap,
-    fmt::{self, Display, Formatter},
-};
+use std::fmt::{self, Display, Formatter};
 
 use crate::{
     core::{changes::ChangesObject, request::ResultReference, Object},
@@ -64,7 +61,7 @@ pub struct Email<State = Get> {
 
     #[serde(rename = "mailboxIds")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    mailbox_ids: Option<HashMap<String, bool>>,
+    mailbox_ids: Option<AHashMap<String, bool>>,
 
     #[serde(rename = "#mailboxIds")]
     #[serde(skip_deserializing)]
@@ -73,7 +70,7 @@ pub struct Email<State = Get> {
 
     #[serde(rename = "keywords")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    keywords: Option<HashMap<String, bool>>,
+    keywords: Option<AHashMap<String, bool>>,
 
     #[serde(rename = "size")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -153,7 +150,7 @@ pub struct Email<State = Get> {
 
     #[serde(rename = "bodyValues")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    body_values: Option<HashMap<String, EmailBodyValue>>,
+    body_values: Option<AHashMap<String, EmailBodyValue>>,
 
     #[serde(rename = "textBody")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -176,13 +173,13 @@ pub struct Email<State = Get> {
     preview: Option<String>,
 
     #[serde(flatten)]
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
-    headers: HashMap<Header, Option<HeaderValue>>,
+    #[serde(skip_serializing_if = "std::collections::HashMap::is_empty")]
+    headers: AHashMap<Header, Option<HeaderValue>>,
 
     #[serde(flatten)]
     #[serde(skip_deserializing)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    patch: Option<HashMap<String, bool>>,
+    patch: Option<AHashMap<String, bool>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -240,7 +237,7 @@ pub struct EmailBodyPart<State = Get> {
 
     #[serde(flatten)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    header: Option<HashMap<Header, HeaderValue>>,
+    header: Option<AHashMap<Header, HeaderValue>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -948,41 +945,16 @@ impl From<Email> for TestEmail {
             reply_to: email.reply_to,
             subject: email.subject,
             sent_at: email.sent_at,
-            body_structure: email.body_structure.map(|b| b.into_sorted_part().into()),
+            body_structure: email.body_structure,
             body_values: email
                 .body_values
                 .map(|body_values| body_values.into_iter().collect()),
-            text_body: email
-                .text_body
-                .map(|parts| parts.into_iter().map(|b| b.into_sorted_part()).collect()),
-            html_body: email
-                .html_body
-                .map(|parts| parts.into_iter().map(|b| b.into_sorted_part()).collect()),
-            attachments: email
-                .attachments
-                .map(|parts| parts.into_iter().map(|b| b.into_sorted_part()).collect()),
+            text_body: email.text_body,
+            html_body: email.html_body,
+            attachments: email.attachments,
             has_attachment: email.has_attachment,
             preview: email.preview,
             headers: email.headers.into_iter().collect(),
         }
-    }
-}
-
-#[cfg(feature = "debug")]
-impl EmailBodyPart {
-    pub fn sort_headers(&mut self) {
-        if let Some(headers) = self.headers.as_mut() {
-            headers.sort_unstable_by_key(|h| (h.name.clone(), h.value.clone()));
-        }
-        if let Some(subparts) = self.sub_parts.as_mut() {
-            for sub_part in subparts {
-                sub_part.sort_headers();
-            }
-        }
-    }
-
-    pub fn into_sorted_part(mut self) -> Self {
-        self.sort_headers();
-        self
     }
 }

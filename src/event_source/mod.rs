@@ -1,11 +1,9 @@
 pub mod parser;
 pub mod stream;
 
-use std::collections::HashMap;
-
-use serde::{Deserialize, Serialize};
-
 use crate::{core::session::URLParser, TypeState};
+use ahash::AHashMap;
+use serde::{Deserialize, Serialize};
 
 pub enum URLParameter {
     Types,
@@ -27,11 +25,11 @@ impl URLParser for URLParameter {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Changes {
     id: Option<String>,
-    changes: HashMap<String, HashMap<TypeState, String>>,
+    changes: AHashMap<String, AHashMap<TypeState, String>>,
 }
 
 impl Changes {
-    pub fn new(id: Option<String>, changes: HashMap<String, HashMap<TypeState, String>>) -> Self {
+    pub fn new(id: Option<String>, changes: AHashMap<String, AHashMap<TypeState, String>>) -> Self {
         Self { id, changes }
     }
 
@@ -39,7 +37,7 @@ impl Changes {
         self.id.as_deref()
     }
 
-    pub fn account_changes(&mut self, account_id: &str) -> Option<HashMap<TypeState, String>> {
+    pub fn account_changes(&mut self, account_id: &str) -> Option<AHashMap<TypeState, String>> {
         self.changes.remove(account_id)
     }
 
@@ -57,7 +55,7 @@ impl Changes {
             .any(|changes| changes.contains_key(&type_))
     }
 
-    pub fn into_inner(self) -> HashMap<String, HashMap<TypeState, String>> {
+    pub fn into_inner(self) -> AHashMap<String, AHashMap<TypeState, String>> {
         self.changes
     }
 

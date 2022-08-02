@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fmt};
-
+use ahash::AHashMap;
 use serde::{de::Visitor, Deserialize};
+use std::fmt;
 
 use crate::{
     blob::copy::CopyBlobResponse,
@@ -29,7 +29,7 @@ pub struct Response<T> {
     method_responses: Vec<T>,
 
     #[serde(rename = "createdIds")]
-    created_ids: Option<HashMap<String, String>>,
+    created_ids: Option<AHashMap<String, String>>,
 
     #[serde(rename = "sessionState")]
     session_state: String,
@@ -40,7 +40,7 @@ pub struct Response<T> {
 impl<T> Response<T> {
     pub fn new(
         method_responses: Vec<T>,
-        created_ids: Option<HashMap<String, String>>,
+        created_ids: Option<AHashMap<String, String>>,
         session_state: String,
         request_id: Option<String>,
     ) -> Self {

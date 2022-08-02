@@ -1,9 +1,9 @@
 use crate::core::error::MethodError;
 use crate::core::error::ProblemDetails;
 use crate::core::set::SetError;
-use std::{collections::HashMap, fmt::Display};
-
+use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 pub mod blob;
 pub mod client;
@@ -154,7 +154,7 @@ pub enum StateChangeType {
 pub struct StateChange {
     #[serde(rename = "@type")]
     pub type_: StateChangeType,
-    pub changed: HashMap<String, HashMap<TypeState, String>>,
+    pub changed: AHashMap<String, AHashMap<TypeState, String>>,
 }
 
 #[derive(Debug, Clone)]

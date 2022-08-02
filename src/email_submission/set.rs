@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
-use crate::{core::set::SetObject, email::Email, Get, Set};
-
 use super::{Address, EmailSubmission, Envelope, SetArguments, UndoStatus};
+use crate::{core::set::SetObject, email::Email, Get, Set};
+use ahash::AHashMap;
 
 impl EmailSubmission<Set> {
     pub fn identity_id(&mut self, identity_id: impl Into<String>) -> &mut Self {
@@ -97,7 +95,7 @@ impl Address<Set> {
         value: Option<impl Into<String>>,
     ) -> Self {
         self.parameters
-            .get_or_insert_with(HashMap::new)
+            .get_or_insert_with(AHashMap::new)
             .insert(parameter.into(), value.map(|s| s.into()));
         self
     }
@@ -155,7 +153,7 @@ impl SetArguments {
     fn on_success_update_email_(&mut self, id: impl Into<String>) -> &mut Email<Set> {
         let id = id.into();
         self.on_success_update_email
-            .get_or_insert_with(HashMap::new)
+            .get_or_insert_with(AHashMap::new)
             .insert(id.clone(), Email::new(None));
         self.on_success_update_email
             .as_mut()

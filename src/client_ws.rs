@@ -1,5 +1,6 @@
-use std::{collections::HashMap, pin::Pin};
+use std::pin::Pin;
 
+use ahash::AHashMap;
 use futures_util::{stream::SplitSink, SinkExt, Stream, StreamExt};
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpStream;
@@ -34,7 +35,7 @@ struct WebSocketRequest {
 
     #[serde(rename = "createdIds")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    created_ids: Option<HashMap<String, String>>,
+    created_ids: Option<AHashMap<String, String>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -49,7 +50,7 @@ pub struct WebSocketResponse {
     method_responses: Vec<TaggedMethodResponse>,
 
     #[serde(rename = "createdIds")]
-    created_ids: Option<HashMap<String, String>>,
+    created_ids: Option<AHashMap<String, String>>,
 
     #[serde(rename = "sessionState")]
     session_state: String,
@@ -104,7 +105,7 @@ pub struct WebSocketStateChange {
     #[serde(rename = "@type")]
     pub type_: WebSocketStateChangeType,
 
-    pub changed: HashMap<String, HashMap<TypeState, String>>,
+    pub changed: AHashMap<String, AHashMap<TypeState, String>>,
 
     #[serde(rename = "pushState")]
     push_state: Option<String>,

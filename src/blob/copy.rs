@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -24,9 +23,9 @@ pub struct CopyBlobResponse {
     #[serde(rename = "accountId")]
     account_id: String,
     #[serde(rename = "copied")]
-    copied: Option<HashMap<String, String>>,
+    copied: Option<AHashMap<String, String>>,
     #[serde(rename = "notCopied")]
-    not_copied: Option<HashMap<String, SetError<String>>>,
+    not_copied: Option<AHashMap<String, SetError<String>>>,
 }
 
 impl CopyBlobRequest {
