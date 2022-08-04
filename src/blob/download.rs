@@ -39,6 +39,7 @@ impl Client {
         Client::handle_error(
             reqwest::Client::builder()
                 .timeout(Duration::from_millis(self.timeout()))
+                .redirect(self.redirect_policy())
                 .default_headers(headers)
                 .build()?
                 .get(download_url)
