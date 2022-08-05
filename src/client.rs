@@ -53,25 +53,47 @@ pub struct Client {
     pub(crate) ws: tokio::sync::Mutex<Option<crate::client_ws::WsStream>>,
 }
 
-impl Client {
-    pub async fn connect(url: &str, credentials: impl Into<Credentials>) -> crate::Result<Self> {
-        Self::connect_(url, credentials, None::<Vec<String>>).await
+pub struct ClientBuilder {
+    credentials: Option<Credentials>,
+    trusted_hosts: AHashSet<String>,
+    timeout: u64,
+}
+
+impl Default for ClientBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ClientBuilder {
+    pub fn new() -> Self {
+        Self {
+            credentials: None,
+            trusted_hosts: AHashSet::new(),
+            timeout: DEFAULT_TIMEOUT_MS,
+        }
     }
 
-    pub async fn connect_with_trusted(
-        url: &str,
-        credentials: impl Into<Credentials>,
+    pub fn credentials(mut self, credentials: impl Into<Credentials>) -> Self {
+        self.credentials = Some(credentials.into());
+        self
+    }
+
+    pub fn timeout(mut self, timeout: u64) -> Self {
+        self.timeout = timeout;
+        self
+    }
+
+    pub fn follow_redirects(
+        mut self,
         trusted_hosts: impl IntoIterator<Item = impl Into<String>>,
-    ) -> crate::Result<Self> {
-        Self::connect_(url, credentials, trusted_hosts.into()).await
+    ) -> Self {
+        self.trusted_hosts = trusted_hosts.into_iter().map(|h| h.into()).collect();
+        self
     }
 
-    async fn connect_(
-        url: &str,
-        credentials: impl Into<Credentials>,
-        trusted_hosts: Option<impl IntoIterator<Item = impl Into<String>>>,
-    ) -> crate::Result<Self> {
-        let authorization = match credentials.into() {
+    pub async fn connect(self, url: &str) -> crate::Result<Client> {
+        let authorization = match self.credentials.expect("Missing credentials") {
             Credentials::Basic(s) => format!("Basic {}", s),
             Credentials::Bearer(s) => format!("Bearer {}", s),
         };
@@ -85,17 +107,13 @@ impl Client {
             header::HeaderValue::from_str(&authorization).unwrap(),
         );
 
-        let trusted_hosts = Arc::new(
-            trusted_hosts
-                .map(|hosts| hosts.into_iter().map(|h| h.into()).collect::<AHashSet<_>>())
-                .unwrap_or_default(),
-        );
+        let trusted_hosts = Arc::new(self.trusted_hosts);
 
         let trusted_hosts_ = trusted_hosts.clone();
         let session: Session = serde_json::from_slice(
             &Client::handle_error(
                 reqwest::Client::builder()
-                    .timeout(Duration::from_millis(DEFAULT_TIMEOUT_MS))
+                    .timeout(Duration::from_millis(self.timeout))
                     .redirect(redirect::Policy::custom(move |attempt| {
                         if attempt.previous().len() > 5 {
                             attempt.error("Too many redirects.")
@@ -143,12 +161,19 @@ impl Client {
             trusted_hosts,
             #[cfg(feature = "websockets")]
             authorization,
-            timeout: DEFAULT_TIMEOUT_MS,
+            timeout: self.timeout,
             headers,
             default_account_id,
             #[cfg(feature = "websockets")]
             ws: None.into(),
         })
+    }
+}
+
+impl Client {
+    #[allow(clippy::new_ret_no_self)]
+    pub fn new() -> ClientBuilder {
+        ClientBuilder::new()
     }
 
     pub fn set_timeout(&mut self, timeout: u64) -> &mut Self {
@@ -156,7 +181,7 @@ impl Client {
         self
     }
 
-    pub fn set_trusted_hosts(
+    pub fn set_follow_redirects(
         &mut self,
         trusted_hosts: impl IntoIterator<Item = impl Into<String>>,
     ) -> &mut Self {
