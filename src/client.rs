@@ -9,7 +9,7 @@ use std::{
 use ahash::AHashSet;
 use reqwest::{
     header::{self},
-    redirect, Response,
+    redirect,
 };
 use serde::de::DeserializeOwned;
 
@@ -20,7 +20,7 @@ use crate::{
         response,
         session::{Session, URLPart},
     },
-    event_source, Error,
+    Error,
 };
 
 const DEFAULT_TIMEOUT_MS: u64 = 10 * 1000;
@@ -41,7 +41,8 @@ pub struct Client {
 
     upload_url: Vec<URLPart<blob::URLParameter>>,
     download_url: Vec<URLPart<blob::URLParameter>>,
-    event_source_url: Vec<URLPart<event_source::URLParameter>>,
+    #[cfg(feature = "async")]
+    event_source_url: Vec<URLPart<crate::event_source::URLParameter>>,
 
     headers: header::HeaderMap,
     default_account_id: String,
@@ -92,6 +93,7 @@ impl ClientBuilder {
         self
     }
 
+    #[cfg(feature = "async")]
     pub async fn connect(self, url: &str) -> crate::Result<Client> {
         let authorization = match self.credentials.expect("Missing credentials") {
             Credentials::Basic(s) => format!("Basic {}", s),
@@ -153,6 +155,84 @@ impl ClientBuilder {
         Ok(Client {
             download_url: URLPart::parse(session.download_url())?,
             upload_url: URLPart::parse(session.upload_url())?,
+            #[cfg(feature = "async")]
+            event_source_url: URLPart::parse(session.event_source_url())?,
+            api_url: session.api_url().to_string(),
+            session: parking_lot::Mutex::new(Arc::new(session)),
+            session_url: url.to_string(),
+            session_updated: true.into(),
+            trusted_hosts,
+            #[cfg(feature = "websockets")]
+            authorization,
+            timeout: self.timeout,
+            headers,
+            default_account_id,
+            #[cfg(feature = "websockets")]
+            ws: None.into(),
+        })
+    }
+
+    #[cfg(feature = "blocking")]
+    pub fn connect(self, url: &str) -> crate::Result<Client> {
+        let authorization = match self.credentials.expect("Missing credentials") {
+            Credentials::Basic(s) => format!("Basic {}", s),
+            Credentials::Bearer(s) => format!("Bearer {}", s),
+        };
+        let mut headers = header::HeaderMap::new();
+        headers.insert(
+            header::USER_AGENT,
+            header::HeaderValue::from_static(USER_AGENT),
+        );
+        headers.insert(
+            header::AUTHORIZATION,
+            header::HeaderValue::from_str(&authorization).unwrap(),
+        );
+
+        let trusted_hosts = Arc::new(self.trusted_hosts);
+
+        let trusted_hosts_ = trusted_hosts.clone();
+        let session: Session = serde_json::from_slice(
+            &Client::handle_error(
+                reqwest::blocking::Client::builder()
+                    .timeout(Duration::from_millis(self.timeout))
+                    .redirect(redirect::Policy::custom(move |attempt| {
+                        if attempt.previous().len() > 5 {
+                            attempt.error("Too many redirects.")
+                        } else if matches!( attempt.url().host_str(), Some(host) if trusted_hosts_.contains(host) )
+                        {
+                            attempt.follow_trusted()
+                        } else {
+                            let message = format!(
+                                "Aborting redirect request to unknown host '{}'.",
+                                attempt.url().host_str().unwrap_or("")
+                            );
+                            attempt.error(message)
+                        }
+                    }))
+                    .default_headers(headers.clone())
+                    .build()?
+                    .get(url)
+                    .send()
+                    ?,
+            )?
+            .bytes()?,
+        )?;
+
+        let default_account_id = session
+            .primary_accounts()
+            .next()
+            .map(|a| a.1.to_string())
+            .unwrap_or_default();
+
+        headers.insert(
+            header::CONTENT_TYPE,
+            header::HeaderValue::from_static("application/json"),
+        );
+
+        Ok(Client {
+            download_url: URLPart::parse(session.download_url())?,
+            upload_url: URLPart::parse(session.upload_url())?,
+            #[cfg(feature = "async")]
             event_source_url: URLPart::parse(session.event_source_url())?,
             api_url: session.api_url().to_string(),
             session: parking_lot::Mutex::new(Arc::new(session)),
@@ -223,6 +303,7 @@ impl Client {
         })
     }
 
+    #[cfg(feature = "async")]
     pub async fn send<R>(
         &self,
         request: &request::Request<'_>,
@@ -254,6 +335,33 @@ impl Client {
         Ok(response)
     }
 
+    #[cfg(feature = "blocking")]
+    pub fn send<R>(&self, request: &request::Request<'_>) -> crate::Result<response::Response<R>>
+    where
+        R: DeserializeOwned,
+    {
+        let response: response::Response<R> = serde_json::from_slice(
+            &Client::handle_error(
+                reqwest::blocking::Client::builder()
+                    .redirect(self.redirect_policy())
+                    .timeout(Duration::from_millis(self.timeout))
+                    .default_headers(self.headers.clone())
+                    .build()?
+                    .post(&self.api_url)
+                    .body(serde_json::to_string(&request)?)
+                    .send()?,
+            )?
+            .bytes()?,
+        )?;
+
+        if response.session_state() != self.session.lock().state() {
+            self.session_updated.store(false, Ordering::Relaxed);
+        }
+
+        Ok(response)
+    }
+
+    #[cfg(feature = "async")]
     pub async fn refresh_session(&self) -> crate::Result<()> {
         let session: Session = serde_json::from_slice(
             &Client::handle_error(
@@ -269,6 +377,25 @@ impl Client {
             .await?
             .bytes()
             .await?,
+        )?;
+        *self.session.lock() = Arc::new(session);
+        self.session_updated.store(true, Ordering::Relaxed);
+        Ok(())
+    }
+
+    #[cfg(feature = "blocking")]
+    pub async fn refresh_session(&self) -> crate::Result<()> {
+        let session: Session = serde_json::from_slice(
+            &Client::handle_error(
+                reqwest::blocking::Client::builder()
+                    .timeout(Duration::from_millis(DEFAULT_TIMEOUT_MS))
+                    .redirect(self.redirect_policy())
+                    .default_headers(self.headers.clone())
+                    .build()?
+                    .get(&self.session_url)
+                    .send()?,
+            )?
+            .bytes()?,
         )?;
         *self.session.lock() = Arc::new(session);
         self.session_updated.store(true, Ordering::Relaxed);
@@ -300,11 +427,13 @@ impl Client {
         &self.upload_url
     }
 
-    pub fn event_source_url(&self) -> &[URLPart<event_source::URLParameter>] {
+    #[cfg(feature = "async")]
+    pub fn event_source_url(&self) -> &[URLPart<crate::event_source::URLParameter>] {
         &self.event_source_url
     }
 
-    pub async fn handle_error(response: Response) -> crate::Result<Response> {
+    #[cfg(feature = "async")]
+    pub async fn handle_error(response: reqwest::Response) -> crate::Result<reqwest::Response> {
         if response.status().is_success() {
             Ok(response)
         } else if let Some(b"application/problem+json") = response
@@ -315,6 +444,23 @@ impl Client {
             Err(Error::Problem(serde_json::from_slice(
                 &response.bytes().await?,
             )?))
+        } else {
+            Err(Error::Server(format!("{}", response.status())))
+        }
+    }
+
+    #[cfg(feature = "blocking")]
+    pub fn handle_error(
+        response: reqwest::blocking::Response,
+    ) -> crate::Result<reqwest::blocking::Response> {
+        if response.status().is_success() {
+            Ok(response)
+        } else if let Some(b"application/problem+json") = response
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .map(|h| h.as_bytes())
+        {
+            Err(Error::Problem(serde_json::from_slice(&response.bytes()?)?))
         } else {
             Err(Error::Server(format!("{}", response.status())))
         }

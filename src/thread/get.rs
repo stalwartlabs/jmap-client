@@ -1,3 +1,5 @@
+use crate::core::get::GetObject;
+
 use super::Thread;
 
 impl Thread {
@@ -8,4 +10,8 @@ impl Thread {
     pub fn email_ids(&self) -> &[String] {
         &self.email_ids
     }
+}
+
+impl GetObject for Thread {
+    type GetArguments = ();
 }

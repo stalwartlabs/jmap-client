@@ -12,22 +12,23 @@ categories = ["email"]
 readme = "README.md"
 
 [dependencies]
+reqwest = { git = "https://github.com/stalwartlabs/reqwest.git", default-features = false, features = ["rustls-tls"]}
+tokio-tungstenite = { version = "0.17", features = ["rustls-tls-webpki-roots"], optional = true}
+tokio = { version = "1.16", default-features = false, features = ["io-util"], optional = true }
+futures-util = { version = "0.3", optional = true}
+async-stream = { version = "0.3", optional = true}
 serde = { version = "1.0", features = ["derive"]}
 serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde"]}
-#reqwest = { version = "0.11", default-features = false, features = ["stream", "rustls-tls"]}
-reqwest = { git = "https://github.com/stalwartlabs/reqwest.git", default-features = false, features = ["stream", "rustls-tls"]}
-futures-util = "0.3"
-async-stream = "0.3"
-base64 = "0.13"
-tokio-tungstenite = { version = "0.17", features = ["rustls-tls-webpki-roots"], optional = true}
-tokio = { version = "1.16", default-features = false, features = ["io-util"], optional = true }
-parking_lot = "0.12.0"
 ahash = {version = "0.7.6", features = ["serde"]}
+parking_lot = "0.12.0"
+base64 = "0.13"
 
 [features]
-default = []
+default = ["async"]
+async = ["futures-util", "async-stream", "reqwest/stream"]
 websockets = ["tokio", "tokio-tungstenite"]
+blocking = ["reqwest/blocking"]
 debug = []
 
 [profile.bench]

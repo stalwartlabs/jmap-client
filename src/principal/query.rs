@@ -18,6 +18,10 @@ pub enum Filter {
         #[serde(rename = "name")]
         value: String,
     },
+    DomainName {
+        #[serde(rename = "domainName")]
+        value: String,
+    },
     Text {
         #[serde(rename = "text")]
         value: String,
@@ -61,16 +65,25 @@ impl Filter {
             value: value.into(),
         }
     }
+
+    pub fn domain_name(value: impl Into<String>) -> Self {
+        Filter::DomainName {
+            value: value.into(),
+        }
+    }
+
     pub fn email(value: impl Into<String>) -> Self {
         Filter::Email {
             value: value.into(),
         }
     }
+
     pub fn text(value: impl Into<String>) -> Self {
         Filter::Text {
             value: value.into(),
         }
     }
+
     pub fn timezone(value: impl Into<String>) -> Self {
         Filter::Timezone {
             value: value.into(),

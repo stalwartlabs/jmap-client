@@ -1,11 +1,14 @@
 pub mod get;
+#[cfg(feature = "async")]
 pub mod helpers;
+#[cfg(feature = "blocking")]
+pub mod helpers_blocking;
 
 use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use crate::core::{Object, changes::ChangesObject};
+use crate::core::{changes::ChangesObject, Object};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Thread {
@@ -42,4 +45,3 @@ impl Display for Property {
 impl ChangesObject for Thread {
     type ChangesResponse = ();
 }
-

@@ -2,7 +2,10 @@ use crate::core::session::URLParser;
 
 pub mod copy;
 pub mod download;
+#[cfg(feature = "async")]
 pub mod helpers;
+#[cfg(feature = "blocking")]
+pub mod helpers_blocking;
 pub mod upload;
 
 pub enum URLParameter {

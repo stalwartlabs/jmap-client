@@ -27,6 +27,10 @@ impl Principal<Get> {
         self.description.as_deref()
     }
 
+    pub fn timezone(&self) -> Option<&str> {
+        self.timezone.as_deref()
+    }
+
     pub fn secret(&self) -> Option<&str> {
         self.secret.as_deref()
     }

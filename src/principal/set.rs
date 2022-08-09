@@ -1,4 +1,4 @@
-use super::{Principal, Type, ACL, DKIM};
+use super::{Principal, Property, Type, ACL, DKIM};
 use crate::{core::set::SetObject, Get, Set};
 use ahash::AHashMap;
 
@@ -62,6 +62,13 @@ impl Principal<Set> {
         self
     }
 
+    pub fn alias(&mut self, alias: &str, set: bool) -> &mut Self {
+        self.property_patch
+            .get_or_insert_with(AHashMap::new)
+            .insert(format!("{}/{}", Property::Aliases, alias), set);
+        self
+    }
+
     pub fn capabilities<T, U>(&mut self, capabilities: Option<T>) -> &mut Self
     where
         T: IntoIterator<Item = U>,
@@ -77,6 +84,13 @@ impl Principal<Set> {
         U: Into<String>,
     {
         self.members = members.map(|l| l.into_iter().map(|v| v.into()).collect());
+        self
+    }
+
+    pub fn member(&mut self, member: &str, set: bool) -> &mut Self {
+        self.property_patch
+            .get_or_insert_with(AHashMap::new)
+            .insert(format!("{}/{}", Property::Members, member), set);
         self
     }
 }
@@ -102,6 +116,7 @@ impl SetObject for Principal<Set> {
             picture: "".to_string().into(),
             members: Vec::with_capacity(0).into(),
             acl: AHashMap::with_capacity(0).into(),
+            property_patch: None,
         }
     }
 

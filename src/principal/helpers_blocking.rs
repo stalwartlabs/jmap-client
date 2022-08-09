@@ -15,7 +15,7 @@ use crate::{
 use super::{Principal, Property, Type};
 
 impl Client {
-    pub async fn individual_create(
+    pub fn individual_create(
         &self,
         email: impl Into<String>,
         secret: impl Into<String>,
@@ -31,13 +31,10 @@ impl Client {
             .ptype(Type::Individual)
             .create_id()
             .unwrap();
-        request
-            .send_single::<PrincipalSetResponse>()
-            .await?
-            .created(&id)
+        request.send_single::<PrincipalSetResponse>()?.created(&id)
     }
 
-    pub async fn domain_create(&self, name: impl Into<String>) -> crate::Result<Principal> {
+    pub fn domain_create(&self, name: impl Into<String>) -> crate::Result<Principal> {
         let mut request = self.build();
         let id = request
             .set_principal()
@@ -46,13 +43,10 @@ impl Client {
             .ptype(Type::Domain)
             .create_id()
             .unwrap();
-        request
-            .send_single::<PrincipalSetResponse>()
-            .await?
-            .created(&id)
+        request.send_single::<PrincipalSetResponse>()?.created(&id)
     }
 
-    pub async fn list_create(
+    pub fn list_create(
         &self,
         email: impl Into<String>,
         name: impl Into<String>,
@@ -68,13 +62,10 @@ impl Client {
             .members(members.into())
             .create_id()
             .unwrap();
-        request
-            .send_single::<PrincipalSetResponse>()
-            .await?
-            .created(&id)
+        request.send_single::<PrincipalSetResponse>()?.created(&id)
     }
 
-    pub async fn group_create(
+    pub fn group_create(
         &self,
         email: impl Into<String>,
         name: impl Into<String>,
@@ -90,91 +81,70 @@ impl Client {
             .members(members.into())
             .create_id()
             .unwrap();
-        request
-            .send_single::<PrincipalSetResponse>()
-            .await?
-            .created(&id)
+        request.send_single::<PrincipalSetResponse>()?.created(&id)
     }
 
-    pub async fn principal_set_name(
+    pub fn principal_set_name(
         &self,
         id: &str,
         name: impl Into<String>,
     ) -> crate::Result<Option<Principal>> {
         let mut request = self.build();
         request.set_principal().update(id).name(name);
-        request
-            .send_single::<PrincipalSetResponse>()
-            .await?
-            .updated(id)
+        request.send_single::<PrincipalSetResponse>()?.updated(id)
     }
 
-    pub async fn principal_set_secret(
+    pub fn principal_set_secret(
         &self,
         id: &str,
         secret: impl Into<String>,
     ) -> crate::Result<Option<Principal>> {
         let mut request = self.build();
         request.set_principal().update(id).secret(secret);
-        request
-            .send_single::<PrincipalSetResponse>()
-            .await?
-            .updated(id)
+        request.send_single::<PrincipalSetResponse>()?.updated(id)
     }
 
-    pub async fn principal_set_email(
+    pub fn principal_set_email(
         &self,
         id: &str,
         email: impl Into<String>,
     ) -> crate::Result<Option<Principal>> {
         let mut request = self.build();
         request.set_principal().update(id).email(email);
-        request
-            .send_single::<PrincipalSetResponse>()
-            .await?
-            .updated(id)
+        request.send_single::<PrincipalSetResponse>()?.updated(id)
     }
 
-    pub async fn principal_set_timezone(
+    pub fn principal_set_timezone(
         &self,
         id: &str,
         timezone: Option<impl Into<String>>,
     ) -> crate::Result<Option<Principal>> {
         let mut request = self.build();
         request.set_principal().update(id).timezone(timezone);
-        request
-            .send_single::<PrincipalSetResponse>()
-            .await?
-            .updated(id)
+        request.send_single::<PrincipalSetResponse>()?.updated(id)
     }
 
-    pub async fn principal_set_members(
+    pub fn principal_set_members(
         &self,
         id: &str,
         members: Option<impl IntoIterator<Item = impl Into<String>>>,
     ) -> crate::Result<Option<Principal>> {
         let mut request = self.build();
         request.set_principal().update(id).members(members);
-        request
-            .send_single::<PrincipalSetResponse>()
-            .await?
-            .updated(id)
+        request.send_single::<PrincipalSetResponse>()?.updated(id)
     }
 
-    pub async fn principal_set_aliases(
+    pub fn principal_set_aliases(
         &self,
         id: &str,
         aliases: Option<impl IntoIterator<Item = impl Into<String>>>,
     ) -> crate::Result<Option<Principal>> {
         let mut request = self.build();
         request.set_principal().update(id).aliases(aliases);
-        request
-            .send_single::<PrincipalSetResponse>()
-            .await?
-            .updated(id)
+        request.send_single::<PrincipalSetResponse>()?.updated(id)
     }
 
-    pub async fn principal_set_capabilities(
+    pub fn principal_set_capabilities(
         &self,
         id: &str,
         capabilities: Option<impl IntoIterator<Item = impl Into<String>>>,
@@ -184,22 +154,16 @@ impl Client {
             .set_principal()
             .update(id)
             .capabilities(capabilities);
-        request
-            .send_single::<PrincipalSetResponse>()
-            .await?
-            .updated(id)
+        request.send_single::<PrincipalSetResponse>()?.updated(id)
     }
 
-    pub async fn principal_destroy(&self, id: &str) -> crate::Result<()> {
+    pub fn principal_destroy(&self, id: &str) -> crate::Result<()> {
         let mut request = self.build();
         request.set_principal().destroy([id]).arguments();
-        request
-            .send_single::<PrincipalSetResponse>()
-            .await?
-            .destroyed(id)
+        request.send_single::<PrincipalSetResponse>()?.destroyed(id)
     }
 
-    pub async fn principal_get(
+    pub fn principal_get(
         &self,
         id: &str,
         properties: Option<impl IntoIterator<Item = Property>>,
@@ -211,11 +175,10 @@ impl Client {
         }
         request
             .send_single::<PrincipalGetResponse>()
-            .await
             .map(|mut r| r.take_list().pop())
     }
 
-    pub async fn principal_query(
+    pub fn principal_query(
         &self,
         filter: Option<impl Into<Filter<super::query::Filter>>>,
         sort: Option<impl IntoIterator<Item = Comparator<super::query::Comparator>>>,
@@ -228,10 +191,10 @@ impl Client {
         if let Some(sort) = sort {
             query_request.sort(sort.into_iter());
         }
-        request.send_single::<QueryResponse>().await
+        request.send_single::<QueryResponse>()
     }
 
-    pub async fn principal_changes(
+    pub fn principal_changes(
         &self,
         since_state: impl Into<String>,
         max_changes: usize,
@@ -240,7 +203,7 @@ impl Client {
         request
             .changes_principal(since_state)
             .max_changes(max_changes);
-        request.send_single().await
+        request.send_single()
     }
 }
 
@@ -253,8 +216,8 @@ impl Request<'_> {
         .principal_get_mut()
     }
 
-    pub async fn send_get_principal(self) -> crate::Result<PrincipalGetResponse> {
-        self.send_single().await
+    pub fn send_get_principal(self) -> crate::Result<PrincipalGetResponse> {
+        self.send_single()
     }
 
     pub fn changes_principal(&mut self, since_state: impl Into<String>) -> &mut ChangesRequest {
@@ -265,8 +228,8 @@ impl Request<'_> {
         .changes_mut()
     }
 
-    pub async fn send_changes_principal(self) -> crate::Result<ChangesResponse<Principal<Get>>> {
-        self.send_single().await
+    pub fn send_changes_principal(self) -> crate::Result<ChangesResponse<Principal<Get>>> {
+        self.send_single()
     }
 
     pub fn query_principal(&mut self) -> &mut QueryRequest<Principal<Set>> {
@@ -277,8 +240,8 @@ impl Request<'_> {
         .principal_query_mut()
     }
 
-    pub async fn send_query_principal(self) -> crate::Result<QueryResponse> {
-        self.send_single().await
+    pub fn send_query_principal(self) -> crate::Result<QueryResponse> {
+        self.send_single()
     }
 
     pub fn query_principal_changes(
@@ -295,8 +258,8 @@ impl Request<'_> {
         .principal_query_changes_mut()
     }
 
-    pub async fn send_query_principal_changes(self) -> crate::Result<QueryChangesResponse> {
-        self.send_single().await
+    pub fn send_query_principal_changes(self) -> crate::Result<QueryChangesResponse> {
+        self.send_single()
     }
 
     pub fn set_principal(&mut self) -> &mut SetRequest<Principal<Set>> {
@@ -307,7 +270,7 @@ impl Request<'_> {
         .principal_set_mut()
     }
 
-    pub async fn send_set_principal(self) -> crate::Result<PrincipalSetResponse> {
-        self.send_single().await
+    pub fn send_set_principal(self) -> crate::Result<PrincipalSetResponse> {
+        self.send_single()
     }
 }

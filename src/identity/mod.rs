@@ -1,5 +1,8 @@
 pub mod get;
+#[cfg(feature = "async")]
 pub mod helpers;
+#[cfg(feature = "blocking")]
+pub mod helpers_blocking;
 pub mod set;
 
 use std::fmt::Display;

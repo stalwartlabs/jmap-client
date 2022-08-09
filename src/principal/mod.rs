@@ -1,5 +1,8 @@
 pub mod get;
+#[cfg(feature = "async")]
 pub mod helpers;
+#[cfg(feature = "blocking")]
+pub mod helpers_blocking;
 pub mod query;
 pub mod set;
 
@@ -23,33 +26,51 @@ pub struct Principal<State = Get> {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     id: Option<String>,
+
     #[serde(rename = "type")]
     #[serde(skip_serializing_if = "Option::is_none")]
     ptype: Option<Type>,
+
     #[serde(skip_serializing_if = "string_not_set")]
     name: Option<String>,
+
     #[serde(skip_serializing_if = "string_not_set")]
     description: Option<String>,
+
     #[serde(skip_serializing_if = "string_not_set")]
     email: Option<String>,
+
     #[serde(skip_serializing_if = "string_not_set")]
     timezone: Option<String>,
+
     #[serde(skip_serializing_if = "list_not_set")]
     capabilities: Option<Vec<String>>,
+
     #[serde(skip_serializing_if = "list_not_set")]
     aliases: Option<Vec<String>>,
+
     #[serde(skip_serializing_if = "string_not_set")]
     secret: Option<String>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     dkim: Option<DKIM>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     quota: Option<u32>,
+
     #[serde(skip_serializing_if = "string_not_set")]
     picture: Option<String>,
+
     #[serde(skip_serializing_if = "list_not_set")]
     members: Option<Vec<String>>,
+
     #[serde(skip_serializing_if = "map_not_set")]
     acl: Option<AHashMap<String, Vec<ACL>>>,
+
+    #[serde(flatten)]
+    #[serde(skip_deserializing)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    property_patch: Option<AHashMap<String, bool>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Copy)]
@@ -129,9 +150,26 @@ pub enum Type {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DKIM {
     #[serde(rename = "dkimSelector")]
-    pub dkim_selector: Option<String>,
+    dkim_selector: Option<String>,
     #[serde(rename = "dkimExpiration")]
-    pub dkim_expiration: Option<i64>,
+    dkim_expiration: Option<i64>,
+}
+
+impl DKIM {
+    pub fn new(dkim_selector: Option<String>, dkim_expiration: Option<i64>) -> DKIM {
+        DKIM {
+            dkim_selector,
+            dkim_expiration,
+        }
+    }
+
+    pub fn selector(&self) -> Option<&str> {
+        self.dkim_selector.as_deref()
+    }
+
+    pub fn expiration(&self) -> Option<i64> {
+        self.dkim_expiration
+    }
 }
 
 impl Display for Property {
