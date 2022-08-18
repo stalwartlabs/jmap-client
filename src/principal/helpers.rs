@@ -12,7 +12,7 @@ use crate::{
     Get, Method, Set,
 };
 
-use super::{Principal, Property, Type};
+use super::{Principal, Property, Type, DKIM};
 
 impl Client {
     pub async fn individual_create(
@@ -50,6 +50,25 @@ impl Client {
             .send_single::<PrincipalSetResponse>()
             .await?
             .created(&id)
+    }
+
+    pub async fn domain_enable_dkim(
+        &self,
+        id: &str,
+        key: impl Into<String>,
+        selector: impl Into<String>,
+        expiration: Option<i64>,
+    ) -> crate::Result<Option<Principal>> {
+        let mut request = self.build();
+        request
+            .set_principal()
+            .update(id)
+            .secret(key)
+            .dkim(DKIM::new(Some(selector), expiration));
+        request
+            .send_single::<PrincipalSetResponse>()
+            .await?
+            .updated(id)
     }
 
     pub async fn list_create(

@@ -82,7 +82,7 @@ where
     properties: Option<Vec<U>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
 pub enum SetErrorType {
     #[serde(rename = "forbidden")]
     Forbidden,

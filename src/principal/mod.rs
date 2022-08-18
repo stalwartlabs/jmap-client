@@ -156,9 +156,9 @@ pub struct DKIM {
 }
 
 impl DKIM {
-    pub fn new(dkim_selector: Option<String>, dkim_expiration: Option<i64>) -> DKIM {
+    pub fn new(dkim_selector: Option<impl Into<String>>, dkim_expiration: Option<i64>) -> DKIM {
         DKIM {
-            dkim_selector,
+            dkim_selector: dkim_selector.map(Into::into),
             dkim_expiration,
         }
     }
