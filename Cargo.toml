@@ -7,7 +7,7 @@ authors = [ "Stalwart Labs Ltd. <hello@stalw.art>"]
 license = "Apache-2.0 OR MIT"
 repository = "https://github.com/stalwartlabs/jmap-client"
 homepage = "https://github.com/stalwartlabs/jmap-client"
-keywords = ["jmap", "email", "mime", "mail", "e-mail"]
+keywords = ["jmap", "email", "mail", "e-mail"]
 categories = ["email"]
 readme = "README.md"
 
