@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::{Object, RequestParams};
+use crate::Method;
+
+use super::{request::ResultReference, Object, RequestParams};
 
 pub trait ChangesObject: Object {
     type ChangesResponse;
@@ -8,6 +10,9 @@ pub trait ChangesObject: Object {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ChangesRequest {
+    #[serde(skip)]
+    method: (Method, usize),
+
     #[serde(rename = "accountId")]
     account_id: String,
 
@@ -46,6 +51,7 @@ pub struct ChangesResponse<O: ChangesObject> {
 impl ChangesRequest {
     pub fn new(params: RequestParams, since_state: String) -> Self {
         ChangesRequest {
+            method: (params.method, params.call_id),
             account_id: params.account_id,
             since_state,
             max_changes: None,
@@ -60,6 +66,18 @@ impl ChangesRequest {
     pub fn max_changes(&mut self, max_changes: usize) -> &mut Self {
         self.max_changes = Some(max_changes);
         self
+    }
+
+    pub fn created_reference(&self) -> ResultReference {
+        ResultReference::new(self.method.0, self.method.1, "/created")
+    }
+
+    pub fn updated_reference(&self) -> ResultReference {
+        ResultReference::new(self.method.0, self.method.1, "/updated")
+    }
+
+    pub fn updated_properties_reference(&self) -> ResultReference {
+        ResultReference::new(self.method.0, self.method.1, "/updatedProperties")
     }
 }
 

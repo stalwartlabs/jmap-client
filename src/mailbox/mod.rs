@@ -131,7 +131,7 @@ impl Default for Role {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct MailboxRights {
     #[serde(rename = "mayReadItems")]
     may_read_items: bool,

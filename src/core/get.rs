@@ -28,6 +28,11 @@ pub struct GetRequest<O: GetObject> {
     #[serde(skip_serializing_if = "Option::is_none")]
     properties: Option<Vec<O::Property>>,
 
+    #[serde(rename = "#properties")]
+    #[serde(skip_deserializing)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    properties_ref: Option<ResultReference>,
+
     #[serde(flatten)]
     arguments: O::GetArguments,
 }
@@ -57,6 +62,7 @@ impl<O: GetObject> GetRequest<O> {
             ids: None,
             ids_ref: None,
             properties: None,
+            properties_ref: None,
             arguments: O::GetArguments::default(),
         }
     }
@@ -86,6 +92,13 @@ impl<O: GetObject> GetRequest<O> {
 
     pub fn properties(&mut self, properties: impl IntoIterator<Item = O::Property>) -> &mut Self {
         self.properties = Some(properties.into_iter().collect());
+        self.properties_ref = None;
+        self
+    }
+
+    pub fn properties_ref(&mut self, reference: ResultReference) -> &mut Self {
+        self.properties_ref = Some(reference);
+        self.properties = None;
         self
     }
 

@@ -112,6 +112,7 @@ impl ClientBuilder {
         let trusted_hosts = Arc::new(self.trusted_hosts);
 
         let trusted_hosts_ = trusted_hosts.clone();
+        let session_url = format!("{}/.well-known/jmap", url);
         let session: Session = serde_json::from_slice(
             &Client::handle_error(
                 reqwest::Client::builder()
@@ -132,7 +133,7 @@ impl ClientBuilder {
                     }))
                     .default_headers(headers.clone())
                     .build()?
-                    .get(url)
+                    .get(&session_url)
                     .send()
                     .await?,
             )
@@ -159,7 +160,7 @@ impl ClientBuilder {
             event_source_url: URLPart::parse(session.event_source_url())?,
             api_url: session.api_url().to_string(),
             session: parking_lot::Mutex::new(Arc::new(session)),
-            session_url: url.to_string(),
+            session_url,
             session_updated: true.into(),
             trusted_hosts,
             #[cfg(feature = "websockets")]
@@ -191,6 +192,7 @@ impl ClientBuilder {
         let trusted_hosts = Arc::new(self.trusted_hosts);
 
         let trusted_hosts_ = trusted_hosts.clone();
+        let session_url = format!("{}/.well-known/jmap", url);
         let session: Session = serde_json::from_slice(
             &Client::handle_error(
                 reqwest::blocking::Client::builder()
@@ -211,7 +213,7 @@ impl ClientBuilder {
                     }))
                     .default_headers(headers.clone())
                     .build()?
-                    .get(url)
+                    .get(&session_url)
                     .send()
                     ?,
             )?
@@ -236,7 +238,7 @@ impl ClientBuilder {
             event_source_url: URLPart::parse(session.event_source_url())?,
             api_url: session.api_url().to_string(),
             session: parking_lot::Mutex::new(Arc::new(session)),
-            session_url: url.to_string(),
+            session_url,
             session_updated: true.into(),
             trusted_hosts,
             #[cfg(feature = "websockets")]
