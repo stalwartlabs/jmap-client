@@ -547,7 +547,5 @@ mod tests {
             }, "t2" ]]}"#,
         )
         .unwrap();
-
-        //println!("{:?}", r);
     }
 }
