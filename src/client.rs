@@ -68,6 +68,7 @@ pub struct Client {
 pub struct ClientBuilder {
     credentials: Option<Credentials>,
     trusted_hosts: AHashSet<String>,
+    forwarded_for: Option<String>,
     timeout: u64,
 }
 
@@ -83,6 +84,7 @@ impl ClientBuilder {
             credentials: None,
             trusted_hosts: AHashSet::new(),
             timeout: DEFAULT_TIMEOUT_MS,
+            forwarded_for: None,
         }
     }
 
@@ -104,6 +106,11 @@ impl ClientBuilder {
         self
     }
 
+    pub fn forwarded_for(mut self, forwarded_for: impl ToString) -> Self {
+        self.forwarded_for = Some(forwarded_for.to_string());
+        self
+    }
+
     #[cfg(feature = "async")]
     pub async fn connect(self, url: &str) -> crate::Result<Client> {
         let authorization = match self.credentials.expect("Missing credentials") {
@@ -119,6 +126,12 @@ impl ClientBuilder {
             header::AUTHORIZATION,
             header::HeaderValue::from_str(&authorization).unwrap(),
         );
+        if let Some(forwarded_for) = self.forwarded_for {
+            headers.insert(
+                header::FORWARDED,
+                header::HeaderValue::from_str(&format!("for={}", forwarded_for)).unwrap(),
+            );
+        }
 
         let trusted_hosts = Arc::new(self.trusted_hosts);
 
@@ -199,6 +212,12 @@ impl ClientBuilder {
             header::AUTHORIZATION,
             header::HeaderValue::from_str(&authorization).unwrap(),
         );
+        if let Some(forwarded_for) = self.forwarded_for {
+            headers.insert(
+                header::FORWARDED,
+                header::HeaderValue::from_str(&format!("for={}", forwarded_for)).unwrap(),
+            );
+        }
 
         let trusted_hosts = Arc::new(self.trusted_hosts);
 
