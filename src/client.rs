@@ -10,6 +10,7 @@
  */
 
 use std::{
+    net::IpAddr,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
@@ -106,8 +107,11 @@ impl ClientBuilder {
         self
     }
 
-    pub fn forwarded_for(mut self, forwarded_for: impl ToString) -> Self {
-        self.forwarded_for = Some(forwarded_for.to_string());
+    pub fn forwarded_for(mut self, forwarded_for: IpAddr) -> Self {
+        self.forwarded_for = Some(match forwarded_for {
+            IpAddr::V4(addr) => format!("for={}", addr),
+            IpAddr::V6(addr) => format!("for=\"{}\"", addr),
+        });
         self
     }
 
@@ -129,7 +133,7 @@ impl ClientBuilder {
         if let Some(forwarded_for) = self.forwarded_for {
             headers.insert(
                 header::FORWARDED,
-                header::HeaderValue::from_str(&format!("for={}", forwarded_for)).unwrap(),
+                header::HeaderValue::from_str(&forwarded_for).unwrap(),
             );
         }
 
@@ -215,7 +219,7 @@ impl ClientBuilder {
         if let Some(forwarded_for) = self.forwarded_for {
             headers.insert(
                 header::FORWARDED,
-                header::HeaderValue::from_str(&format!("for={}", forwarded_for)).unwrap(),
+                header::HeaderValue::from_str(&forwarded_for).unwrap(),
             );
         }
 
