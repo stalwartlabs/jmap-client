@@ -22,120 +22,120 @@ Features:
 ## Usage Example
 
 ```rust
-    // Connect to the JMAP server using Basic authentication.
-    // (just for demonstration purposes, Bearer tokens should be used instead)
-    let client = Client::new()
-        .credentials(("john@example.org", "secret"))
-        .connect("https://jmap.example.org")
-        .await
-        .unwrap();
+// Connect to the JMAP server using Basic authentication.
+// (just for demonstration purposes, Bearer tokens should be used instead)
+let client = Client::new()
+    .credentials(("john@example.org", "secret"))
+    .connect("https://jmap.example.org")
+    .await
+    .unwrap();
 
-    // Create a mailbox.
-    let mailbox_id = client
-        .mailbox_create("My Mailbox", None::<String>, Role::None)
-        .await
-        .unwrap()
-        .take_id();
+// Create a mailbox.
+let mailbox_id = client
+    .mailbox_create("My Mailbox", None::<String>, Role::None)
+    .await
+    .unwrap()
+    .take_id();
 
-    // Import a message into the mailbox.
-    client
-        .email_import(
-            b"From: john@example.org\nSubject: test\n\n test".to_vec(),
-            [&mailbox_id],
-            ["$draft"].into(),
-            None,
-        )
-        .await
-        .unwrap();
+// Import a message into the mailbox.
+client
+    .email_import(
+        b"From: john@example.org\nSubject: test\n\n test".to_vec(),
+        [&mailbox_id],
+        ["$draft"].into(),
+        None,
+    )
+    .await
+    .unwrap();
 
-    // Obtain all e-mail ids matching a filter.
-    let email_id = client
-        .email_query(
-            Filter::and([
-                email::query::Filter::subject("test"),
-                email::query::Filter::in_mailbox(&mailbox_id),
-                email::query::Filter::has_keyword("$draft"),
-            ])
-            .into(),
-            [email::query::Comparator::from()].into(),
-        )
-        .await
-        .unwrap()
-        .take_ids()
-        .pop()
-        .unwrap();
+// Obtain all e-mail ids matching a filter.
+let email_id = client
+    .email_query(
+        Filter::and([
+            email::query::Filter::subject("test"),
+            email::query::Filter::in_mailbox(&mailbox_id),
+            email::query::Filter::has_keyword("$draft"),
+        ])
+        .into(),
+        [email::query::Comparator::from()].into(),
+    )
+    .await
+    .unwrap()
+    .take_ids()
+    .pop()
+    .unwrap();
 
-    // Fetch an e-mail message.
-    let email = client
-        .email_get(
-            &email_id,
-            [Property::Subject, Property::Preview, Property::Keywords].into(),
-        )
-        .await
-        .unwrap()
-        .unwrap();
-    assert_eq!(email.preview().unwrap(), "test");
-    assert_eq!(email.subject().unwrap(), "test");
-    assert_eq!(email.keywords(), ["$draft"]);
+// Fetch an e-mail message.
+let email = client
+    .email_get(
+        &email_id,
+        [Property::Subject, Property::Preview, Property::Keywords].into(),
+    )
+    .await
+    .unwrap()
+    .unwrap();
+assert_eq!(email.preview().unwrap(), "test");
+assert_eq!(email.subject().unwrap(), "test");
+assert_eq!(email.keywords(), ["$draft"]);
 
-    // Fetch only the updated properties of all mailboxes that changed
-    // since a state.
-    let mut request = client.build();
-    let changes_request = request.changes_mailbox("n").max_changes(0);
-    let properties_ref = changes_request.updated_properties_reference();
-    let updated_ref = changes_request.updated_reference();
-    request
-        .get_mailbox()
-        .ids_ref(updated_ref)
-        .properties_ref(properties_ref);
-    for mailbox in request
-        .send()
-        .await
-        .unwrap()
-        .unwrap_method_responses()
-        .pop()
-        .unwrap()
-        .unwrap_get_mailbox()
-        .unwrap()
-        .take_list()
-    {
-        println!("Changed mailbox: {:#?}", mailbox);
-    }
+// Fetch only the updated properties of all mailboxes that changed
+// since a state.
+let mut request = client.build();
+let changes_request = request.changes_mailbox("n").max_changes(0);
+let properties_ref = changes_request.updated_properties_reference();
+let updated_ref = changes_request.updated_reference();
+request
+    .get_mailbox()
+    .ids_ref(updated_ref)
+    .properties_ref(properties_ref);
+for mailbox in request
+    .send()
+    .await
+    .unwrap()
+    .unwrap_method_responses()
+    .pop()
+    .unwrap()
+    .unwrap_get_mailbox()
+    .unwrap()
+    .take_list()
+{
+    println!("Changed mailbox: {:#?}", mailbox);
+}
 
-    // Delete the mailbox including any messages
-    client.mailbox_destroy(&mailbox_id, true).await.unwrap();
+// Delete the mailbox including any messages
+client.mailbox_destroy(&mailbox_id, true).await.unwrap();
 
-    // Open an EventSource connection with the JMAP server.
-    let mut stream = client
-        .event_source(
-            [
-                TypeState::Email,
-                TypeState::EmailDelivery,
-                TypeState::Mailbox,
-                TypeState::EmailSubmission,
-                TypeState::Identity,
-            ]
-            .into(),
-            false,
-            60.into(),
-            None,
-        )
-        .await
-        .unwrap();
+// Open an EventSource connection with the JMAP server.
+let mut stream = client
+    .event_source(
+        [
+            TypeState::Email,
+            TypeState::EmailDelivery,
+            TypeState::Mailbox,
+            TypeState::EmailSubmission,
+            TypeState::Identity,
+        ]
+        .into(),
+        false,
+        60.into(),
+        None,
+    )
+    .await
+    .unwrap();
 
-    // Consume events received over EventSource.
-    while let Some(event) = stream.next().await {
-        let changes = event.unwrap();
-        println!("-> Change id: {:?}", changes.id());
-        for account_id in changes.changed_accounts() {
-            println!(" Account {} has changes:", account_id);
-            if let Some(account_changes) = changes.changes(account_id) {
-                for (type_state, state_id) in account_changes {
-                    println!("   Type {:?} has a new state {}.", type_state, state_id);
-                }
+// Consume events received over EventSource.
+while let Some(event) = stream.next().await {
+    let changes = event.unwrap();
+    println!("-> Change id: {:?}", changes.id());
+    for account_id in changes.changed_accounts() {
+        println!(" Account {} has changes:", account_id);
+        if let Some(account_changes) = changes.changes(account_id) {
+            for (type_state, state_id) in account_changes {
+                println!("   Type {:?} has a new state {}.", type_state, state_id);
             }
         }
     }
+}
 ```
 
 More examples available under the [examples](examples) directory. 
