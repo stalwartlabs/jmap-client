@@ -150,7 +150,15 @@ impl ClientBuilder {
                             attempt.error("Too many redirects.")
                         } else if matches!( attempt.url().host_str(), Some(host) if trusted_hosts_.contains(host) )
                         {
-                            attempt.follow_trusted()
+                            #[cfg(feature = "follow-trusted")]
+                            {
+                                attempt.follow_trusted()
+                            }
+                            
+                            #[cfg(not(feature = "follow-trusted"))]
+                            {
+                                attempt.follow()
+                            }
                         } else {
                             let message = format!(
                                 "Aborting redirect request to unknown host '{}'.",
@@ -328,7 +336,15 @@ impl Client {
                 attempt.error("Too many redirects.")
             } else if matches!( attempt.url().host_str(), Some(host) if trusted_hosts.contains(host) )
             {
-                attempt.follow_trusted()
+                #[cfg(feature = "follow-trusted")]
+                {
+                    attempt.follow_trusted()
+                }
+                
+                #[cfg(not(feature = "follow-trusted"))]
+                {
+                    attempt.follow()
+                }
             } else {
                 let message = format!(
                     "Aborting redirect request to unknown host '{}'.",

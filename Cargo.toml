@@ -29,6 +29,7 @@ default = ["async"]
 async = ["futures-util", "async-stream", "reqwest/stream"]
 websockets = ["tokio", "tokio-tungstenite"]
 blocking = ["reqwest/blocking"]
+follow-trusted = []
 debug = []
 
 [lib]
