@@ -31,5 +31,8 @@ websockets = ["tokio", "tokio-tungstenite"]
 blocking = ["reqwest/blocking"]
 debug = []
 
+[lib]
+doctest = false
+
 [profile.bench]
 debug = true

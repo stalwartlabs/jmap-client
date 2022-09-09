@@ -13,11 +13,15 @@
  * except according to those terms.
  */
 
+#[cfg(feature = "websockets")]
 use futures_util::StreamExt;
+#[cfg(feature = "websockets")]
 use jmap_client::{client::Client, client_ws::WebSocketMessage, core::set::SetObject};
+#[cfg(feature = "websockets")]
 use tokio::sync::mpsc;
 
 // Make sure the "websockets" feature is enabled!
+#[cfg(feature = "websockets")]
 async fn websocket() {
     // Connect to the JMAP server using Basic authentication
     let client = Client::new()
@@ -82,5 +86,6 @@ async fn websocket() {
 }
 
 fn main() {
+    #[cfg(feature = "websockets")]
     let _c = websocket();
 }
