@@ -68,6 +68,7 @@ pub enum Capabilities {
     Mail(MailCapabilities),
     Submission(SubmissionCapabilities),
     WebSocket(WebSocketCapabilities),
+    Sieve(SieveCapabilities),
     Empty(EmptyCapabilities),
     Other(serde_json::Value),
 }
@@ -105,6 +106,24 @@ pub struct WebSocketCapabilities {
     url: String,
     #[serde(rename = "supportsPush")]
     supports_push: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SieveCapabilities {
+    #[serde(rename(serialize = "maxSizeScriptName"))]
+    max_script_name: Option<usize>,
+    #[serde(rename(serialize = "maxSizeScript"))]
+    max_script_size: Option<usize>,
+    #[serde(rename(serialize = "maxNumberScripts"))]
+    max_scripts: Option<usize>,
+    #[serde(rename(serialize = "maxNumberRedirects"))]
+    max_redirects: Option<usize>,
+    #[serde(rename(serialize = "sieveExtensions"))]
+    extensions: Vec<String>,
+    #[serde(rename(serialize = "notificationMethods"))]
+    notification_methods: Option<Vec<String>>,
+    #[serde(rename(serialize = "externalLists"))]
+    ext_lists: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -155,6 +174,15 @@ impl Session {
             .get(URI::Submission.as_ref())
             .and_then(|v| match v {
                 Capabilities::Submission(capabilities) => Some(capabilities),
+                _ => None,
+            })
+    }
+
+    pub fn sieve_capabilities(&self) -> Option<&SieveCapabilities> {
+        self.capabilities
+            .get(URI::Sieve.as_ref())
+            .and_then(|v| match v {
+                Capabilities::Sieve(capabilities) => Some(capabilities),
                 _ => None,
             })
     }
@@ -259,6 +287,36 @@ impl WebSocketCapabilities {
 
     pub fn supports_push(&self) -> bool {
         self.supports_push
+    }
+}
+
+impl SieveCapabilities {
+    pub fn max_script_name_size(&self) -> usize {
+        self.max_script_name.unwrap_or(512)
+    }
+
+    pub fn max_script_size(&self) -> Option<usize> {
+        self.max_script_size
+    }
+
+    pub fn max_number_scripts(&self) -> Option<usize> {
+        self.max_scripts
+    }
+
+    pub fn max_number_redirects(&self) -> Option<usize> {
+        self.max_redirects
+    }
+
+    pub fn sieve_extensions(&self) -> &[String] {
+        &self.extensions
+    }
+
+    pub fn notification_methods(&self) -> Option<&[String]> {
+        self.notification_methods.as_deref()
+    }
+
+    pub fn external_lists(&self) -> Option<&[String]> {
+        self.ext_lists.as_deref()
     }
 }
 

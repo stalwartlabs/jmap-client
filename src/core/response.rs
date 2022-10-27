@@ -24,6 +24,7 @@ use crate::{
     mailbox::Mailbox,
     principal::Principal,
     push_subscription::PushSubscription,
+    sieve::{validate::SieveScriptValidateResponse, SieveScript},
     thread::Thread,
     vacation_response::VacationResponse,
     Get, Method,
@@ -132,6 +133,8 @@ pub type EmailSubmissionGetResponse = GetResponse<EmailSubmission<Get>>;
 pub type EmailSubmissionChangesResponse = ChangesResponse<EmailSubmission<Get>>;
 pub type VacationResponseGetResponse = GetResponse<VacationResponse<Get>>;
 pub type VacationResponseSetResponse = SetResponse<VacationResponse<Get>>;
+pub type SieveScriptGetResponse = GetResponse<SieveScript<Get>>;
+pub type SieveScriptSetResponse = SetResponse<SieveScript<Get>>;
 pub type PrincipalChangesResponse = ChangesResponse<Principal<Get>>;
 pub type PrincipalSetResponse = SetResponse<Principal<Get>>;
 pub type PrincipalGetResponse = GetResponse<Principal<Get>>;
@@ -173,6 +176,10 @@ pub enum MethodResponse {
     SetEmailSubmission(EmailSubmissionSetResponse),
     GetVacationResponse(VacationResponseGetResponse),
     SetVacationResponse(VacationResponseSetResponse),
+    GetSieveScript(SieveScriptGetResponse),
+    QuerySieveScript(QueryResponse),
+    SetSieveScript(SieveScriptSetResponse),
+    ValidateSieveScript(SieveScriptValidateResponse),
 
     GetPrincipal(PrincipalGetResponse),
     ChangesPrincipal(PrincipalChangesResponse),
@@ -257,6 +264,16 @@ impl TaggedMethodResponse {
                     MethodResponse::SetVacationResponse(_),
                     Method::SetVacationResponse
                 )
+                | (MethodResponse::GetSieveScript(_), Method::GetSieveScript)
+                | (
+                    MethodResponse::ValidateSieveScript(_),
+                    Method::ValidateSieveScript
+                )
+                | (
+                    MethodResponse::QuerySieveScript(_),
+                    Method::QuerySieveScript
+                )
+                | (MethodResponse::SetSieveScript(_), Method::SetSieveScript)
                 | (MethodResponse::GetPrincipal(_), Method::GetPrincipal)
                 | (
                     MethodResponse::ChangesPrincipal(_),
@@ -509,6 +526,38 @@ impl TaggedMethodResponse {
         }
     }
 
+    pub fn unwrap_get_sieve_script(self) -> crate::Result<SieveScriptGetResponse> {
+        match self.response {
+            MethodResponse::GetSieveScript(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
+        }
+    }
+
+    pub fn unwrap_validate_sieve_script(self) -> crate::Result<SieveScriptValidateResponse> {
+        match self.response {
+            MethodResponse::ValidateSieveScript(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
+        }
+    }
+
+    pub fn unwrap_set_sieve_script(self) -> crate::Result<SieveScriptSetResponse> {
+        match self.response {
+            MethodResponse::SetSieveScript(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
+        }
+    }
+
+    pub fn unwrap_query_sieve_script(self) -> crate::Result<QueryResponse> {
+        match self.response {
+            MethodResponse::QuerySieveScript(response) => Ok(response),
+            MethodResponse::Error(err) => Err(err.into()),
+            _ => Err("Response type mismatch".into()),
+        }
+    }
+
     pub fn unwrap_get_principal(self) -> crate::Result<PrincipalGetResponse> {
         match self.response {
             MethodResponse::GetPrincipal(response) => Ok(response),
@@ -705,6 +754,22 @@ impl<'de> Visitor<'de> for TaggedMethodResponseVisitor {
                     .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
             ),
             Method::SetVacationResponse => MethodResponse::SetVacationResponse(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::GetSieveScript => MethodResponse::GetSieveScript(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::SetSieveScript => MethodResponse::SetSieveScript(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::QuerySieveScript => MethodResponse::QuerySieveScript(
+                seq.next_element()?
+                    .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
+            ),
+            Method::ValidateSieveScript => MethodResponse::ValidateSieveScript(
                 seq.next_element()?
                     .ok_or_else(|| serde::de::Error::custom("Expected a method response"))?,
             ),

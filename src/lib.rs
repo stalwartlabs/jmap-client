@@ -21,6 +21,7 @@
 //! - JMAP Core ([RFC 8620](https://datatracker.ietf.org/doc/html/rfc8620))
 //! - JMAP for Mail ([RFC 8621](https://datatracker.ietf.org/doc/html/rfc8621))
 //! - JMAP over WebSocket ([RFC 8887](https://datatracker.ietf.org/doc/html/rfc8887)).
+//! - JMAP for Sieve Scripts ([DRAFT-SIEVE-12](https://www.ietf.org/archive/id/draft-ietf-jmap-sieve-12.html)).
 //!
 //! Features:
 //!
@@ -191,6 +192,7 @@ pub mod identity;
 pub mod mailbox;
 pub mod principal;
 pub mod push_subscription;
+pub mod sieve;
 pub mod thread;
 pub mod vacation_response;
 
@@ -220,6 +222,8 @@ pub enum URI {
     Calendars,
     #[serde(rename = "urn:ietf:params:jmap:websocket")]
     WebSocket,
+    #[serde(rename = "urn:ietf:params:jmap:sieve")]
+    Sieve,
     #[serde(rename = "urn:ietf:params:jmap:principals")]
     Principals,
     #[serde(rename = "urn:ietf:params:jmap:principals:owner")]
@@ -236,6 +240,7 @@ impl AsRef<str> for URI {
             URI::Contacts => "urn:ietf:params:jmap:contacts",
             URI::Calendars => "urn:ietf:params:jmap:calendars",
             URI::WebSocket => "urn:ietf:params:jmap:websocket",
+            URI::Sieve => "urn:ietf:params:jmap:sieve",
             URI::Principals => "urn:ietf:params:jmap:principals",
             URI::PrincipalsOwner => "urn:ietf:params:jmap:principals:owner",
         }
@@ -304,6 +309,14 @@ pub enum Method {
     GetVacationResponse,
     #[serde(rename = "VacationResponse/set")]
     SetVacationResponse,
+    #[serde(rename = "SieveScript/get")]
+    GetSieveScript,
+    #[serde(rename = "SieveScript/set")]
+    SetSieveScript,
+    #[serde(rename = "SieveScript/query")]
+    QuerySieveScript,
+    #[serde(rename = "SieveScript/validate")]
+    ValidateSieveScript,
     #[serde(rename = "Principal/get")]
     GetPrincipal,
     #[serde(rename = "Principal/changes")]

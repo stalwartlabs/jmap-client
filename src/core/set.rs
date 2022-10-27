@@ -139,6 +139,12 @@ pub enum SetErrorType {
     ForbiddenToSend,
     #[serde(rename = "cannotUnsend")]
     CannotUnsend,
+    #[serde(rename = "alreadyExists")]
+    AlreadyExists,
+    #[serde(rename = "invalidScript")]
+    InvalidScript,
+    #[serde(rename = "scriptIsActive")]
+    ScriptIsActive,
 }
 
 impl<O: SetObject> SetRequest<O> {
@@ -325,6 +331,24 @@ impl<O: SetObject> SetResponse<O> {
     pub fn has_destroyed(&self) -> bool {
         self.destroyed.as_ref().map_or(false, |m| !m.is_empty())
     }
+
+    pub fn unwrap_update_errors(&self) -> crate::Result<()> {
+        if let Some(errors) = &self.not_updated {
+            if let Some(err) = errors.values().next() {
+                return Err(err.to_string_error().into());
+            }
+        }
+        Ok(())
+    }
+
+    pub fn unwrap_create_errors(&self) -> crate::Result<()> {
+        if let Some(errors) = &self.not_created {
+            if let Some(err) = errors.values().next() {
+                return Err(err.to_string_error().into());
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<U: Display> SetError<U> {
@@ -376,28 +400,31 @@ impl<U: Display> Display for SetError<U> {
 impl Display for SetErrorType {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            SetErrorType::Forbidden => write!(f, "Forbidden"),
-            SetErrorType::OverQuota => write!(f, "OverQuota"),
-            SetErrorType::TooLarge => write!(f, "TooLarge"),
-            SetErrorType::RateLimit => write!(f, "RateLimit"),
-            SetErrorType::NotFound => write!(f, "NotFound"),
-            SetErrorType::InvalidPatch => write!(f, "InvalidPatch"),
-            SetErrorType::WillDestroy => write!(f, "WillDestroy"),
-            SetErrorType::InvalidProperties => write!(f, "InvalidProperties"),
-            SetErrorType::Singleton => write!(f, "Singleton"),
-            SetErrorType::MailboxHasChild => write!(f, "MailboxHasChild"),
-            SetErrorType::MailboxHasEmail => write!(f, "MailboxHasEmail"),
-            SetErrorType::BlobNotFound => write!(f, "BlobNotFound"),
-            SetErrorType::TooManyKeywords => write!(f, "TooManyKeywords"),
-            SetErrorType::TooManyMailboxes => write!(f, "TooManyMailboxes"),
-            SetErrorType::ForbiddenFrom => write!(f, "ForbiddenFrom"),
-            SetErrorType::InvalidEmail => write!(f, "InvalidEmail"),
-            SetErrorType::TooManyRecipients => write!(f, "TooManyRecipients"),
-            SetErrorType::NoRecipients => write!(f, "NoRecipients"),
-            SetErrorType::InvalidRecipients => write!(f, "InvalidRecipients"),
-            SetErrorType::ForbiddenMailFrom => write!(f, "ForbiddenMailFrom"),
-            SetErrorType::ForbiddenToSend => write!(f, "ForbiddenToSend"),
-            SetErrorType::CannotUnsend => write!(f, "CannotUnsend"),
+            SetErrorType::Forbidden => write!(f, "forbidden"),
+            SetErrorType::OverQuota => write!(f, "overQuota"),
+            SetErrorType::TooLarge => write!(f, "tooLarge"),
+            SetErrorType::RateLimit => write!(f, "rateLimit"),
+            SetErrorType::NotFound => write!(f, "notFound"),
+            SetErrorType::InvalidPatch => write!(f, "invalidPatch"),
+            SetErrorType::WillDestroy => write!(f, "willDestroy"),
+            SetErrorType::InvalidProperties => write!(f, "invalidProperties"),
+            SetErrorType::Singleton => write!(f, "singleton"),
+            SetErrorType::MailboxHasChild => write!(f, "mailboxHasChild"),
+            SetErrorType::MailboxHasEmail => write!(f, "mailboxHasEmail"),
+            SetErrorType::BlobNotFound => write!(f, "blobNotFound"),
+            SetErrorType::TooManyKeywords => write!(f, "tooManyKeywords"),
+            SetErrorType::TooManyMailboxes => write!(f, "tooManyMailboxes"),
+            SetErrorType::ForbiddenFrom => write!(f, "forbiddenFrom"),
+            SetErrorType::InvalidEmail => write!(f, "invalidEmail"),
+            SetErrorType::TooManyRecipients => write!(f, "tooManyRecipients"),
+            SetErrorType::NoRecipients => write!(f, "noRecipients"),
+            SetErrorType::InvalidRecipients => write!(f, "invalidRecipients"),
+            SetErrorType::ForbiddenMailFrom => write!(f, "forbiddenMailFrom"),
+            SetErrorType::ForbiddenToSend => write!(f, "forbiddenToSend"),
+            SetErrorType::CannotUnsend => write!(f, "cannotUnsend"),
+            SetErrorType::AlreadyExists => write!(f, "alreadyExists"),
+            SetErrorType::InvalidScript => write!(f, "invalidScript"),
+            SetErrorType::ScriptIsActive => write!(f, "scriptIsActive"),
         }
     }
 }

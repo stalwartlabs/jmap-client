@@ -101,7 +101,7 @@ impl Client {
 
     pub async fn vacation_response_get(
         &self,
-        properties: Option<Vec<Property>>,
+        properties: Option<impl IntoIterator<Item = Property>>,
     ) -> crate::Result<Option<VacationResponse>> {
         let mut request = self.build();
         let get_request = request.get_vacation_response().ids(["singleton"]);

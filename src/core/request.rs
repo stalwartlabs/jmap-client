@@ -21,6 +21,7 @@ use crate::{
     mailbox::Mailbox,
     principal::Principal,
     push_subscription::PushSubscription,
+    sieve::{validate::SieveScriptValidateRequest, SieveScript},
     thread::Thread,
     vacation_response::VacationResponse,
     Error, Method, Set, URI,
@@ -92,6 +93,10 @@ pub enum Arguments {
     EmailSubmissionSet(SetRequest<EmailSubmission<Set>>),
     VacationResponseGet(GetRequest<VacationResponse<Set>>),
     VacationResponseSet(SetRequest<VacationResponse<Set>>),
+    SieveScriptGet(GetRequest<SieveScript<Set>>),
+    SieveScriptQuery(QueryRequest<SieveScript<Set>>),
+    SieveScriptValidate(SieveScriptValidateRequest),
+    SieveScriptSet(SetRequest<SieveScript<Set>>),
     PrincipalGet(GetRequest<Principal<Set>>),
     PrincipalQuery(QueryRequest<Principal<Set>>),
     PrincipalQueryChanges(QueryChangesRequest<Principal<Set>>),
@@ -200,6 +205,22 @@ impl Arguments {
 
     pub fn vacation_response_set(params: RequestParams) -> Self {
         Arguments::VacationResponseSet(SetRequest::new(params))
+    }
+
+    pub fn sieve_script_get(params: RequestParams) -> Self {
+        Arguments::SieveScriptGet(GetRequest::new(params))
+    }
+
+    pub fn sieve_script_query(params: RequestParams) -> Self {
+        Arguments::SieveScriptQuery(QueryRequest::new(params))
+    }
+
+    pub fn sieve_script_validate(params: RequestParams, blob_id: impl Into<String>) -> Self {
+        Arguments::SieveScriptValidate(SieveScriptValidateRequest::new(params, blob_id))
+    }
+
+    pub fn sieve_script_set(params: RequestParams) -> Self {
+        Arguments::SieveScriptSet(SetRequest::new(params))
     }
 
     pub fn principal_get(params: RequestParams) -> Self {
@@ -391,6 +412,34 @@ impl Arguments {
     pub fn vacation_response_set_mut(&mut self) -> &mut SetRequest<VacationResponse<Set>> {
         match self {
             Arguments::VacationResponseSet(ref mut r) => r,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn sieve_script_get_mut(&mut self) -> &mut GetRequest<SieveScript<Set>> {
+        match self {
+            Arguments::SieveScriptGet(ref mut r) => r,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn sieve_script_query_mut(&mut self) -> &mut QueryRequest<SieveScript<Set>> {
+        match self {
+            Arguments::SieveScriptQuery(ref mut r) => r,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn sieve_script_validate_mut(&mut self) -> &mut SieveScriptValidateRequest {
+        match self {
+            Arguments::SieveScriptValidate(ref mut r) => r,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn sieve_script_set_mut(&mut self) -> &mut SetRequest<SieveScript<Set>> {
+        match self {
+            Arguments::SieveScriptSet(ref mut r) => r,
             _ => unreachable!(),
         }
     }
