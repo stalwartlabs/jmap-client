@@ -110,19 +110,19 @@ pub struct WebSocketCapabilities {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SieveCapabilities {
-    #[serde(rename(serialize = "maxSizeScriptName"))]
+    #[serde(rename = "maxSizeScriptName")]
     max_script_name: Option<usize>,
-    #[serde(rename(serialize = "maxSizeScript"))]
+    #[serde(rename = "maxSizeScript")]
     max_script_size: Option<usize>,
-    #[serde(rename(serialize = "maxNumberScripts"))]
+    #[serde(rename = "maxNumberScripts")]
     max_scripts: Option<usize>,
-    #[serde(rename(serialize = "maxNumberRedirects"))]
+    #[serde(rename = "maxNumberRedirects")]
     max_redirects: Option<usize>,
-    #[serde(rename(serialize = "sieveExtensions"))]
+    #[serde(rename = "sieveExtensions")]
     extensions: Vec<String>,
-    #[serde(rename(serialize = "notificationMethods"))]
+    #[serde(rename = "notificationMethods")]
     notification_methods: Option<Vec<String>>,
-    #[serde(rename(serialize = "externalLists"))]
+    #[serde(rename = "externalLists")]
     ext_lists: Option<Vec<String>>,
 }
 

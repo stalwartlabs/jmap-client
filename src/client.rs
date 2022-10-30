@@ -555,7 +555,7 @@ impl From<(String, String)> for Credentials {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::response::{Response, TaggedMethodResponse};
+    use crate::core::{response::{Response, TaggedMethodResponse}};
 
     #[test]
     fn test_deserialize() {
