@@ -373,6 +373,8 @@ pub enum Error {
     WebSocket(tokio_tungstenite::tungstenite::error::Error),
 }
 
+impl std::error::Error for Error {}
+
 impl From<reqwest::Error> for Error {
     fn from(e: reqwest::Error) -> Self {
         Error::Transport(e)
