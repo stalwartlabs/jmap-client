@@ -10,10 +10,7 @@
  */
 
 pub mod get;
-#[cfg(feature = "async")]
 pub mod helpers;
-#[cfg(feature = "blocking")]
-pub mod helpers_blocking;
 
 use std::fmt::Display;
 

@@ -27,6 +27,7 @@ use crate::{
 use super::{Mailbox, Property, Role};
 
 impl Client {
+    #[maybe_async::maybe_async]
     pub async fn mailbox_create(
         &self,
         name: impl Into<String>,
@@ -48,6 +49,7 @@ impl Client {
             .created(&id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn mailbox_rename(
         &self,
         id: &str,
@@ -61,6 +63,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn mailbox_move(
         &self,
         id: &str,
@@ -74,6 +77,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn mailbox_update_role(
         &self,
         id: &str,
@@ -87,6 +91,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn mailbox_update_acl(
         &self,
         id: &str,
@@ -101,6 +106,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn mailbox_update_sort_order(
         &self,
         id: &str,
@@ -114,6 +120,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn mailbox_subscribe(
         &self,
         id: &str,
@@ -130,6 +137,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn mailbox_destroy(&self, id: &str, delete_emails: bool) -> crate::Result<()> {
         let mut request = self.build();
         request
@@ -143,6 +151,7 @@ impl Client {
             .destroyed(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn mailbox_get(
         &self,
         id: &str,
@@ -159,6 +168,7 @@ impl Client {
             .map(|mut r| r.take_list().pop())
     }
 
+    #[maybe_async::maybe_async]
     pub async fn mailbox_query(
         &self,
         filter: Option<impl Into<Filter<super::query::Filter>>>,
@@ -175,6 +185,7 @@ impl Client {
         request.send_single::<QueryResponse>().await
     }
 
+    #[maybe_async::maybe_async]
     pub async fn mailbox_changes(
         &self,
         since_state: impl Into<String>,
@@ -197,6 +208,7 @@ impl Request<'_> {
         .mailbox_get_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_get_mailbox(self) -> crate::Result<MailboxGetResponse> {
         self.send_single().await
     }
@@ -209,6 +221,7 @@ impl Request<'_> {
         .changes_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_changes_mailbox(self) -> crate::Result<ChangesResponse<Mailbox<Get>>> {
         self.send_single().await
     }
@@ -221,6 +234,7 @@ impl Request<'_> {
         .mailbox_query_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_query_mailbox(self) -> crate::Result<QueryResponse> {
         self.send_single().await
     }
@@ -239,6 +253,7 @@ impl Request<'_> {
         .mailbox_query_changes_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_query_mailbox_changes(self) -> crate::Result<QueryChangesResponse> {
         self.send_single().await
     }
@@ -251,6 +266,7 @@ impl Request<'_> {
         .mailbox_set_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_set_mailbox(self) -> crate::Result<MailboxSetResponse> {
         self.send_single().await
     }

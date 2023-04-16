@@ -86,8 +86,8 @@ impl SetObject for PushSubscription<Get> {
 impl Keys {
     pub fn new(p256dh: &[u8], auth: &[u8]) -> Self {
         Keys {
-            p256dh: base64::encode_config(&p256dh, base64::URL_SAFE),
-            auth: base64::encode_config(&auth, base64::URL_SAFE),
+            p256dh: base64::encode_config(p256dh, base64::URL_SAFE),
+            auth: base64::encode_config(auth, base64::URL_SAFE),
         }
     }
 }

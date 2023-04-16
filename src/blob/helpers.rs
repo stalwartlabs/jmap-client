@@ -18,6 +18,7 @@ use crate::{
 use super::copy::{CopyBlobRequest, CopyBlobResponse};
 
 impl Client {
+    #[maybe_async::maybe_async]
     pub async fn blob_copy(
         &self,
         from_account_id: impl Into<String>,
@@ -34,6 +35,7 @@ impl Client {
 }
 
 impl Request<'_> {
+    #[maybe_async::maybe_async]
     pub fn copy_blob(&mut self, from_account_id: impl Into<String>) -> &mut CopyBlobRequest {
         self.add_method_call(
             Method::CopyBlob,
@@ -42,6 +44,7 @@ impl Request<'_> {
         .blob_copy_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_copy_blob(self) -> crate::Result<CopyBlobResponse> {
         self.send_single().await
     }

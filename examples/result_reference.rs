@@ -13,8 +13,10 @@
  * except according to those terms.
  */
 
+#[cfg(feature = "async")]
 use jmap_client::{client::Client, core::query, email, mailbox};
 
+#[cfg(feature = "async")]
 async fn result_reference() {
     // Connect to the JMAP server using Basic authentication
     let client = Client::new()
@@ -97,5 +99,6 @@ async fn result_reference() {
 }
 
 fn main() {
+    #[cfg(feature = "async")]
     let _c = result_reference();
 }

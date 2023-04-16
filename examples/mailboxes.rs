@@ -13,11 +13,13 @@
  * except according to those terms.
  */
 
+#[cfg(feature = "async")]
 use jmap_client::{
     client::Client,
     mailbox::{query::Filter, Role},
 };
 
+#[cfg(feature = "async")]
 async fn mailboxes() {
     // Connect to the JMAP server using Basic authentication
     let client = Client::new()
@@ -65,5 +67,6 @@ async fn mailboxes() {
 }
 
 fn main() {
+    #[cfg(feature = "async")]
     let _c = mailboxes();
 }

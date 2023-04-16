@@ -10,10 +10,7 @@
  */
 
 pub mod get;
-#[cfg(feature = "async")]
 pub mod helpers;
-#[cfg(feature = "blocking")]
-pub mod helpers_blocking;
 pub mod query;
 pub mod set;
 
@@ -116,7 +113,7 @@ pub(crate) enum ACLPatch {
     Set(bool),
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum Role {
     #[serde(rename = "archive", alias = "ARCHIVE")]
@@ -133,13 +130,8 @@ pub enum Role {
     Sent,
     #[serde(rename = "trash", alias = "TRASH")]
     Trash,
+    #[default]
     None,
-}
-
-impl Default for Role {
-    fn default() -> Self {
-        Role::None
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

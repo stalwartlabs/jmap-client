@@ -24,6 +24,7 @@ use crate::{
 use super::{Identity, Property};
 
 impl Client {
+    #[maybe_async::maybe_async]
     pub async fn identity_create(
         &self,
         name: impl Into<String>,
@@ -43,6 +44,7 @@ impl Client {
             .created(&id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn identity_destroy(&self, id: &str) -> crate::Result<()> {
         let mut request = self.build();
         request.set_identity().destroy([id]);
@@ -52,6 +54,7 @@ impl Client {
             .destroyed(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn identity_get(
         &self,
         id: &str,
@@ -68,6 +71,7 @@ impl Client {
             .map(|mut r| r.take_list().pop())
     }
 
+    #[maybe_async::maybe_async]
     pub async fn identity_changes(
         &self,
         since_state: impl Into<String>,
@@ -90,6 +94,7 @@ impl Request<'_> {
         .identity_get_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_get_identity(self) -> crate::Result<IdentityGetResponse> {
         self.send_single().await
     }
@@ -102,6 +107,7 @@ impl Request<'_> {
         .identity_set_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_set_identity(self) -> crate::Result<IdentitySetResponse> {
         self.send_single().await
     }
@@ -114,6 +120,7 @@ impl Request<'_> {
         .changes_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_changes_identity(self) -> crate::Result<ChangesResponse<Identity<Get>>> {
         self.send_single().await
     }

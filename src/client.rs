@@ -19,10 +19,15 @@ use std::{
 };
 
 use ahash::AHashSet;
+#[cfg(feature = "blocking")]
+use reqwest::blocking::{Client as HttpClient, Response};
 use reqwest::{
     header::{self},
     redirect,
 };
+#[cfg(feature = "async")]
+use reqwest::{Client as HttpClient, Response};
+
 use serde::de::DeserializeOwned;
 
 use crate::{
@@ -59,6 +64,7 @@ pub struct Client {
     headers: header::HeaderMap,
     default_account_id: String,
     timeout: u64,
+    accept_invalid_certs: bool,
 
     #[cfg(feature = "websockets")]
     pub(crate) authorization: String,
@@ -70,6 +76,7 @@ pub struct ClientBuilder {
     credentials: Option<Credentials>,
     trusted_hosts: AHashSet<String>,
     forwarded_for: Option<String>,
+    accept_invalid_certs: bool,
     timeout: u64,
 }
 
@@ -86,6 +93,7 @@ impl ClientBuilder {
             trusted_hosts: AHashSet::new(),
             timeout: DEFAULT_TIMEOUT_MS,
             forwarded_for: None,
+            accept_invalid_certs: false,
         }
     }
 
@@ -96,6 +104,11 @@ impl ClientBuilder {
 
     pub fn timeout(mut self, timeout: u64) -> Self {
         self.timeout = timeout;
+        self
+    }
+
+    pub fn accept_invalid_certs(mut self, accept_invalid_certs: bool) -> Self {
+        self.accept_invalid_certs = accept_invalid_certs;
         self
     }
 
@@ -115,7 +128,7 @@ impl ClientBuilder {
         self
     }
 
-    #[cfg(feature = "async")]
+    #[maybe_async::maybe_async]
     pub async fn connect(self, url: &str) -> crate::Result<Client> {
         let authorization = match self.credentials.expect("Missing credentials") {
             Credentials::Basic(s) => format!("Basic {}", s),
@@ -143,22 +156,15 @@ impl ClientBuilder {
         let session_url = format!("{}/.well-known/jmap", url);
         let session: Session = serde_json::from_slice(
             &Client::handle_error(
-                reqwest::Client::builder()
+                HttpClient::builder()
                     .timeout(Duration::from_millis(self.timeout))
+                    .danger_accept_invalid_certs(self.accept_invalid_certs)
                     .redirect(redirect::Policy::custom(move |attempt| {
                         if attempt.previous().len() > 5 {
                             attempt.error("Too many redirects.")
                         } else if matches!( attempt.url().host_str(), Some(host) if trusted_hosts_.contains(host) )
                         {
-                            #[cfg(feature = "follow-trusted")]
-                            {
-                                attempt.follow_trusted()
-                            }
-                            
-                            #[cfg(not(feature = "follow-trusted"))]
-                            {
                                 attempt.follow()
-                            }
                         } else {
                             let message = format!(
                                 "Aborting redirect request to unknown host '{}'.",
@@ -198,90 +204,7 @@ impl ClientBuilder {
             session: parking_lot::Mutex::new(Arc::new(session)),
             session_url,
             session_updated: true.into(),
-            trusted_hosts,
-            #[cfg(feature = "websockets")]
-            authorization,
-            timeout: self.timeout,
-            headers,
-            default_account_id,
-            #[cfg(feature = "websockets")]
-            ws: None.into(),
-        })
-    }
-
-    #[cfg(feature = "blocking")]
-    pub fn connect(self, url: &str) -> crate::Result<Client> {
-        let authorization = match self.credentials.expect("Missing credentials") {
-            Credentials::Basic(s) => format!("Basic {}", s),
-            Credentials::Bearer(s) => format!("Bearer {}", s),
-        };
-        let mut headers = header::HeaderMap::new();
-        headers.insert(
-            header::USER_AGENT,
-            header::HeaderValue::from_static(USER_AGENT),
-        );
-        headers.insert(
-            header::AUTHORIZATION,
-            header::HeaderValue::from_str(&authorization).unwrap(),
-        );
-        if let Some(forwarded_for) = self.forwarded_for {
-            headers.insert(
-                header::FORWARDED,
-                header::HeaderValue::from_str(&forwarded_for).unwrap(),
-            );
-        }
-
-        let trusted_hosts = Arc::new(self.trusted_hosts);
-
-        let trusted_hosts_ = trusted_hosts.clone();
-        let session_url = format!("{}/.well-known/jmap", url);
-        let session: Session = serde_json::from_slice(
-            &Client::handle_error(
-                reqwest::blocking::Client::builder()
-                    .timeout(Duration::from_millis(self.timeout))
-                    .redirect(redirect::Policy::custom(move |attempt| {
-                        if attempt.previous().len() > 5 {
-                            attempt.error("Too many redirects.")
-                        } else if matches!( attempt.url().host_str(), Some(host) if trusted_hosts_.contains(host) )
-                        {
-                            attempt.follow_trusted()
-                        } else {
-                            let message = format!(
-                                "Aborting redirect request to unknown host '{}'.",
-                                attempt.url().host_str().unwrap_or("")
-                            );
-                            attempt.error(message)
-                        }
-                    }))
-                    .default_headers(headers.clone())
-                    .build()?
-                    .get(&session_url)
-                    .send()
-                    ?,
-            )?
-            .bytes()?,
-        )?;
-
-        let default_account_id = session
-            .primary_accounts()
-            .next()
-            .map(|a| a.1.to_string())
-            .unwrap_or_default();
-
-        headers.insert(
-            header::CONTENT_TYPE,
-            header::HeaderValue::from_static("application/json"),
-        );
-
-        Ok(Client {
-            download_url: URLPart::parse(session.download_url())?,
-            upload_url: URLPart::parse(session.upload_url())?,
-            #[cfg(feature = "async")]
-            event_source_url: URLPart::parse(session.event_source_url())?,
-            api_url: session.api_url().to_string(),
-            session: parking_lot::Mutex::new(Arc::new(session)),
-            session_url,
-            session_updated: true.into(),
+            accept_invalid_certs: self.accept_invalid_certs,
             trusted_hosts,
             #[cfg(feature = "websockets")]
             authorization,
@@ -336,15 +259,7 @@ impl Client {
                 attempt.error("Too many redirects.")
             } else if matches!( attempt.url().host_str(), Some(host) if trusted_hosts.contains(host) )
             {
-                #[cfg(feature = "follow-trusted")]
-                {
-                    attempt.follow_trusted()
-                }
-                
-                #[cfg(not(feature = "follow-trusted"))]
-                {
-                    attempt.follow()
-                }
+                attempt.follow()
             } else {
                 let message = format!(
                     "Aborting redirect request to unknown host '{}'.",
@@ -355,7 +270,7 @@ impl Client {
         })
     }
 
-    #[cfg(feature = "async")]
+    #[maybe_async::maybe_async]
     pub async fn send<R>(
         &self,
         request: &request::Request<'_>,
@@ -365,8 +280,9 @@ impl Client {
     {
         let response: response::Response<R> = serde_json::from_slice(
             &Client::handle_error(
-                reqwest::Client::builder()
+                HttpClient::builder()
                     .redirect(self.redirect_policy())
+                    .danger_accept_invalid_certs(self.accept_invalid_certs)
                     .timeout(Duration::from_millis(self.timeout))
                     .default_headers(self.headers.clone())
                     .build()?
@@ -387,37 +303,11 @@ impl Client {
         Ok(response)
     }
 
-    #[cfg(feature = "blocking")]
-    pub fn send<R>(&self, request: &request::Request<'_>) -> crate::Result<response::Response<R>>
-    where
-        R: DeserializeOwned,
-    {
-        let response: response::Response<R> = serde_json::from_slice(
-            &Client::handle_error(
-                reqwest::blocking::Client::builder()
-                    .redirect(self.redirect_policy())
-                    .timeout(Duration::from_millis(self.timeout))
-                    .default_headers(self.headers.clone())
-                    .build()?
-                    .post(&self.api_url)
-                    .body(serde_json::to_string(&request)?)
-                    .send()?,
-            )?
-            .bytes()?,
-        )?;
-
-        if response.session_state() != self.session.lock().state() {
-            self.session_updated.store(false, Ordering::Relaxed);
-        }
-
-        Ok(response)
-    }
-
-    #[cfg(feature = "async")]
+    #[maybe_async::maybe_async]
     pub async fn refresh_session(&self) -> crate::Result<()> {
         let session: Session = serde_json::from_slice(
             &Client::handle_error(
-                reqwest::Client::builder()
+                HttpClient::builder()
                     .timeout(Duration::from_millis(DEFAULT_TIMEOUT_MS))
                     .redirect(self.redirect_policy())
                     .default_headers(self.headers.clone())
@@ -429,25 +319,6 @@ impl Client {
             .await?
             .bytes()
             .await?,
-        )?;
-        *self.session.lock() = Arc::new(session);
-        self.session_updated.store(true, Ordering::Relaxed);
-        Ok(())
-    }
-
-    #[cfg(feature = "blocking")]
-    pub async fn refresh_session(&self) -> crate::Result<()> {
-        let session: Session = serde_json::from_slice(
-            &Client::handle_error(
-                reqwest::blocking::Client::builder()
-                    .timeout(Duration::from_millis(DEFAULT_TIMEOUT_MS))
-                    .redirect(self.redirect_policy())
-                    .default_headers(self.headers.clone())
-                    .build()?
-                    .get(&self.session_url)
-                    .send()?,
-            )?
-            .bytes()?,
         )?;
         *self.session.lock() = Arc::new(session);
         self.session_updated.store(true, Ordering::Relaxed);
@@ -484,8 +355,8 @@ impl Client {
         &self.event_source_url
     }
 
-    #[cfg(feature = "async")]
-    pub async fn handle_error(response: reqwest::Response) -> crate::Result<reqwest::Response> {
+    #[maybe_async::maybe_async]
+    pub async fn handle_error(response: Response) -> crate::Result<Response> {
         if response.status().is_success() {
             Ok(response)
         } else if let Some(b"application/problem+json") = response
@@ -496,23 +367,6 @@ impl Client {
             Err(Error::Problem(serde_json::from_slice(
                 &response.bytes().await?,
             )?))
-        } else {
-            Err(Error::Server(format!("{}", response.status())))
-        }
-    }
-
-    #[cfg(feature = "blocking")]
-    pub fn handle_error(
-        response: reqwest::blocking::Response,
-    ) -> crate::Result<reqwest::blocking::Response> {
-        if response.status().is_success() {
-            Ok(response)
-        } else if let Some(b"application/problem+json") = response
-            .headers()
-            .get(header::CONTENT_TYPE)
-            .map(|h| h.as_bytes())
-        {
-            Err(Error::Problem(serde_json::from_slice(&response.bytes()?)?))
         } else {
             Err(Error::Server(format!("{}", response.status())))
         }
@@ -555,7 +409,7 @@ impl From<(String, String)> for Credentials {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::{response::{Response, TaggedMethodResponse}};
+    use crate::core::response::{Response, TaggedMethodResponse};
 
     #[test]
     fn test_deserialize() {

@@ -23,6 +23,7 @@ use crate::{
 use super::{Keys, PushSubscription};
 
 impl Client {
+    #[maybe_async::maybe_async]
     pub async fn push_subscription_create(
         &self,
         device_client_id: impl Into<String>,
@@ -47,6 +48,7 @@ impl Client {
             .created(&id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn push_subscription_verify(
         &self,
         id: &str,
@@ -63,6 +65,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn push_subscription_update_types(
         &self,
         id: &str,
@@ -76,6 +79,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn push_subscription_destroy(&self, id: &str) -> crate::Result<()> {
         let mut request = self.build();
         request.set_push_subscription().destroy([id]);
@@ -95,6 +99,7 @@ impl Request<'_> {
         .push_get_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_get_push_subscription(self) -> crate::Result<PushSubscriptionGetResponse> {
         self.send_single().await
     }
@@ -107,6 +112,7 @@ impl Request<'_> {
         .push_set_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_set_push_subscription(self) -> crate::Result<PushSubscriptionSetResponse> {
         self.send_single().await
     }

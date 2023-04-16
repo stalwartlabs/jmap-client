@@ -26,6 +26,7 @@ use crate::{
 use super::{Principal, Property, Type, DKIM};
 
 impl Client {
+    #[maybe_async::maybe_async]
     pub async fn individual_create(
         &self,
         email: impl Into<String>,
@@ -48,6 +49,7 @@ impl Client {
             .created(&id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn domain_create(&self, name: impl Into<String>) -> crate::Result<Principal> {
         let mut request = self.build();
         let id = request
@@ -63,6 +65,7 @@ impl Client {
             .created(&id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn domain_enable_dkim(
         &self,
         id: &str,
@@ -82,6 +85,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn list_create(
         &self,
         email: impl Into<String>,
@@ -104,6 +108,7 @@ impl Client {
             .created(&id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn group_create(
         &self,
         email: impl Into<String>,
@@ -126,6 +131,7 @@ impl Client {
             .created(&id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn principal_set_name(
         &self,
         id: &str,
@@ -139,6 +145,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn principal_set_secret(
         &self,
         id: &str,
@@ -152,6 +159,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn principal_set_email(
         &self,
         id: &str,
@@ -165,6 +173,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn principal_set_timezone(
         &self,
         id: &str,
@@ -178,6 +187,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn principal_set_members(
         &self,
         id: &str,
@@ -191,6 +201,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn principal_set_aliases(
         &self,
         id: &str,
@@ -204,6 +215,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn principal_set_capabilities(
         &self,
         id: &str,
@@ -220,6 +232,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn principal_destroy(&self, id: &str) -> crate::Result<()> {
         let mut request = self.build();
         request.set_principal().destroy([id]).arguments();
@@ -229,6 +242,7 @@ impl Client {
             .destroyed(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn principal_get(
         &self,
         id: &str,
@@ -245,6 +259,7 @@ impl Client {
             .map(|mut r| r.take_list().pop())
     }
 
+    #[maybe_async::maybe_async]
     pub async fn principal_query(
         &self,
         filter: Option<impl Into<Filter<super::query::Filter>>>,
@@ -261,6 +276,7 @@ impl Client {
         request.send_single::<QueryResponse>().await
     }
 
+    #[maybe_async::maybe_async]
     pub async fn principal_changes(
         &self,
         since_state: impl Into<String>,
@@ -283,6 +299,7 @@ impl Request<'_> {
         .principal_get_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_get_principal(self) -> crate::Result<PrincipalGetResponse> {
         self.send_single().await
     }
@@ -295,6 +312,7 @@ impl Request<'_> {
         .changes_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_changes_principal(self) -> crate::Result<ChangesResponse<Principal<Get>>> {
         self.send_single().await
     }
@@ -307,6 +325,7 @@ impl Request<'_> {
         .principal_query_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_query_principal(self) -> crate::Result<QueryResponse> {
         self.send_single().await
     }
@@ -325,6 +344,7 @@ impl Request<'_> {
         .principal_query_changes_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_query_principal_changes(self) -> crate::Result<QueryChangesResponse> {
         self.send_single().await
     }
@@ -337,6 +357,7 @@ impl Request<'_> {
         .principal_set_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_set_principal(self) -> crate::Result<PrincipalSetResponse> {
         self.send_single().await
     }

@@ -13,6 +13,7 @@
  * except according to those terms.
  */
 
+#[cfg(feature = "async")]
 use jmap_client::{
     client::Client,
     core::query::Filter,
@@ -20,6 +21,7 @@ use jmap_client::{
     mailbox::{self, Role},
 };
 
+#[cfg(feature = "async")]
 const TEST_MESSAGE: &[u8; 90] = br#"From: john@example.org
 To: jane@example.org
 Subject: Testing JMAP client
@@ -27,6 +29,7 @@ Subject: Testing JMAP client
 This is a test.
 "#;
 
+#[cfg(feature = "async")]
 async fn messages() {
     // Connect to the JMAP server using Basic authentication
     let client = Client::new()
@@ -116,5 +119,6 @@ async fn messages() {
 }
 
 fn main() {
+    #[cfg(feature = "async")]
     let _c = messages();
 }

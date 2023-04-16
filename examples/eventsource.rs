@@ -13,9 +13,12 @@
  * except according to those terms.
  */
 
+#[cfg(feature = "async")]
 use futures_util::StreamExt;
+#[cfg(feature = "async")]
 use jmap_client::{client::Client, TypeState};
 
+#[cfg(feature = "async")]
 async fn event_source() {
     // Connect to the JMAP server using Basic authentication
     let client = Client::new()
@@ -58,5 +61,6 @@ async fn event_source() {
 }
 
 fn main() {
+    #[cfg(feature = "async")]
     let _c = event_source();
 }

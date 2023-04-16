@@ -26,6 +26,7 @@ use crate::{
 use super::{Address, EmailSubmission, Property, UndoStatus};
 
 impl Client {
+    #[maybe_async::maybe_async]
     pub async fn email_submission_create(
         &self,
         email_id: impl Into<String>,
@@ -45,6 +46,7 @@ impl Client {
             .created(&id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn email_submission_create_envelope<S, T, U>(
         &self,
         email_id: impl Into<String>,
@@ -72,6 +74,7 @@ impl Client {
             .created(&id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn email_submission_change_status(
         &self,
         id: &str,
@@ -88,6 +91,7 @@ impl Client {
             .updated(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn email_submission_destroy(&self, id: &str) -> crate::Result<()> {
         let mut request = self.build();
         request.set_email_submission().destroy([id]);
@@ -97,6 +101,7 @@ impl Client {
             .destroyed(id)
     }
 
+    #[maybe_async::maybe_async]
     pub async fn email_submission_get(
         &self,
         id: &str,
@@ -113,6 +118,7 @@ impl Client {
             .map(|mut r| r.take_list().pop())
     }
 
+    #[maybe_async::maybe_async]
     pub async fn email_submission_query(
         &self,
         filter: Option<impl Into<Filter<super::query::Filter>>>,
@@ -129,6 +135,7 @@ impl Client {
         request.send_single::<QueryResponse>().await
     }
 
+    #[maybe_async::maybe_async]
     pub async fn email_submission_changes(
         &self,
         since_state: impl Into<String>,
@@ -152,6 +159,7 @@ impl Request<'_> {
         .email_submission_get_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_get_email_submission(self) -> crate::Result<EmailSubmissionGetResponse> {
         self.send_single().await
     }
@@ -171,6 +179,7 @@ impl Request<'_> {
         .changes_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_changes_email_submission(
         self,
     ) -> crate::Result<ChangesResponse<EmailSubmission<Get>>> {
@@ -186,6 +195,7 @@ impl Request<'_> {
         .email_submission_query_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_query_email_submission(self) -> crate::Result<QueryResponse> {
         self.send_single().await
     }
@@ -205,6 +215,7 @@ impl Request<'_> {
         .email_submission_query_changes_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_query_email_submission_changes(self) -> crate::Result<QueryChangesResponse> {
         self.send_single().await
     }
@@ -218,6 +229,7 @@ impl Request<'_> {
         .email_submission_set_mut()
     }
 
+    #[maybe_async::maybe_async]
     pub async fn send_set_email_submission(self) -> crate::Result<EmailSubmissionSetResponse> {
         self.send_single().await
     }

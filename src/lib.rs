@@ -365,7 +365,7 @@ pub enum Error {
     Transport(reqwest::Error),
     Parse(serde_json::Error),
     Internal(String),
-    Problem(ProblemDetails),
+    Problem(Box<ProblemDetails>),
     Server(String),
     Method(MethodError),
     Set(SetError<String>),
@@ -395,7 +395,7 @@ impl From<MethodError> for Error {
 
 impl From<ProblemDetails> for Error {
     fn from(e: ProblemDetails) -> Self {
-        Error::Problem(e)
+        Error::Problem(Box::new(e))
     }
 }
 
