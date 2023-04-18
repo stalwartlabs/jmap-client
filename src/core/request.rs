@@ -489,14 +489,9 @@ impl<'x> Request<'x> {
         self
     }
 
-    #[cfg(feature = "async")]
+    #[maybe_async::maybe_async]
     pub async fn send(self) -> crate::Result<Response<TaggedMethodResponse>> {
         self.client.send(&self).await
-    }
-
-    #[cfg(feature = "blocking")]
-    pub fn send(self) -> crate::Result<Response<TaggedMethodResponse>> {
-        self.client.send(&self)
     }
 
     #[cfg(feature = "websockets")]
@@ -504,28 +499,12 @@ impl<'x> Request<'x> {
         self.client.send_ws(self).await
     }
 
-    #[cfg(feature = "async")]
+    #[maybe_async::maybe_async]
     pub async fn send_single<T>(self) -> crate::Result<T>
     where
         T: DeserializeOwned,
     {
         let response: Response<SingleMethodResponse<T>> = self.client.send(&self).await?;
-        match response
-            .unwrap_method_responses()
-            .pop()
-            .ok_or_else(|| Error::Internal("Server returned no results".to_string()))?
-        {
-            SingleMethodResponse::Ok((_, response, _)) => Ok(response),
-            SingleMethodResponse::Error((_, err, _)) => Err(err.into()),
-        }
-    }
-
-    #[cfg(feature = "blocking")]
-    pub fn send_single<T>(self) -> crate::Result<T>
-    where
-        T: DeserializeOwned,
-    {
-        let response: Response<SingleMethodResponse<T>> = self.client.send(&self)?;
         match response
             .unwrap_method_responses()
             .pop()
