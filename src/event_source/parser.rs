@@ -68,6 +68,7 @@ impl EventParser {
     }
 
     pub fn filter_state(&mut self) -> Option<crate::Result<Changes>> {
+        #[allow(clippy::never_loop)]
         #[allow(clippy::while_let_on_iterator)]
         while let Some(event) = self.next() {
             match event {
