@@ -65,6 +65,7 @@ impl Client {
             &Client::handle_error(
                 HttpClient::builder()
                     .timeout(Duration::from_millis(self.timeout()))
+                    .danger_accept_invalid_certs(self.accept_invalid_certs)
                     .redirect(self.redirect_policy())
                     .default_headers(self.headers().clone())
                     .build()?

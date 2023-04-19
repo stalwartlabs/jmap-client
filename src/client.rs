@@ -64,7 +64,7 @@ pub struct Client {
     headers: header::HeaderMap,
     default_account_id: String,
     timeout: u64,
-    accept_invalid_certs: bool,
+    pub(crate) accept_invalid_certs: bool,
 
     #[cfg(feature = "websockets")]
     pub(crate) authorization: String,
@@ -309,6 +309,7 @@ impl Client {
             &Client::handle_error(
                 HttpClient::builder()
                     .timeout(Duration::from_millis(DEFAULT_TIMEOUT_MS))
+                    .danger_accept_invalid_certs(self.accept_invalid_certs)
                     .redirect(self.redirect_policy())
                     .default_headers(self.headers.clone())
                     .build()?

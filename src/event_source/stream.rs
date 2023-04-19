@@ -74,6 +74,7 @@ impl Client {
         let mut stream = Client::handle_error(
             reqwest::Client::builder()
                 .connect_timeout(Duration::from_millis(self.timeout()))
+                .danger_accept_invalid_certs(self.accept_invalid_certs)
                 .redirect(self.redirect_policy())
                 .default_headers(headers)
                 .build()?
