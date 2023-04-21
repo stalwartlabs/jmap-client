@@ -63,7 +63,7 @@ pub struct Client {
 
     headers: header::HeaderMap,
     default_account_id: String,
-    timeout: u64,
+    timeout: Duration,
     pub(crate) accept_invalid_certs: bool,
 
     #[cfg(feature = "websockets")]
@@ -77,7 +77,7 @@ pub struct ClientBuilder {
     trusted_hosts: AHashSet<String>,
     forwarded_for: Option<String>,
     accept_invalid_certs: bool,
-    timeout: u64,
+    timeout: Duration,
 }
 
 impl Default for ClientBuilder {
@@ -91,7 +91,7 @@ impl ClientBuilder {
         Self {
             credentials: None,
             trusted_hosts: AHashSet::new(),
-            timeout: DEFAULT_TIMEOUT_MS,
+            timeout: Duration::from_millis(DEFAULT_TIMEOUT_MS),
             forwarded_for: None,
             accept_invalid_certs: false,
         }
@@ -102,7 +102,7 @@ impl ClientBuilder {
         self
     }
 
-    pub fn timeout(mut self, timeout: u64) -> Self {
+    pub fn timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
         self
     }
@@ -157,7 +157,7 @@ impl ClientBuilder {
         let session: Session = serde_json::from_slice(
             &Client::handle_error(
                 HttpClient::builder()
-                    .timeout(Duration::from_millis(self.timeout))
+                    .timeout(self.timeout)
                     .danger_accept_invalid_certs(self.accept_invalid_certs)
                     .redirect(redirect::Policy::custom(move |attempt| {
                         if attempt.previous().len() > 5 {
@@ -223,7 +223,7 @@ impl Client {
         ClientBuilder::new()
     }
 
-    pub fn set_timeout(&mut self, timeout: u64) -> &mut Self {
+    pub fn set_timeout(&mut self, timeout: Duration) -> &mut Self {
         self.timeout = timeout;
         self
     }
@@ -236,7 +236,7 @@ impl Client {
         self
     }
 
-    pub fn timeout(&self) -> u64 {
+    pub fn timeout(&self) -> Duration {
         self.timeout
     }
 
@@ -283,7 +283,7 @@ impl Client {
                 HttpClient::builder()
                     .redirect(self.redirect_policy())
                     .danger_accept_invalid_certs(self.accept_invalid_certs)
-                    .timeout(Duration::from_millis(self.timeout))
+                    .timeout(self.timeout)
                     .default_headers(self.headers.clone())
                     .build()?
                     .post(&self.api_url)

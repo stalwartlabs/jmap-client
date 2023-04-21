@@ -9,8 +9,6 @@
  * except according to those terms.
  */
 
-use std::time::Duration;
-
 use crate::{client::Client, core::session::URLPart, event_source::parser::EventParser, TypeState};
 use futures_util::{Stream, StreamExt};
 use reqwest::header::{HeaderValue, ACCEPT, CONTENT_TYPE};
@@ -73,7 +71,7 @@ impl Client {
 
         let mut stream = Client::handle_error(
             reqwest::Client::builder()
-                .connect_timeout(Duration::from_millis(self.timeout()))
+                .connect_timeout(self.timeout())
                 .danger_accept_invalid_certs(self.accept_invalid_certs)
                 .redirect(self.redirect_policy())
                 .default_headers(headers)

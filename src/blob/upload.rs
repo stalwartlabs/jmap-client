@@ -9,8 +9,6 @@
  * except according to those terms.
  */
 
-use std::time::Duration;
-
 use reqwest::header::CONTENT_TYPE;
 use serde::Deserialize;
 
@@ -64,7 +62,7 @@ impl Client {
         serde_json::from_slice::<UploadResponse>(
             &Client::handle_error(
                 HttpClient::builder()
-                    .timeout(Duration::from_millis(self.timeout()))
+                    .timeout(self.timeout())
                     .danger_accept_invalid_certs(self.accept_invalid_certs)
                     .redirect(self.redirect_policy())
                     .default_headers(self.headers().clone())

@@ -9,8 +9,6 @@
  * except according to those terms.
  */
 
-use std::time::Duration;
-
 use reqwest::header::CONTENT_TYPE;
 
 use crate::{client::Client, core::session::URLPart};
@@ -55,7 +53,7 @@ impl Client {
 
         Client::handle_error(
             HttpClient::builder()
-                .timeout(Duration::from_millis(self.timeout()))
+                .timeout(self.timeout())
                 .danger_accept_invalid_certs(self.accept_invalid_certs)
                 .redirect(self.redirect_policy())
                 .default_headers(headers)
