@@ -1,3 +1,8 @@
+jmap-client 0.3.0
+================================
+- Set timeouts using `Duration` instead of `u64`.
+- SetError handling of unknown properties.
+
 jmap-client 0.2.1
 ================================
 - Using maybe_async to reduce duplicate code.

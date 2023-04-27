@@ -323,6 +323,7 @@ pub enum Property {
     HasAttachment,
     Preview,
     Header(Header),
+    Other(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -386,7 +387,7 @@ impl Property {
             "attachments" => Some(Property::Attachments),
             "bodyStructure" => Some(Property::BodyStructure),
             _ if value.starts_with("header:") => Some(Property::Header(Header::parse(value)?)),
-            _ => None,
+            _ => Some(Property::Other(value.to_string())),
         }
     }
 }
@@ -420,6 +421,7 @@ impl Display for Property {
             Property::HasAttachment => write!(f, "hasAttachment"),
             Property::Preview => write!(f, "preview"),
             Property::Header(header) => header.fmt(f),
+            Property::Other(other) => write!(f, "{}", other),
         }
     }
 }
