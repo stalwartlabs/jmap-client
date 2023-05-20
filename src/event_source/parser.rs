@@ -97,8 +97,6 @@ impl EventParser {
                     ..
                 }) => {
                     #[cfg(feature = "debug")]
-                    use std::iter::FromIterator;
-                    #[cfg(feature = "debug")]
                     return Some(Ok(Changes {
                         id: if !id.is_empty() {
                             Some(String::from_utf8(id).unwrap_or_default())

@@ -430,7 +430,10 @@ impl Display for SetErrorType {
 }
 
 pub fn from_timestamp(timestamp: i64) -> DateTime<Utc> {
-    DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(timestamp, 0), Utc)
+    DateTime::<Utc>::from_utc(
+        NaiveDateTime::from_timestamp_opt(timestamp, 0).unwrap_or_default(),
+        Utc,
+    )
 }
 
 pub fn string_not_set(string: &Option<String>) -> bool {

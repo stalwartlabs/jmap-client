@@ -46,17 +46,17 @@ impl SetObject for SieveScript<Set> {
 
 impl SetArguments {
     pub fn on_success_activate_script(&mut self, id: impl Into<String>) -> &mut Self {
-        self.on_success_activate_script = Some(Some(format!("#{}", id.into())));
+        self.on_success_activate_script = Some(format!("#{}", id.into()));
         self
     }
 
     pub fn on_success_activate_script_id(&mut self, id: impl Into<String>) -> &mut Self {
-        self.on_success_activate_script = Some(Some(id.into()));
+        self.on_success_activate_script = Some(id.into());
         self
     }
 
-    pub fn on_success_deactivate_scripts(&mut self) -> &mut Self {
-        self.on_success_activate_script = Some(None);
+    pub fn on_success_deactivate_script(&mut self, value: bool) -> &mut Self {
+        self.on_success_deactivate_script = Some(value);
         self
     }
 }

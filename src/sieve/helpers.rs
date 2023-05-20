@@ -112,7 +112,7 @@ impl Client {
         request
             .set_sieve_script()
             .arguments()
-            .on_success_deactivate_scripts();
+            .on_success_deactivate_script(true);
         request
             .send_single::<SieveScriptSetResponse>()
             .await?

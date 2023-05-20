@@ -10,7 +10,7 @@ _jmap-client_ is a **JSON Meta Application Protocol (JMAP) library** written in 
 - JMAP Core ([RFC 8620](https://datatracker.ietf.org/doc/html/rfc8620))
 - JMAP for Mail ([RFC 8621](https://datatracker.ietf.org/doc/html/rfc8621)) 
 - JMAP over WebSocket ([RFC 8887](https://datatracker.ietf.org/doc/html/rfc8887)).
-- JMAP for Sieve Scripts ([DRAFT-SIEVE-12](https://www.ietf.org/archive/id/draft-ietf-jmap-sieve-12.html)).
+- JMAP for Sieve Scripts ([DRAFT-SIEVE-14](https://www.ietf.org/archive/id/draft-ietf-jmap-sieve-14.html)).
 
 Features:
 

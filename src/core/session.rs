@@ -110,6 +110,8 @@ pub struct WebSocketCapabilities {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SieveCapabilities {
+    #[serde(rename = "implementation")]
+    implementation: Option<String>,
     #[serde(rename = "maxSizeScriptName")]
     max_script_name: Option<usize>,
     #[serde(rename = "maxSizeScript")]
