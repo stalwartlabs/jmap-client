@@ -9,15 +9,19 @@
  * except according to those terms.
  */
 
-use std::pin::Pin;
+use std::{pin::Pin, sync::Arc};
 
 use ahash::AHashMap;
 use futures_util::{stream::SplitSink, SinkExt, Stream, StreamExt};
+use rustls::{
+    client::{ServerCertVerified, ServerCertVerifier},
+    Certificate, ClientConfig, ServerName,
+};
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpStream;
 use tokio_tungstenite::{
     tungstenite::{client::IntoClientRequest, Message},
-    MaybeTlsStream, WebSocketStream,
+    Connector, MaybeTlsStream, WebSocketStream,
 };
 
 use crate::{
@@ -123,9 +127,9 @@ pub struct WebSocketStateChange {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct WebSocketProblem {
+pub struct WebSocketError {
     #[serde(rename = "@type")]
-    pub type_: WebSocketProblemType,
+    pub type_: WebSocketErrorType,
 
     #[serde(rename = "requestId")]
     pub request_id: Option<String>,
@@ -139,8 +143,8 @@ pub struct WebSocketProblem {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum WebSocketProblemType {
-    Problem,
+pub enum WebSocketErrorType {
+    RequestError,
 }
 
 #[derive(Debug, Deserialize)]
@@ -148,7 +152,7 @@ pub enum WebSocketProblemType {
 enum WebSocketMessage_ {
     Response(WebSocketResponse),
     StateChange(WebSocketStateChange),
-    Error(WebSocketProblem),
+    Error(WebSocketError),
 }
 
 #[derive(Debug)]
@@ -160,6 +164,23 @@ pub enum WebSocketMessage {
 pub struct WsStream {
     tx: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
     req_id: usize,
+}
+
+#[doc(hidden)]
+struct DummyVerifier;
+
+impl ServerCertVerifier for DummyVerifier {
+    fn verify_server_cert(
+        &self,
+        _e: &Certificate,
+        _i: &[Certificate],
+        _sn: &ServerName,
+        _sc: &mut dyn Iterator<Item = &[u8]>,
+        _o: &[u8],
+        _n: std::time::SystemTime,
+    ) -> Result<ServerCertVerified, rustls::Error> {
+        Ok(ServerCertVerified::assertion())
+    }
 }
 
 impl Client {
@@ -178,7 +199,23 @@ impl Client {
             .headers_mut()
             .insert("Authorization", self.authorization.parse().unwrap());
 
-        let (stream, _) = tokio_tungstenite::connect_async(request).await?;
+        let (stream, _) = if self.accept_invalid_certs & capabilities.url().starts_with("wss") {
+            tokio_tungstenite::connect_async_tls_with_config(
+                request,
+                None,
+                false,
+                Connector::Rustls(Arc::new(
+                    ClientConfig::builder()
+                        .with_safe_defaults()
+                        .with_custom_certificate_verifier(Arc::new(DummyVerifier {}))
+                        .with_no_client_auth(),
+                ))
+                .into(),
+            )
+            .await?
+        } else {
+            tokio_tungstenite::connect_async(request).await?
+        };
         let (tx, mut rx) = stream.split();
 
         *self.ws.lock().await = WsStream { tx, req_id: 0 }.into();
@@ -221,7 +258,7 @@ impl Client {
             .as_mut()
             .ok_or_else(|| crate::Error::Internal("Websocket stream not set.".to_string()))?;
 
-        // Assing request id
+        // Assign request id
         let request_id = ws.req_id.to_string();
         ws.req_id += 1;
 
@@ -294,8 +331,8 @@ impl Client {
     }
 }
 
-impl From<WebSocketProblem> for ProblemDetails {
-    fn from(problem: WebSocketProblem) -> Self {
+impl From<WebSocketError> for ProblemDetails {
+    fn from(problem: WebSocketError) -> Self {
         ProblemDetails::new(
             problem.p_type,
             problem.status,

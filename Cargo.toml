@@ -14,10 +14,11 @@ resolver = "2"
 
 [dependencies]
 reqwest = { version = "0.11", default-features = false, features = ["rustls-tls"]}
-tokio-tungstenite = { version = "0.18", features = ["rustls-tls-webpki-roots"], optional = true}
+tokio-tungstenite = { version = "0.19", features = ["rustls-tls-webpki-roots"], optional = true}
 tokio = { version = "1.16", default-features = false, features = ["io-util"], optional = true }
 futures-util = { version = "0.3", optional = true}
 async-stream = { version = "0.3", optional = true}
+rustls = { version = "0.21.0", features = ["dangerous_configuration"], optional = true }
 serde = { version = "1.0", features = ["derive"]}
 serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde"]}
@@ -29,7 +30,7 @@ maybe-async = "0.2"
 [features]
 default = ["async"]
 async = ["futures-util", "async-stream", "reqwest/stream"]
-websockets = ["tokio", "tokio-tungstenite"]
+websockets = ["tokio", "tokio-tungstenite", "rustls"]
 blocking = ["reqwest/blocking", "maybe-async/is_sync"]
 debug = []
 
