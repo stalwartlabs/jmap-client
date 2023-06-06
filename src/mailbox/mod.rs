@@ -113,23 +113,16 @@ pub(crate) enum ACLPatch {
     Set(bool),
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum Role {
-    #[serde(rename = "archive", alias = "ARCHIVE")]
     Archive,
-    #[serde(rename = "drafts", alias = "DRAFTS")]
     Drafts,
-    #[serde(rename = "important", alias = "IMPORTANT")]
     Important,
-    #[serde(rename = "inbox", alias = "INBOX")]
     Inbox,
-    #[serde(rename = "junk", alias = "JUNK")]
     Junk,
-    #[serde(rename = "sent", alias = "SENT")]
     Sent,
-    #[serde(rename = "trash", alias = "TRASH")]
     Trash,
+    Other(String),
     #[default]
     None,
 }
@@ -251,4 +244,44 @@ impl ChangesObject for Mailbox<Set> {
 
 impl ChangesObject for Mailbox<Get> {
     type ChangesResponse = ChangesResponse;
+}
+
+impl<'de> Deserialize<'de> for Role {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        match <&str>::deserialize(deserializer)?
+            .to_ascii_lowercase()
+            .as_str()
+        {
+            "inbox" => Ok(Role::Inbox),
+            "sent" => Ok(Role::Sent),
+            "trash" => Ok(Role::Trash),
+            "drafts" => Ok(Role::Drafts),
+            "junk" => Ok(Role::Junk),
+            "archive" => Ok(Role::Archive),
+            "important" => Ok(Role::Important),
+            other => Ok(Role::Other(other.to_string())),
+        }
+    }
+}
+
+impl Serialize for Role {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(match self {
+            Role::Inbox => "inbox",
+            Role::Sent => "sent",
+            Role::Trash => "trash",
+            Role::Drafts => "drafts",
+            Role::Junk => "junk",
+            Role::Archive => "archive",
+            Role::Important => "important",
+            Role::Other(other) => other,
+            Role::None => "",
+        })
+    }
 }
