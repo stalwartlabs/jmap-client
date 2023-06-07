@@ -167,20 +167,24 @@ impl Email<Set> {
         self
     }
 
-    pub fn text_body(&mut self, text_body: EmailBodyPart) -> &mut Self {
-        self.text_body.get_or_insert_with(Vec::new).push(text_body);
+    pub fn text_body(&mut self, text_body: impl Into<EmailBodyPart<Get>>) -> &mut Self {
+        self.text_body
+            .get_or_insert_with(Vec::new)
+            .push(text_body.into());
         self
     }
 
-    pub fn html_body(&mut self, html_body: EmailBodyPart) -> &mut Self {
-        self.html_body.get_or_insert_with(Vec::new).push(html_body);
+    pub fn html_body(&mut self, html_body: impl Into<EmailBodyPart<Get>>) -> &mut Self {
+        self.html_body
+            .get_or_insert_with(Vec::new)
+            .push(html_body.into());
         self
     }
 
-    pub fn attachment(&mut self, attachment: EmailBodyPart) -> &mut Self {
+    pub fn attachment(&mut self, attachment: impl Into<EmailBodyPart<Get>>) -> &mut Self {
         self.attachments
             .get_or_insert_with(Vec::new)
-            .push(attachment);
+            .push(attachment.into());
         self
     }
 
@@ -266,6 +270,27 @@ impl EmailBodyPart {
             location: None,
             sub_parts: None,
             header: None,
+            _state: Default::default(),
+        }
+    }
+}
+
+impl From<EmailBodyPart<Set>> for EmailBodyPart<Get> {
+    fn from(part: EmailBodyPart<Set>) -> Self {
+        EmailBodyPart {
+            part_id: part.part_id,
+            blob_id: part.blob_id,
+            size: part.size,
+            headers: part.headers,
+            name: part.name,
+            type_: part.type_,
+            charset: part.charset,
+            disposition: part.disposition,
+            cid: part.cid,
+            language: part.language,
+            location: part.location,
+            sub_parts: part.sub_parts,
+            header: part.header,
             _state: Default::default(),
         }
     }
