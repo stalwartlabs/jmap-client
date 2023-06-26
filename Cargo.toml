@@ -13,7 +13,7 @@ readme = "README.md"
 resolver = "2"
 
 [dependencies]
-reqwest = { version = "0.11", default-features = false, features = ["rustls-tls"]}
+reqwest = { version = "0.11", default-features = false, features = ["rustls-tls-webpki-roots"]}
 tokio-tungstenite = { version = "0.19", features = ["rustls-tls-webpki-roots"], optional = true}
 tokio = { version = "1.16", default-features = false, features = ["io-util"], optional = true }
 futures-util = { version = "0.3", optional = true}
