@@ -87,6 +87,9 @@ impl Default for ClientBuilder {
 }
 
 impl ClientBuilder {
+    /// Creates a new `ClientBuilder`.
+    ///
+    /// Setting the credentials is required to connect to the JMAP API.
     pub fn new() -> Self {
         Self {
             credentials: None,
@@ -97,21 +100,70 @@ impl ClientBuilder {
         }
     }
 
+    /// Set up client credentials to connect to the JMAP API.
+    ///
+    /// The JMAP API URL is set using the [ClientBuilder.connect()](struct.ClientBuilder.html#method.connect) method.
+    ///
+    /// # Bearer authentication
+    /// Pass a `&str` with the API Token.
+    ///
+    /// ```rust
+    /// Client::new().credentials("some-api-token");
+    /// ```
+    ///
+    /// Or use the longer form by using [Credentials::bearer()](enum.Credentials.html#method.bearer).
+    /// ```rust
+    /// let credentials = Credentials::bearer("some-api-token");
+    /// Client::new().credentials(credentials);
+    /// ```
+    ///
+    /// # Basic authentication
+    /// Pass a `(&str, &str)` tuple, with the first position containing a username and the second containing a password.
+    ///
+    /// **It is not suggested to use this approach in production;** instead, if possible, use [Bearer authentication](struct.ClientBuilder.html#bearer-authentication).
+    ///
+    /// ```rust
+    /// Client::new().credentials(("user@domain.com", "password"));
+    /// ```
+    ///
+    /// Or use the longer form by using [Credentials::basic()](enum.Credentials.html#method.basic).
+    /// ```rust
+    /// let credentials = Credentials::basic("user@domain.com", "password");
+    /// Client::new().credentials(credentials);
+    /// ```
     pub fn credentials(mut self, credentials: impl Into<Credentials>) -> Self {
         self.credentials = Some(credentials.into());
         self
     }
 
+    /// Set a timeout for all the requests to the JMAP API.
+    ///
+    /// The timeout can be changed after the `Client` has been created by using [Client.set_timeout()](struct.Client.html#method.set_timeout).
+    ///
+    /// By default the timeout is 10 seconds.
     pub fn timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
         self
     }
 
+    /// Accepts invalid certificates for all the requests to the JMAP API.
+    ///
+    /// By default certificates are validated.
+    ///
+    /// # Warning
+    /// **It is not suggested to use this approach in production;** this method should be used only for testing and as a last resort.
+    ///
+    /// [Read more in the reqwest docs](https://docs.rs/reqwest/latest/reqwest/struct.ClientBuilder.html#method.danger_accept_invalid_certs)
     pub fn accept_invalid_certs(mut self, accept_invalid_certs: bool) -> Self {
         self.accept_invalid_certs = accept_invalid_certs;
         self
     }
 
+    /// Set a list of trusted hosts that will be checked when a redirect is required.
+    ///
+    /// The list can be changed after the `Client` has been created by using [Client.set_follow_redirects()](struct.Client.html#method.set_follow_redirects).
+    ///
+    /// The client will follow at most 5 redirects.
     pub fn follow_redirects(
         mut self,
         trusted_hosts: impl IntoIterator<Item = impl Into<String>>,
@@ -120,6 +172,7 @@ impl ClientBuilder {
         self
     }
 
+    /// Set the originating IP address of the client connecting to the JMAP API.
     pub fn forwarded_for(mut self, forwarded_for: IpAddr) -> Self {
         self.forwarded_for = Some(match forwarded_for {
             IpAddr::V4(addr) => format!("for={}", addr),
@@ -128,6 +181,9 @@ impl ClientBuilder {
         self
     }
 
+    /// Connects to the JMAP API Session URL.
+    ///
+    /// Setting up [Credentials](struct.ClientBuilder.html#method.credentials) must be done before calling this function.
     #[maybe_async::maybe_async]
     pub async fn connect(self, url: &str) -> crate::Result<Client> {
         let authorization = match self.credentials.expect("Missing credentials") {
