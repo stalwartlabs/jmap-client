@@ -438,7 +438,7 @@ impl Display for SetErrorType {
 }
 
 pub fn from_timestamp(timestamp: i64) -> DateTime<Utc> {
-    DateTime::<Utc>::from_utc(
+    DateTime::from_naive_utc_and_offset(
         NaiveDateTime::from_timestamp_opt(timestamp, 0).unwrap_or_default(),
         Utc,
     )
