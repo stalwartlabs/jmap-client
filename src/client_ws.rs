@@ -14,8 +14,8 @@ use std::{pin::Pin, sync::Arc};
 use ahash::AHashMap;
 use futures_util::{stream::SplitSink, SinkExt, Stream, StreamExt};
 use rustls::{
-    client::{ServerCertVerified, ServerCertVerifier},
-    Certificate, ClientConfig, ServerName,
+    client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier},
+    ClientConfig, SignatureScheme,
 };
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpStream;
@@ -167,19 +167,55 @@ pub struct WsStream {
 }
 
 #[doc(hidden)]
+#[derive(Debug)]
 struct DummyVerifier;
 
 impl ServerCertVerifier for DummyVerifier {
     fn verify_server_cert(
         &self,
-        _e: &Certificate,
-        _i: &[Certificate],
-        _sn: &ServerName,
-        _sc: &mut dyn Iterator<Item = &[u8]>,
-        _o: &[u8],
-        _n: std::time::SystemTime,
+        _end_entity: &rustls_pki_types::CertificateDer<'_>,
+        _intermediates: &[rustls_pki_types::CertificateDer<'_>],
+        _server_name: &rustls_pki_types::ServerName<'_>,
+        _ocsp_response: &[u8],
+        _now: rustls_pki_types::UnixTime,
     ) -> Result<ServerCertVerified, rustls::Error> {
         Ok(ServerCertVerified::assertion())
+    }
+
+    fn verify_tls12_signature(
+        &self,
+        _message: &[u8],
+        _cert: &rustls_pki_types::CertificateDer<'_>,
+        _dss: &rustls::DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        Ok(HandshakeSignatureValid::assertion())
+    }
+
+    fn verify_tls13_signature(
+        &self,
+        _message: &[u8],
+        _cert: &rustls_pki_types::CertificateDer<'_>,
+        _dss: &rustls::DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        Ok(HandshakeSignatureValid::assertion())
+    }
+
+    fn supported_verify_schemes(&self) -> Vec<SignatureScheme> {
+        vec![
+            SignatureScheme::RSA_PKCS1_SHA1,
+            SignatureScheme::ECDSA_SHA1_Legacy,
+            SignatureScheme::RSA_PKCS1_SHA256,
+            SignatureScheme::ECDSA_NISTP256_SHA256,
+            SignatureScheme::RSA_PKCS1_SHA384,
+            SignatureScheme::ECDSA_NISTP384_SHA384,
+            SignatureScheme::RSA_PKCS1_SHA512,
+            SignatureScheme::ECDSA_NISTP521_SHA512,
+            SignatureScheme::RSA_PSS_SHA256,
+            SignatureScheme::RSA_PSS_SHA384,
+            SignatureScheme::RSA_PSS_SHA512,
+            SignatureScheme::ED25519,
+            SignatureScheme::ED448,
+        ]
     }
 }
 
@@ -206,7 +242,7 @@ impl Client {
                 false,
                 Connector::Rustls(Arc::new(
                     ClientConfig::builder()
-                        .with_safe_defaults()
+                        .dangerous()
                         .with_custom_certificate_verifier(Arc::new(DummyVerifier {}))
                         .with_no_client_auth(),
                 ))

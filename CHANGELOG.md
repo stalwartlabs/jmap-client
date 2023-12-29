@@ -1,3 +1,7 @@
+jmap-client 0.3.2
+================================
+- Bump to `rustls` 0.22.
+
 jmap-client 0.3.0
 ================================
 - JMAP for Sieve Scripts DRAFT-14 support.
