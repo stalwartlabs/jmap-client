@@ -166,5 +166,5 @@ at your option.
 
 ## Copyright
 
-Copyright (C) 2022, Stalwart Labs Ltd.
+Copyright (C) 2022, Stalwart Labs LLC
 
