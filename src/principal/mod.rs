@@ -109,32 +109,32 @@ pub enum Property {
     Picture = 11,
     #[serde(rename = "members")]
     Members = 12,
-    #[serde(rename = "acl")]
-    ACL = 13,
+    #[serde(rename = "shareWith")]
+    ShareWith = 13,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Copy)]
 pub enum ACL {
-    #[serde(rename = "read")]
-    Read = 0,
-    #[serde(rename = "modify")]
-    Modify = 1,
-    #[serde(rename = "delete")]
+    #[serde(rename = "mayRename")]
+    Rename = 1,
+    #[serde(rename = "mayDelete")]
     Delete = 2,
-    #[serde(rename = "readItems")]
+    #[serde(rename = "mayReadItems")]
     ReadItems = 3,
-    #[serde(rename = "addItems")]
+    #[serde(rename = "mayAddItems")]
     AddItems = 4,
-    #[serde(rename = "modifyItems")]
-    ModifyItems = 5,
-    #[serde(rename = "removeItems")]
+    #[serde(rename = "maySetKeywords")]
+    SetKeywords = 5,
+    #[serde(rename = "mayRemoveItems")]
     RemoveItems = 6,
-    #[serde(rename = "createChild")]
+    #[serde(rename = "mayCreateChild")]
     CreateChild = 7,
-    #[serde(rename = "administer")]
+    #[serde(rename = "mayShare")]
     Administer = 8,
-    #[serde(rename = "submit")]
+    #[serde(rename = "maySubmit")]
     Submit = 10,
+    #[serde(rename = "maySetSeen")]
+    SetSeen = 11,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -196,7 +196,7 @@ impl Display for Property {
             Property::Quota => write!(f, "quota"),
             Property::Picture => write!(f, "picture"),
             Property::Members => write!(f, "members"),
-            Property::ACL => write!(f, "acl"),
+            Property::ShareWith => write!(f, "shareWith"),
         }
     }
 }
@@ -204,16 +204,16 @@ impl Display for Property {
 impl Display for ACL {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ACL::Read => write!(f, "read"),
-            ACL::Modify => write!(f, "modify"),
+            ACL::Rename => write!(f, "rename"),
             ACL::Delete => write!(f, "delete"),
             ACL::ReadItems => write!(f, "readItems"),
             ACL::AddItems => write!(f, "addItems"),
-            ACL::ModifyItems => write!(f, "modifyItems"),
+            ACL::SetKeywords => write!(f, "setKeywords"),
             ACL::RemoveItems => write!(f, "removeItems"),
             ACL::CreateChild => write!(f, "createChild"),
             ACL::Administer => write!(f, "administer"),
             ACL::Submit => write!(f, "submit"),
+            ACL::SetSeen => write!(f, "setSeen"),
         }
     }
 }

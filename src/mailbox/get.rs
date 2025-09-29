@@ -62,12 +62,12 @@ impl Mailbox<Get> {
         self.my_rights.as_ref()
     }
 
-    pub fn acl(&self) -> Option<&AHashMap<String, Vec<ACL>>> {
-        self.acl.as_ref()
+    pub fn acl(&self) -> Option<&AHashMap<String, AHashMap<ACL, bool>>> {
+        self.share_with.as_ref()
     }
 
-    pub fn take_acl(&mut self) -> Option<AHashMap<String, Vec<ACL>>> {
-        self.acl.take()
+    pub fn take_acl(&mut self) -> Option<AHashMap<String, AHashMap<ACL, bool>>> {
+        self.share_with.take()
     }
 }
 
@@ -114,10 +114,10 @@ impl MailboxRights {
             (self.may_read_items, ACL::ReadItems),
             (self.may_add_items, ACL::AddItems),
             (self.may_remove_items, ACL::RemoveItems),
-            (self.may_set_seen, ACL::ModifyItems),
-            (self.may_set_keywords, ACL::ModifyItems),
+            (self.may_set_seen, ACL::SetSeen),
+            (self.may_set_keywords, ACL::SetKeywords),
             (self.may_create_child, ACL::CreateChild),
-            (self.may_rename, ACL::Modify),
+            (self.may_rename, ACL::Rename),
             (self.may_delete, ACL::Delete),
             (self.may_submit, ACL::Submit),
         ] {

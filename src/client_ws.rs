@@ -13,6 +13,7 @@ use std::{pin::Pin, sync::Arc};
 
 use ahash::AHashMap;
 use futures_util::{stream::SplitSink, SinkExt, Stream, StreamExt};
+use reqwest::header::SEC_WEBSOCKET_PROTOCOL;
 use rustls::{
     client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier},
     ClientConfig, SignatureScheme,
@@ -234,6 +235,9 @@ impl Client {
         request
             .headers_mut()
             .insert("Authorization", self.authorization.parse().unwrap());
+        request
+            .headers_mut()
+            .insert(SEC_WEBSOCKET_PROTOCOL, "jmap".parse().unwrap());
 
         let (stream, _) = if self.accept_invalid_certs & capabilities.url().starts_with("wss") {
             tokio_tungstenite::connect_async_tls_with_config(
@@ -361,7 +365,7 @@ impl Client {
             .as_mut()
             .ok_or_else(|| crate::Error::Internal("Websocket stream not set.".to_string()))?
             .tx
-            .send(Message::Ping(vec![]))
+            .send(Message::Ping(vec![].into()))
             .await
             .map_err(|err| err.into())
     }

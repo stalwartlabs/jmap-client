@@ -54,9 +54,9 @@ impl Mailbox<Set> {
         U: Into<String>,
         V: IntoIterator<Item = ACL>,
     {
-        self.acl = Some(
+        self.share_with = Some(
             acls.into_iter()
-                .map(|(id, acls)| (id.into(), acls.into_iter().collect()))
+                .map(|(id, acls)| (id.into(), acls.into_iter().map(|acl| (acl, true)).collect()))
                 .collect(),
         );
         self
@@ -64,8 +64,8 @@ impl Mailbox<Set> {
 
     pub fn acl(&mut self, id: &str, acl: impl IntoIterator<Item = ACL>) -> &mut Self {
         self.acl_patch.get_or_insert_with(AHashMap::new).insert(
-            format!("acl/{}", id),
-            ACLPatch::Replace(acl.into_iter().collect()),
+            format!("shareWith/{}", id),
+            ACLPatch::Replace(acl.into_iter().map(|acl| (acl, true)).collect()),
         );
         self
     }
@@ -73,7 +73,7 @@ impl Mailbox<Set> {
     pub fn acl_set(&mut self, id: &str, acl: ACL, set: bool) -> &mut Self {
         self.acl_patch
             .get_or_insert_with(AHashMap::new)
-            .insert(format!("acl/{}/{}", id, acl), ACLPatch::Set(set));
+            .insert(format!("shareWith/{}/{}", id, acl), ACLPatch::Set(set));
         self
     }
 }
@@ -100,7 +100,7 @@ impl SetObject for Mailbox<Set> {
             unread_threads: None,
             my_rights: None,
             is_subscribed: None,
-            acl: AHashMap::with_capacity(0).into(),
+            share_with: AHashMap::with_capacity(0).into(),
             acl_patch: None,
         }
     }

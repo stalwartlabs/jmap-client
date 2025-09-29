@@ -97,8 +97,9 @@ pub struct Mailbox<State = Get> {
     #[serde(skip_serializing_if = "Option::is_none")]
     is_subscribed: Option<bool>,
 
+    #[serde(rename = "shareWith")]
     #[serde(skip_serializing_if = "map_not_set")]
-    acl: Option<AHashMap<String, Vec<ACL>>>,
+    share_with: Option<AHashMap<String, AHashMap<ACL, bool>>>,
 
     #[serde(flatten)]
     #[serde(skip_deserializing)]
@@ -109,7 +110,7 @@ pub struct Mailbox<State = Get> {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub(crate) enum ACLPatch {
-    Replace(Vec<ACL>),
+    Replace(AHashMap<ACL, bool>),
     Set(bool),
 }
 
@@ -130,30 +131,39 @@ pub enum Role {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct MailboxRights {
     #[serde(rename = "mayReadItems")]
+    #[serde(default)]
     may_read_items: bool,
 
     #[serde(rename = "mayAddItems")]
+    #[serde(default)]
     may_add_items: bool,
 
     #[serde(rename = "mayRemoveItems")]
+    #[serde(default)]
     may_remove_items: bool,
 
     #[serde(rename = "maySetSeen")]
+    #[serde(default)]
     may_set_seen: bool,
 
     #[serde(rename = "maySetKeywords")]
+    #[serde(default)]
     may_set_keywords: bool,
 
     #[serde(rename = "mayCreateChild")]
+    #[serde(default)]
     may_create_child: bool,
 
     #[serde(rename = "mayRename")]
+    #[serde(default)]
     may_rename: bool,
 
     #[serde(rename = "mayDelete")]
+    #[serde(default)]
     may_delete: bool,
 
     #[serde(rename = "maySubmit")]
+    #[serde(default)]
     may_submit: bool,
 }
 
@@ -181,8 +191,8 @@ pub enum Property {
     MyRights,
     #[serde(rename = "isSubscribed")]
     IsSubscribed,
-    #[serde(rename = "acl")]
-    ACL,
+    #[serde(rename = "shareWith")]
+    ShareWith,
 }
 
 impl Property {
@@ -211,7 +221,7 @@ impl Display for Property {
             Property::UnreadThreads => write!(f, "unreadThreads"),
             Property::MyRights => write!(f, "myRights"),
             Property::IsSubscribed => write!(f, "isSubscribed"),
-            Property::ACL => write!(f, "acl"),
+            Property::ShareWith => write!(f, "shareWith"),
         }
     }
 }

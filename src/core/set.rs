@@ -11,7 +11,7 @@
 
 use crate::Error;
 use ahash::AHashMap;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
 
@@ -438,10 +438,7 @@ impl Display for SetErrorType {
 }
 
 pub fn from_timestamp(timestamp: i64) -> DateTime<Utc> {
-    DateTime::from_naive_utc_and_offset(
-        NaiveDateTime::from_timestamp_opt(timestamp, 0).unwrap_or_default(),
-        Utc,
-    )
+    DateTime::from_timestamp(timestamp, 0).unwrap_or_default()
 }
 
 pub fn string_not_set(string: &Option<String>) -> bool {
