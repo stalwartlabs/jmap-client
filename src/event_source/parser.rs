@@ -337,4 +337,22 @@ mod tests {
             ]
         );
     }
+
+    /// Per WHATWG SSE spec §9.2.6, the field name is everything before the
+    /// first colon. A line like " data: hello" has field name " data" (with
+    /// leading space), which is not a recognized field and must be ignored.
+    /// See: https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation
+    #[test]
+    fn leading_space_not_stripped_from_field_name() {
+        let mut parser = super::EventParser::default();
+        // " data: hello" has field " data" (not "data"), should be ignored.
+        // Only "data: real" should appear in the dispatched event.
+        parser.push_bytes(Vec::from(" data: hello\ndata: real\n\n"));
+        let event = parser.next().unwrap().unwrap();
+        assert_eq!(
+            String::from_utf8(event.data).unwrap(),
+            "real",
+            "line with leading space should be ignored, not parsed as 'data' field"
+        );
+    }
 }
