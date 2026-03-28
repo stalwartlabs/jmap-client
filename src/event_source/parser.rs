@@ -59,6 +59,7 @@ pub struct EventParser {
     bytes: Option<Vec<u8>>,
     pos: usize,
     result: Event,
+    last_cr: bool,
 }
 
 impl EventParser {
@@ -146,13 +147,24 @@ impl Iterator for EventParser {
         for byte in bytes.get(self.pos..)? {
             self.pos += 1;
 
+            // Per WHATWG SSE spec: \n, \r, and \r\n are all valid line endings.
+            // Skip \n that immediately follows \r (already handled as line end).
+            if *byte == b'\n' && self.last_cr {
+                self.last_cr = false;
+                continue;
+            }
+            self.last_cr = *byte == b'\r';
+
+            // Treat \r the same as \n for line termination.
+            let is_line_end = *byte == b'\n' || *byte == b'\r';
+
             match self.state {
                 EventParserState::Init => match byte {
                     b':' => {
                         self.state = EventParserState::Comment;
                     }
-                    b'\r' | b' ' => (),
-                    b'\n' => {
+                    b' ' => (),
+                    _ if is_line_end => {
                         return Some(Ok(std::mem::take(&mut self.result)));
                     }
                     _ => {
@@ -161,13 +173,12 @@ impl Iterator for EventParser {
                     }
                 },
                 EventParserState::Comment => {
-                    if *byte == b'\n' {
+                    if is_line_end {
                         self.state = EventParserState::Init;
                     }
                 }
                 EventParserState::Field => match byte {
-                    b'\r' => (),
-                    b'\n' => {
+                    _ if is_line_end => {
                         self.state = EventParserState::Init;
                         self.field.clear();
                     }
@@ -185,9 +196,8 @@ impl Iterator for EventParser {
                     }
                 },
                 EventParserState::Value => match byte {
-                    b'\r' => (),
                     b' ' if self.value.is_empty() => (),
-                    b'\n' => {
+                    _ if is_line_end => {
                         self.state = EventParserState::Init;
                         match &self.field[..] {
                             b"id" => {
@@ -361,4 +371,5 @@ mod tests {
         let event2 = parser.next().unwrap().unwrap();
         assert_eq!(String::from_utf8(event2.data).unwrap(), "world");
     }
+
 }
