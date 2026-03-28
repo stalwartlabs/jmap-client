@@ -149,7 +149,7 @@ impl Request<'_> {
         self.add_capability(URI::VacationResponse);
         self.add_method_call(
             Method::SetVacationResponse,
-            Arguments::vacation_response_set(self.params(Method::GetVacationResponse)),
+            Arguments::vacation_response_set(self.params(Method::SetVacationResponse)),
         )
         .vacation_response_set_mut()
     }
