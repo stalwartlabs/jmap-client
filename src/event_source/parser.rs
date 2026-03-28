@@ -151,7 +151,7 @@ impl Iterator for EventParser {
                     b':' => {
                         self.state = EventParserState::Comment;
                     }
-                    b'\r' | b' ' => (),
+                    b'\r' => (),
                     b'\n' => {
                         return Some(Ok(std::mem::take(&mut self.result)));
                     }
