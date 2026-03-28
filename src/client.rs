@@ -465,8 +465,62 @@ impl From<(String, String)> for Credentials {
 }
 
 #[cfg(test)]
+impl Client {
+    pub(crate) fn test_client() -> Self {
+        let session: Session = serde_json::from_value(serde_json::json!({
+            "capabilities": {},
+            "accounts": {},
+            "primaryAccounts": {},
+            "username": "test@example.com",
+            "apiUrl": "https://example.com/jmap",
+            "downloadUrl": "https://example.com/download/{blobId}",
+            "uploadUrl": "https://example.com/upload",
+            "eventSourceUrl": "https://example.com/events",
+            "state": "0"
+        }))
+        .unwrap();
+        Client {
+            download_url: URLPart::parse(session.download_url()).unwrap(),
+            upload_url: URLPart::parse(session.upload_url()).unwrap(),
+            #[cfg(feature = "async")]
+            event_source_url: URLPart::parse(session.event_source_url()).unwrap(),
+            api_url: session.api_url().to_string(),
+            session: parking_lot::Mutex::new(Arc::new(session)),
+            session_url: "https://example.com/.well-known/jmap".to_string(),
+            session_updated: true.into(),
+            accept_invalid_certs: false,
+            trusted_hosts: Arc::new(AHashSet::new()),
+            #[cfg(feature = "websockets")]
+            authorization: String::new(),
+            timeout: Duration::from_secs(10),
+            headers: header::HeaderMap::new(),
+            default_account_id: "test-account".to_string(),
+            #[cfg(feature = "websockets")]
+            ws: tokio::sync::Mutex::new(None),
+        }
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use crate::core::response::{Response, TaggedMethodResponse};
+
+    /// VacationResponse/set must store Method::SetVacationResponse in its
+    /// RequestParams so that result references built from the call carry the
+    /// correct method name per RFC 8620 Section 3.7.
+    #[test]
+    fn set_vacation_response_result_reference_method() {
+        let client = super::Client::test_client();
+        let mut request = client.build();
+        let set_req = request.set_vacation_response();
+        let result_ref = set_req.result_reference("/created");
+        let json = serde_json::to_value(&result_ref).unwrap();
+        assert_eq!(
+            json["name"], "VacationResponse/set",
+            "result reference from VacationResponse/set should have name \
+             'VacationResponse/set', not 'VacationResponse/get'"
+        );
+    }
 
     #[test]
     fn test_deserialize() {

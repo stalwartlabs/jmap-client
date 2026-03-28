@@ -9,7 +9,7 @@
  * except according to those terms.
  */
 
-use crate::Error;
+use crate::{Error, Method};
 use ahash::AHashMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -26,6 +26,9 @@ pub trait SetObject: Object {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SetRequest<O: SetObject> {
+    #[serde(skip)]
+    method: (Method, usize),
+
     #[serde(rename = "accountId")]
     #[serde(skip_serializing_if = "Option::is_none")]
     account_id: Option<String>,
@@ -150,6 +153,7 @@ pub enum SetErrorType {
 impl<O: SetObject> SetRequest<O> {
     pub fn new(params: RequestParams) -> Self {
         Self {
+            method: (params.method, params.call_id),
             account_id: if O::requires_account_id() {
                 params.account_id.into()
             } else {
@@ -240,6 +244,10 @@ impl<O: SetObject> SetRequest<O> {
 
     pub fn arguments(&mut self) -> &mut O::SetArguments {
         &mut self.arguments
+    }
+
+    pub fn result_reference(&self, path: impl Into<String>) -> ResultReference {
+        ResultReference::new(self.method.0, self.method.1, path)
     }
 }
 
