@@ -337,4 +337,28 @@ mod tests {
             ]
         );
     }
+
+    #[test]
+    fn bare_cr_treated_as_line_terminator() {
+        let mut parser = super::EventParser::default();
+        parser.push_bytes(Vec::from("data: hello\r\rdata: world\r\r"));
+        let event1 = parser.next().unwrap().unwrap();
+        assert_eq!(
+            String::from_utf8(event1.data).unwrap(),
+            "hello",
+            "bare \\r should terminate the data line and \\r\\r should dispatch the event"
+        );
+        let event2 = parser.next().unwrap().unwrap();
+        assert_eq!(String::from_utf8(event2.data).unwrap(), "world");
+    }
+
+    #[test]
+    fn crlf_treated_as_single_line_terminator() {
+        let mut parser = super::EventParser::default();
+        parser.push_bytes(Vec::from("data: hello\r\n\r\ndata: world\r\n\r\n"));
+        let event1 = parser.next().unwrap().unwrap();
+        assert_eq!(String::from_utf8(event1.data).unwrap(), "hello");
+        let event2 = parser.next().unwrap().unwrap();
+        assert_eq!(String::from_utf8(event2.data).unwrap(), "world");
+    }
 }
