@@ -337,4 +337,24 @@ mod tests {
             ]
         );
     }
+
+    /// push_bytes must reset the internal position so that a new buffer
+    /// is read from the beginning, even if the previous buffer was only
+    /// partially consumed.
+    #[test]
+    fn push_bytes_resets_pos_on_partial_consume() {
+        let mut parser = super::EventParser::default();
+        parser.push_bytes(Vec::from("data: first\n\ndata: second\n\n"));
+        let event1 = parser.next().unwrap().unwrap();
+        assert_eq!(String::from_utf8(event1.data).unwrap(), "first");
+
+        // Replace buffer before old one is exhausted — pos is stale
+        parser.push_bytes(Vec::from("data: replaced\n\n"));
+        let event2 = parser.next().unwrap().unwrap();
+        assert_eq!(
+            String::from_utf8(event2.data).unwrap(),
+            "replaced",
+            "new buffer should be read from the start, not from stale pos"
+        );
+    }
 }
