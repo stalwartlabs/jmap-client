@@ -64,6 +64,7 @@ pub struct EventParser {
 impl EventParser {
     pub fn push_bytes(&mut self, bytes: Vec<u8>) {
         self.bytes = Some(bytes);
+        self.pos = 0;
     }
 
     pub fn needs_bytes(&self) -> bool {
