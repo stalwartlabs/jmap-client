@@ -337,4 +337,16 @@ mod tests {
             ]
         );
     }
+
+    /// Per WHATWG SSE spec, multiple `data:` lines within a single event must
+    /// be joined with U+000A (newline) between them.
+    /// See: https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation
+    #[test]
+    fn multiline_data_joined_with_newline() {
+        let mut parser = super::EventParser::default();
+        parser.push_bytes(Vec::from("data: line1\ndata: line2\ndata: line3\n\n"));
+        let event = parser.next().unwrap().unwrap();
+        let data = String::from_utf8(event.data).unwrap();
+        assert_eq!(data, "line1\nline2\nline3");
+    }
 }
