@@ -1,3 +1,7 @@
+jmap-client 0.4.1
+================================
+- Use `rustls-tls-native-roots` for TLS support.
+
 jmap-client 0.4.0
 ================================
 - Calendar Alerts support.

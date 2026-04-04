@@ -9,9 +9,9 @@
  * except according to those terms.
  */
 
-use crate::{core::get::GetObject, Get, Set, DataType};
-
 use super::{Keys, PushSubscription};
+use crate::{core::get::GetObject, DataType, Get, Set};
+use base64::{engine::general_purpose::URL_SAFE, Engine};
 
 impl PushSubscription<Get> {
     pub fn id(&self) -> Option<&str> {
@@ -49,11 +49,11 @@ impl PushSubscription<Get> {
 
 impl Keys {
     pub fn p256dh(&self) -> Option<Vec<u8>> {
-        base64::decode_config(&self.p256dh, base64::URL_SAFE).ok()
+        URL_SAFE.decode(&self.p256dh).ok()
     }
 
     pub fn auth(&self) -> Option<Vec<u8>> {
-        base64::decode_config(&self.auth, base64::URL_SAFE).ok()
+        URL_SAFE.decode(&self.auth).ok()
     }
 }
 

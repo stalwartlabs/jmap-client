@@ -9,13 +9,13 @@
  * except according to those terms.
  */
 
+use super::{Keys, PushSubscription};
 use crate::{
     core::set::{from_timestamp, SetObject},
     email_submission::SetArguments,
-    Get, Set, DataType,
+    DataType, Get, Set,
 };
-
-use super::{Keys, PushSubscription};
+use base64::{engine::general_purpose::URL_SAFE, Engine};
 
 impl PushSubscription<Set> {
     pub fn device_client_id(&mut self, device_client_id: impl Into<String>) -> &mut Self {
@@ -86,8 +86,8 @@ impl SetObject for PushSubscription<Get> {
 impl Keys {
     pub fn new(p256dh: &[u8], auth: &[u8]) -> Self {
         Keys {
-            p256dh: base64::encode_config(p256dh, base64::URL_SAFE),
-            auth: base64::encode_config(auth, base64::URL_SAFE),
+            p256dh: URL_SAFE.encode(p256dh),
+            auth: URL_SAFE.encode(auth),
         }
     }
 }
