@@ -9,27 +9,6 @@
  * except according to those terms.
  */
 
-use std::{
-    net::IpAddr,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    time::Duration,
-};
-
-use ahash::AHashSet;
-#[cfg(feature = "blocking")]
-use reqwest::blocking::{Client as HttpClient, Response};
-use reqwest::{
-    header::{self},
-    redirect,
-};
-#[cfg(feature = "async")]
-use reqwest::{Client as HttpClient, Response};
-
-use serde::de::DeserializeOwned;
-
 use crate::{
     blob,
     core::{
@@ -38,6 +17,25 @@ use crate::{
         session::{Session, URLPart},
     },
     Error,
+};
+use ahash::AHashSet;
+use base64::{engine::general_purpose, Engine};
+#[cfg(feature = "blocking")]
+use reqwest::blocking::{Client as HttpClient, Response};
+use reqwest::{
+    header::{self},
+    redirect,
+};
+#[cfg(feature = "async")]
+use reqwest::{Client as HttpClient, Response};
+use serde::de::DeserializeOwned;
+use std::{
+    net::IpAddr,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    time::Duration,
 };
 
 const DEFAULT_TIMEOUT_MS: u64 = 10 * 1000;
@@ -432,7 +430,7 @@ impl Client {
 
 impl Credentials {
     pub fn basic(username: &str, password: &str) -> Self {
-        Credentials::Basic(base64::encode(format!("{}:{}", username, password)))
+        Credentials::Basic(general_purpose::STANDARD.encode(format!("{}:{}", username, password)))
     }
 
     pub fn bearer(token: impl Into<String>) -> Self {
