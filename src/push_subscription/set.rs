@@ -15,7 +15,7 @@ use crate::{
     email_submission::SetArguments,
     DataType, Get, Set,
 };
-use base64::{engine::general_purpose::URL_SAFE, Engine};
+use encodify::base64::URL_SAFE;
 
 impl PushSubscription<Set> {
     pub fn device_client_id(&mut self, device_client_id: impl Into<String>) -> &mut Self {

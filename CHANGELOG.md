@@ -1,3 +1,7 @@
+jmap-client 0.4.3
+================================
+- Replace `base64` with `encodify`.
+
 jmap-client 0.4.2
 ================================
 - JMAP compliance fixes. 

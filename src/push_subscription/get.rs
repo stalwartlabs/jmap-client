@@ -11,7 +11,7 @@
 
 use super::{Keys, PushSubscription};
 use crate::{core::get::GetObject, DataType, Get, Set};
-use base64::{engine::general_purpose::URL_SAFE, Engine};
+use encodify::base64::URL_SAFE;
 
 impl PushSubscription<Get> {
     pub fn id(&self) -> Option<&str> {

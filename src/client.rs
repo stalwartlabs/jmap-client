@@ -19,7 +19,7 @@ use crate::{
     Error,
 };
 use ahash::AHashSet;
-use base64::{engine::general_purpose, Engine};
+use encodify::base64;
 #[cfg(feature = "blocking")]
 use reqwest::blocking::{Client as HttpClient, Response};
 use reqwest::{
@@ -430,7 +430,7 @@ impl Client {
 
 impl Credentials {
     pub fn basic(username: &str, password: &str) -> Self {
-        Credentials::Basic(general_purpose::STANDARD.encode(format!("{}:{}", username, password)))
+        Credentials::Basic(base64::STANDARD.encode(format!("{}:{}", username, password)))
     }
 
     pub fn bearer(token: impl Into<String>) -> Self {
